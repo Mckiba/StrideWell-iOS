@@ -7,26 +7,31 @@ import SwiftUI
 
 /// Top-level navigation gate.
 ///
-/// Reads `authStore.authCheckComplete` before routing so there is never
-/// a flash of the wrong stack during the Keychain read on launch.
-/// The check is synchronous in practice (< 1ms) but the flag exists
-/// to guard against any future async auth-check path.
+/// Routing priority:
+/// 1. Keychain read incomplete → skeleton
+/// 2. Not authenticated → Auth stack
+/// 3. Authenticated + onboarding incomplete → Onboarding stack
+/// 4. Authenticated + onboarding complete → Main tab bar
 struct RootView: View {
 
     var authStore: AuthStore
+    var onboardingStore: OnboardingStore
 
     var body: some View {
         Group {
             if !authStore.authCheckComplete {
                 SkeletonLoadingView()
-            } else if authStore.isAuthenticated {
-                MainContainerView()
-            } else {
+            } else if !authStore.isAuthenticated {
                 AuthContainerView()
+            } else if !onboardingStore.isComplete {
+                OnboardingContainerView()
+            } else {
+                MainContainerView()
             }
         }
         .animation(.easeInOut(duration: 0.2), value: authStore.authCheckComplete)
         .animation(.easeInOut(duration: 0.2), value: authStore.isAuthenticated)
+        .animation(.easeInOut(duration: 0.2), value: onboardingStore.isComplete)
     }
 }
 

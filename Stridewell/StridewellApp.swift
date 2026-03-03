@@ -12,6 +12,7 @@ import SwiftUI
 extension EnvironmentValues {
     @Entry var authStore: AuthStore = AuthStore()
     @Entry var apiClient: APIClient = APIClient(tokenProvider: { nil }, onUnauthorized: {})
+    @Entry var onboardingStore: OnboardingStore = OnboardingStore()
 }
 
 // MARK: - App
@@ -20,6 +21,7 @@ extension EnvironmentValues {
 struct StridewellApp: App {
 
     @State private var authStore: AuthStore
+    @State private var onboardingStore = OnboardingStore()
     private let apiClient: APIClient
 
     init() {
@@ -34,9 +36,10 @@ struct StridewellApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView(authStore: authStore)
+            RootView(authStore: authStore, onboardingStore: onboardingStore)
                 .environment(\.authStore, authStore)
                 .environment(\.apiClient, apiClient)
+                .environment(\.onboardingStore, onboardingStore)
         }
     }
 }
