@@ -10,6 +10,7 @@ import Foundation
 enum APIEndpoints {
 
     // MARK: Auth (M2)
+    static let register          = "/auth/register"
     static let login             = "/auth/login"
     static let me                = "/auth/me"
 
@@ -29,9 +30,10 @@ enum APIEndpoints {
     // MARK: Reflection (M10)
     static let reflection        = "/reflection"
 
-    // MARK: Strava OAuth (M4, M13)
+    // MARK: Strava OAuth (M3, M12)
     static let stravaConnect     = "/oauth/strava/connect"
     static let stravaDisconnect  = "/oauth/strava/disconnect"
+    static let stravaStatus      = "/auth/strava-status"
 
     // MARK: Notifications (M15)
     static let notificationsRegister = "/notifications/register"

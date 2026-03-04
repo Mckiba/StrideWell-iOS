@@ -24,7 +24,7 @@ struct WelcomeScreen: View {
 
             // Actions
             VStack(spacing: 12) {
-                NavigationLink(destination: OnboardingContainerView()) {
+                NavigationLink(destination: SignUpScreen()) {
                     Text("Get started")
                         .frame(maxWidth: .infinity)
                 }
