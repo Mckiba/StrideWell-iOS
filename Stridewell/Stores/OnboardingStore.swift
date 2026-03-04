@@ -35,6 +35,12 @@ final class OnboardingStore {
         if let cid = state.conversation_id { conversationId = cid }
     }
 
+    /// Called after POST /onboarding/confirm-plan succeeds.
+    /// Flips isComplete → RootView re-routes to the main tab bar automatically.
+    func markComplete() {
+        status = .complete
+    }
+
     func reset() {
         status             = .pending
         stravaConnected    = false

@@ -20,9 +20,10 @@ enum APIEndpoints {
     static let onboardingMessage = "/onboarding/message"
     static let onboardingConfirm = "/onboarding/confirm-plan"
 
-    // MARK: Plan (M8–M9)
+    // MARK: Plan (M6–M9)
     static let planToday         = "/plan/today"
     static let planWeek          = "/plan/week"
+    static let planVersion       = "/plan/version"  // GET /plan/version/:id?weeks=N
 
     // MARK: Chat (M11)
     static let chatMessage       = "/chat/message"

@@ -42,7 +42,6 @@ final class APIClient {
 
         var req = URLRequest(url: url)
         req.httpMethod = method
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         if let token = tokenProvider() {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -50,6 +49,7 @@ final class APIClient {
 
         if let body {
             do {
+                req.setValue("application/json", forHTTPHeaderField: "Content-Type")
                 req.httpBody = try JSONEncoder().encode(body)
             } catch {
                 return .failure(status: 0, message: "Encoding error: \(error.localizedDescription)")

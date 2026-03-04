@@ -96,9 +96,7 @@ struct StravaConnectScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .navigationDestination(isPresented: $navigateToInterview) {
-            // M4: IntakeInterviewScreen
-            Text("Milestone 4 — Intake Interview")
-                .foregroundStyle(.secondary)
+            IntakeInterviewScreen()
         }
         .task { await startOnboardingSession() }
     }
