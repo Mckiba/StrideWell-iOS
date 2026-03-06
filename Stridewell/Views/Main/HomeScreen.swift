@@ -17,6 +17,7 @@ struct HomeScreen: View {
     @State private var retryTrigger = false
     @State private var recentRuns: [Run] = []
     @State private var showReflection = false
+    @State private var showPlanChange = false
 
     enum ScreenState {
         case loading
@@ -52,6 +53,7 @@ struct HomeScreen: View {
         .navigationBarTitleDisplayMode(.large)
         .task(id: retryTrigger) { await loadData() }
         .sheet(isPresented: $showReflection) { ReflectionScreen() }
+        .navigationDestination(isPresented: $showPlanChange) { PlanChangeScreen() }
     }
 
     // MARK: - Home Content
@@ -111,10 +113,8 @@ struct HomeScreen: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .onTapGesture {
-                // M11: Navigate to PlanChangeScreen
-                planStore.markPlanChangeSeen()
-            }
+            .contentShape(Rectangle())
+            .onTapGesture { showPlanChange = true }
         }
     }
 

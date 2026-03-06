@@ -20,18 +20,19 @@ enum APIEndpoints {
     static let onboardingMessage = "/onboarding/message"
     static let onboardingConfirm = "/onboarding/confirm-plan"
 
-    // MARK: Plan (M6–M9)
+    // MARK: Plan (M6–M11)
     static let planToday         = "/plan/today"
     static let planWeek          = "/plan/week"
     static let planVersion       = "/plan/version"  // GET /plan/version/:id?weeks=N
+    static let latestDecision    = "/plan/latest-decision"
 
     // MARK: Runs (M7)
     static let runsRecent        = "/runs/recent"
 
-    // MARK: Chat (M11)
+    // MARK: Chat (M10)
     static let chatMessage       = "/chat/message"
 
-    // MARK: Reflection (M10)
+    // MARK: Reflection (M9)
     static let reflection        = "/reflection"
 
     // MARK: Strava OAuth (M3, M12)

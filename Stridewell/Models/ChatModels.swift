@@ -23,3 +23,15 @@ struct ChatMessage: Codable, Identifiable {
     let agent_used: AgentUsed?
     let created_at: String
 }
+
+// MARK: - Request / Response (M10)
+
+struct ChatMessageRequest: Encodable {
+    let message: String
+    let conversation_id: String?
+}
+
+struct ChatMessageResponse: Decodable {
+    let conversation_id: String
+    let message: ChatMessage
+}

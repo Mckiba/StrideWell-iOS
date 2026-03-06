@@ -25,7 +25,7 @@ struct MainContainerView: View {
 
             Tab("Chat", systemImage: "bubble.left.and.bubble.right") {
                 NavigationStack {
-                    ChatStubScreen()
+                    ChatScreen()
                 }
             }
 

@@ -18,6 +18,7 @@ struct PlanScreen: View {
     @State private var selectedMonday: Date = DateUtils.mondayOfWeek(containing: Date())
     @State private var displayedWeek: PlanWeekResponse? = nil
     @State private var selectedDay: PlanDay? = nil
+    @State private var showPlanChange = false
 
     enum ScreenState {
         case loading
@@ -62,6 +63,7 @@ struct PlanScreen: View {
         .sheet(item: $selectedDay) { day in
             WorkoutDetailSheet(day: day)
         }
+        .navigationDestination(isPresented: $showPlanChange) { PlanChangeScreen() }
     }
 
     // MARK: - Plan Content
@@ -99,10 +101,8 @@ struct PlanScreen: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .onTapGesture {
-                // M11: Navigate to PlanChangeScreen
-                planStore.markPlanChangeSeen()
-            }
+            .contentShape(Rectangle())
+            .onTapGesture { showPlanChange = true }
         }
     }
 

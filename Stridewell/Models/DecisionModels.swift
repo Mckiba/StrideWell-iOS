@@ -36,3 +36,9 @@ struct DecisionRecord: Codable, Identifiable {
     let signals_used: SignalsUsed?
     let guardrails_applied: [String]?
 }
+
+// MARK: - Response (M11)
+
+struct LatestDecisionResponse: Decodable {
+    let decision_record: DecisionRecord
+}
