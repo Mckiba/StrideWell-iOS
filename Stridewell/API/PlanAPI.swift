@@ -16,6 +16,11 @@ extension APIClient {
         return await get(path: path)
     }
 
+    /// Fetch today's planned workout. 404 if no current plan exists.
+    func planToday() async -> ApiResult<PlanDay> {
+        await get(path: APIEndpoints.planToday)
+    }
+
     /// Fetch the current active plan for a date window.
     /// Used by HomeScreen (M7) and PlanScreen (M8).
     func planWeek(start: String) async -> ApiResult<PlanWeekResponse> {

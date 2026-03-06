@@ -13,6 +13,7 @@ extension EnvironmentValues {
     @Entry var authStore: AuthStore = AuthStore()
     @Entry var apiClient: APIClient = APIClient(tokenProvider: { nil }, onUnauthorized: {})
     @Entry var onboardingStore: OnboardingStore = OnboardingStore()
+    @Entry var planStore: PlanStore = PlanStore()
 }
 
 // MARK: - App
@@ -22,6 +23,7 @@ struct StridewellApp: App {
 
     @State private var authStore: AuthStore
     @State private var onboardingStore = OnboardingStore()
+    @State private var planStore = PlanStore()
     private let apiClient: APIClient
 
     init() {
@@ -40,6 +42,7 @@ struct StridewellApp: App {
                 .environment(\.authStore, authStore)
                 .environment(\.apiClient, apiClient)
                 .environment(\.onboardingStore, onboardingStore)
+                .environment(\.planStore, planStore)
         }
     }
 }

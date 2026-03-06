@@ -2,14 +2,38 @@
 //  MainContainerView.swift
 //  Stridewell
 //
-//  M7: Replace body with TabView { HomeScreen | PlanScreen | ChatScreen | SettingsScreen }
+//  M7: TabView with Home | Plan | Chat | Settings.
+//  Each tab wraps its content in a NavigationStack for scoped push navigation.
 //
 
 import SwiftUI
 
 struct MainContainerView: View {
     var body: some View {
-        Text("Main tab bar — Milestone 7")
-            .foregroundStyle(.secondary)
+        TabView {
+            Tab("Home", systemImage: "house") {
+                NavigationStack {
+                    HomeScreen()
+                }
+            }
+
+            Tab("Plan", systemImage: "calendar") {
+                NavigationStack {
+                    PlanScreen()
+                }
+            }
+
+            Tab("Chat", systemImage: "bubble.left.and.bubble.right") {
+                NavigationStack {
+                    ChatStubScreen()
+                }
+            }
+
+            Tab("Settings", systemImage: "gearshape") {
+                NavigationStack {
+                    SettingsStubScreen()
+                }
+            }
+        }
     }
 }
