@@ -74,7 +74,7 @@ struct ChatScreen: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, Spacing.md)
                                 .padding(.vertical, Spacing.sm)
-                                .background(Color(.secondarySystemBackground))
+                                .background(AppColor.surfaceElevated)
                                 .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
                         }
                         .buttonStyle(.plain)
@@ -99,31 +99,35 @@ struct ChatScreen: View {
     private var messageThread: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 12) {
+                LazyVStack(alignment: .leading, spacing: Spacing.sm) {
                     ForEach(chatStore.messages) { msg in
-                        ChatBubble(message: msg)
+                        ChatBubbleView(
+                            content: msg.content,
+                            isUser: msg.role == .user,
+                            subtitle: msg.role == .user ? nil : msg.agent_used?.rawValue
+                        )
                     }
 
                     if screenState == .waiting {
                         HStack {
-                            ChatTypingIndicator()
-                                .padding(.leading, 16)
+                            TypingIndicatorView()
+                                .padding(.leading, Spacing.md)
                             Spacer()
                         }
                         .id("typing")
                     }
 
                     if case .error(let errorMsg) = screenState {
-                        ChatInlineError(message: errorMsg) {
+                        InlineErrorView(message: errorMsg) {
                             Task { await retry() }
                         }
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, Spacing.md)
                         .id("error")
                     }
 
-                    Color.clear.frame(height: 8).id("bottom")
+                    Color.clear.frame(height: Spacing.sm).id("bottom")
                 }
-                .padding(.vertical, 16)
+                .padding(.vertical, Spacing.md)
             }
             .onChange(of: chatStore.messages.count) {
                 withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo("bottom") }
@@ -143,12 +147,12 @@ struct ChatScreen: View {
     // MARK: - Input Bar
 
     private var inputBar: some View {
-        HStack(alignment: .bottom, spacing: 8) {
+        HStack(alignment: .bottom, spacing: Spacing.sm) {
             TextField("Message…", text: $inputText, axis: .vertical)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .padding(.horizontal, Spacing.sm)
+                .padding(.vertical, Spacing.sm)
+                .background(AppColor.surfaceElevated)
+                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.input))
                 .lineLimit(1...5)
 
             Button {
@@ -156,13 +160,13 @@ struct ChatScreen: View {
             } label: {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.system(size: 32))
-                    .foregroundStyle(canSend ? Color.accentColor : Color(.tertiaryLabel))
+                    .foregroundStyle(canSend ? AppColor.accent : AppColor.textTertiary)
             }
             .disabled(!canSend)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(Color(.systemBackground))
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.sm)
+        .background(AppColor.surface)
     }
 
     private var canSend: Bool {
@@ -185,7 +189,7 @@ struct ChatScreen: View {
             role: .user,
             content: trimmed,
             agent_used: nil,
-            created_at: Self.isoFormatter.string(from: Date())
+            created_at: DateUtils.isoDateTimeFormatter.string(from: Date())
         )
         chatStore.addMessage(userMessage)
         screenState = .waiting
@@ -229,7 +233,7 @@ struct ChatScreen: View {
             // If the Adjuster agent responded, poll for the updated plan
             if response.message.agent_used == .adjuster {
                 Task {
-                    try? await Task.sleep(nanoseconds: 5_000_000_000)
+                    try? await Task.sleep(for: .seconds(5))
                     if case .success(let day) = await apiClient.planToday() {
                         planStore.setTodayPlanDay(day)
                     }
@@ -241,95 +245,5 @@ struct ChatScreen: View {
         }
     }
 
-    // MARK: - Helpers
-
-    private static let isoFormatter: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime]
-        return f
-    }()
 }
 
-// MARK: - Chat Bubble
-
-private struct ChatBubble: View {
-    let message: ChatMessage
-
-    private var isUser: Bool { message.role == .user }
-
-    var body: some View {
-        VStack(alignment: isUser ? .trailing : .leading, spacing: 2) {
-            HStack(alignment: .bottom, spacing: 0) {
-                if isUser { Spacer(minLength: 56) }
-
-                Text(message.content)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(isUser ? Color.accentColor : Color(.secondarySystemBackground))
-                    .foregroundStyle(isUser ? Color.white : Color.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
-                    .textSelection(.enabled)
-
-                if !isUser { Spacer(minLength: 56) }
-            }
-
-            // Agent label for assistant messages
-            if !isUser, let agent = message.agent_used {
-                Text(agent.rawValue)
-                    .font(.cardCaption)
-                    .foregroundStyle(.tertiary)
-                    .padding(.leading, 4)
-            }
-        }
-        .padding(.horizontal, 16)
-        .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
-    }
-}
-
-// MARK: - Typing Indicator
-
-private struct ChatTypingIndicator: View {
-    @State private var phase = 0
-
-    var body: some View {
-        HStack(spacing: 5) {
-            ForEach(0..<3, id: \.self) { index in
-                Circle()
-                    .frame(width: 8, height: 8)
-                    .foregroundStyle(Color(.tertiaryLabel))
-                    .scaleEffect(phase == index ? 1.4 : 1.0)
-                    .animation(.spring(duration: 0.3), value: phase)
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .task {
-            while !Task.isCancelled {
-                phase = (phase + 1) % 3
-                try? await Task.sleep(nanoseconds: 400_000_000)
-            }
-        }
-    }
-}
-
-// MARK: - Inline Error
-
-private struct ChatInlineError: View {
-    let message: String
-    let onRetry: () -> Void
-
-    var body: some View {
-        VStack(spacing: 6) {
-            Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.red)
-                .multilineTextAlignment(.center)
-            Button("Try again", action: onRetry)
-                .font(.subheadline.weight(.medium))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-    }
-}

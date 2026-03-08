@@ -7,40 +7,43 @@ import SwiftUI
 
 struct WelcomeScreen: View {
 
+    @State private var showSignUp = false
+    @State private var showSignIn = false
+
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
 
             // Brand
-            VStack(spacing: 12) {
+            VStack(spacing: Spacing.sm) {
                 Text("Stridewell")
                     .font(.system(size: 42, weight: .bold))
                 Text("Your AI running coach")
                     .font(.title3)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppColor.textSecondary)
             }
 
             Spacer()
 
             // Actions
-            VStack(spacing: 12) {
-                NavigationLink(destination: SignUpScreen()) {
-                    Text("Get started")
-                        .frame(maxWidth: .infinity)
+            VStack(spacing: Spacing.sm) {
+                Button { showSignUp = true } label: {
+                    Text("Get started").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
 
-                NavigationLink(destination: SignInScreen()) {
-                    Text("Sign in")
-                        .frame(maxWidth: .infinity)
+                Button { showSignIn = true } label: {
+                    Text("Sign in").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 48)
+            .padding(.horizontal, Spacing.lg)
+            .padding(.bottom, Spacing.xxl)
         }
         .toolbar(.hidden, for: .navigationBar)
+        .navigationDestination(isPresented: $showSignUp) { SignUpScreen() }
+        .navigationDestination(isPresented: $showSignIn) { SignInScreen() }
     }
 }

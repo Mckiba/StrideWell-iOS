@@ -3,20 +3,87 @@
 //  Stridewell
 //
 //  Shared date utilities — Monday-of-week computation, week navigation,
-//  range labels, and YYYY-MM-DD formatting.
+//  range labels, ISO-8601 parsing, and display formatting.
+//
+//  All date formatter instances are static so they are created once and
+//  shared across the app.  Views should use the formatting helpers rather
+//  than constructing their own DateFormatter/ISO8601DateFormatter instances.
 //
 
 import Foundation
 
 enum DateUtils {
 
-    // MARK: - Shared Formatter
+    // MARK: - YYYY-MM-DD Formatter
 
-    /// POSIX formatter for YYYY-MM-DD strings.
+    /// POSIX formatter for YYYY-MM-DD strings (plan dates, week keys).
     static let isoDate: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
         f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+
+    // MARK: - ISO-8601 DateTime Formatters
+
+    /// Full ISO-8601 formatter with fractional seconds (used when creating
+    /// outgoing message timestamps).
+    static let isoDateTimeFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
+
+    /// Parses an ISO-8601 string, trying fractional seconds first, then
+    /// without.  Returns nil only if the string cannot be parsed at all.
+    static func parseISO8601(_ iso: String) -> Date? {
+        let withFractional = ISO8601DateFormatter()
+        withFractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = withFractional.date(from: iso) { return date }
+        return ISO8601DateFormatter().date(from: iso)
+    }
+
+    // MARK: - Display Formatters
+
+    /// "Mar 8, 2026 at 3:00 PM"
+    static func displayDateTime(_ iso: String) -> String {
+        guard let date = parseISO8601(iso) else { return String(iso.prefix(10)) }
+        return displayDateTimeFormatter.string(from: date)
+    }
+
+    /// "Mar 8, 2026"
+    static func displayDate(_ iso: String) -> String {
+        guard let date = parseISO8601(iso) else { return String(iso.prefix(10)) }
+        return displayDateFormatter.string(from: date)
+    }
+
+    private static let displayDateTimeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .short
+        return f
+    }()
+
+    private static let displayDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .none
+        return f
+    }()
+
+    // MARK: - Workout Date Formatters (used by WorkoutCardView)
+
+    /// Abbreviated day name: "Mon", "Tue", …
+    static let dayAbbrevFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEE"
+        return f
+    }()
+
+    /// Day number: "3", "14", …
+    static let dayNumberFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "d"
         return f
     }()
 
@@ -71,7 +138,7 @@ enum DateUtils {
         }
     }
 
-    // MARK: - Parse / Format
+    // MARK: - Parse / Format (YYYY-MM-DD)
 
     /// Parse a YYYY-MM-DD string into a Date.
     static func parse(_ dateString: String) -> Date? {

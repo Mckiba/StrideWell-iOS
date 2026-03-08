@@ -14,15 +14,15 @@ struct WorkoutCardView: View {
     var isToday: Bool = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: Spacing.md) {
             // Date column — fixed width so workout labels align across rows
             VStack(alignment: .center, spacing: 2) {
                 Text(dayAbbreviation)
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(.secondary)
+                    .font(.dateDay)
+                    .foregroundStyle(AppColor.textSecondary)
                 Text(dayNumber)
-                    .font(.callout.weight(.semibold))
-                    .foregroundStyle(isToday ? Color.accentColor : Color.primary)
+                    .font(.dateNumber)
+                    .foregroundStyle(isToday ? AppColor.accent : AppColor.textPrimary)
             }
             .frame(width: 36)
 
@@ -30,19 +30,19 @@ struct WorkoutCardView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(day.workout.label)
                     .font(.body.weight(isToday ? .semibold : .regular))
-                    .foregroundStyle(isRest ? Color.secondary : (isToday ? Color.accentColor : Color.primary))
+                    .foregroundStyle(isRest ? AppColor.textSecondary : (isToday ? AppColor.accent : AppColor.textPrimary))
 
                 if let metric = metricLine {
                     Text(metric)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(.cardBody)
+                        .foregroundStyle(AppColor.textSecondary)
                 }
             }
 
             Spacer()
         }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 16)
+        .padding(.vertical, Spacing.sm + 2)  // 10pt — keeps rows compact
+        .padding(.horizontal, Spacing.md)
         .contentShape(Rectangle())
     }
 
@@ -67,38 +67,17 @@ struct WorkoutCardView: View {
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
-    // MARK: - Date helpers
+    // MARK: - Date helpers (delegates to shared DateUtils)
 
-    private var parsedDate: Date? {
-        Self.dateParser.date(from: day.date)
-    }
+    private var parsedDate: Date? { DateUtils.parse(day.date) }
 
     private var dayAbbreviation: String {
         guard let d = parsedDate else { return "" }
-        return Self.dayFormatter.string(from: d)
+        return DateUtils.dayAbbrevFormatter.string(from: d)
     }
 
     private var dayNumber: String {
         guard let d = parsedDate else { return "" }
-        return Self.numberFormatter.string(from: d)
+        return DateUtils.dayNumberFormatter.string(from: d)
     }
-
-    private static let dateParser: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f
-    }()
-
-    private static let dayFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "EEE"   // "Mon", "Tue", …
-        return f
-    }()
-
-    private static let numberFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "d"     // "3", "14", …
-        return f
-    }()
 }

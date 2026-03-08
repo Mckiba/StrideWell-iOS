@@ -14,14 +14,7 @@ struct PlanChangeScreen: View {
     @Environment(\.planStore) private var planStore
     @Environment(\.dismiss) private var dismiss
 
-    @State private var screenState: ScreenState = .loading
-
-    enum ScreenState {
-        case loading
-        case loaded(DecisionRecord)
-        case empty
-        case error(String)
-    }
+    @State private var screenState: LoadableState<DecisionRecord> = .loading
 
     var body: some View {
         ZStack {
@@ -255,14 +248,6 @@ struct PlanChangeScreen: View {
     }
 
     private static func formatTimestamp(_ iso: String) -> String {
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = isoFormatter.date(from: iso) ?? ISO8601DateFormatter().date(from: iso) else {
-            return iso.prefix(10).description
-        }
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
+        DateUtils.displayDateTime(iso)
     }
 }

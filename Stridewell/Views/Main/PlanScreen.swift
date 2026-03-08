@@ -13,19 +13,12 @@ struct PlanScreen: View {
     @Environment(\.apiClient) private var apiClient
     @Environment(\.planStore) private var planStore
 
-    @State private var screenState: ScreenState = .loading
+    @State private var screenState: LoadableState<Void> = .loading
     @State private var retryTrigger = false
     @State private var selectedMonday: Date = DateUtils.mondayOfWeek(containing: Date())
     @State private var displayedWeek: PlanWeekResponse? = nil
     @State private var selectedDay: PlanDay? = nil
     @State private var showPlanChange = false
-
-    enum ScreenState {
-        case loading
-        case loaded
-        case empty
-        case error(String)
-    }
 
     var body: some View {
         ZStack {

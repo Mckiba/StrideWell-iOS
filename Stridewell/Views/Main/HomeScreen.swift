@@ -13,18 +13,11 @@ struct HomeScreen: View {
     @Environment(\.apiClient) private var apiClient
     @Environment(\.planStore) private var planStore
 
-    @State private var screenState: ScreenState = .loading
+    @State private var screenState: LoadableState<Void> = .loading
     @State private var retryTrigger = false
     @State private var recentRuns: [Run] = []
     @State private var showReflection = false
     @State private var showPlanChange = false
-
-    enum ScreenState {
-        case loading
-        case loaded
-        case empty
-        case error(String)
-    }
 
     var body: some View {
         ZStack {
@@ -206,22 +199,14 @@ struct HomeScreen: View {
     }
 
     private static func formatRunDate(_ isoString: String) -> String {
-        let iso = ISO8601DateFormatter()
-        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = iso.date(from: isoString) ?? ISO8601DateFormatter().date(from: isoString) else {
-            return isoString.prefix(10).description
-        }
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter.string(from: date)
+        DateUtils.displayDate(isoString)
     }
 
     // MARK: - Data Loading
 
     private func loadData() async {
         if case .loaded = screenState {
-            // Already loaded — pull-to-refresh, don't show loading spinner
+            // Already loaded — pull-to-refresh, skip loading spinner
         } else {
             screenState = .loading
         }

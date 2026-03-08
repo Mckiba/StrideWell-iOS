@@ -1,23 +1,21 @@
 //
-//  PlanRevealScreen.swift
+//  PlanRevealContent.swift
 //  Stridewell
 //
 
 import SwiftUI
 
-struct PlanRevealScreen: View {
+struct PlanRevealContent: View {
 
-    @Environment(\.onboardingStore) private var onboardingStore
-    @Environment(\.apiClient) private var apiClient
-
-    @State private var screenState: ScreenState = .loading
-    @State private var confirmError: String? = nil
-    @State private var retryTrigger = false
+    let screenState: ScreenState
+    let confirmError: String?
+    var onConfirm: () -> Void = {}
+    var onRetry: () -> Void = {}
 
     enum ScreenState {
         case loading
         case loaded(PlanVersionResponse)
-        case confirming
+        case confirming(PlanVersionResponse)
         case error(String)
     }
 
@@ -28,23 +26,15 @@ struct PlanRevealScreen: View {
                 loadingView
 
             case .loaded(let plan):
-                planContent(plan)
+                planContent(plan, isConfirming: false)
 
-            case .confirming:
-                // Keep plan visible while confirming — only button changes
-                if case .loaded(let plan) = screenState {
-                    planContent(plan)
-                }
-                loadingView  // fallback (shouldn't show)
+            case .confirming(let plan):
+                planContent(plan, isConfirming: true)
 
             case .error(let message):
                 errorView(message)
             }
         }
-        .navigationTitle("Your plan")
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .task(id: retryTrigger) { await fetchPlan() }
     }
 
     // MARK: - Loading
@@ -72,7 +62,7 @@ struct PlanRevealScreen: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
-            Button("Try again") { retryTrigger.toggle() }
+            Button("Try again", action: onRetry)
                 .buttonStyle(.bordered)
             Spacer()
         }
@@ -80,14 +70,12 @@ struct PlanRevealScreen: View {
 
     // MARK: - Plan Content
 
-    private func planContent(_ plan: PlanVersionResponse) -> some View {
-        let isConfirming = { if case .confirming = screenState { return true }; return false }()
+    private func planContent(_ plan: PlanVersionResponse, isConfirming: Bool) -> some View {
         let days = plan.weeks.first?.days ?? []
 
         return ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
 
-                // Coach notes card
                 if let notes = plan.coaching_notes {
                     coachCard(notes, phaseLabel: plan.phase_label)
                         .padding(.horizontal, 16)
@@ -100,32 +88,27 @@ struct PlanRevealScreen: View {
                         .padding(.bottom, 12)
                 }
 
-                // Plan days
                 Divider().padding(.leading, 16)
                 ForEach(days) { day in
                     WorkoutCardView(day: day)
                     Divider().padding(.leading, 68)
                 }
 
-                // Why this plan
                 if let bullets = plan.rationale_bullets, !bullets.isEmpty {
                     rationaleSection(bullets)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 16)
                 }
 
-                // Warning flags
                 if let flags = plan.warning_flags, !flags.isEmpty {
                     warningSection(flags)
                         .padding(.horizontal, 16)
                         .padding(.bottom, 16)
                 }
 
-                // Bottom padding for the sticky button
                 Color.clear.frame(height: 96)
             }
         }
-        // Sticky "Start training" button
         .overlay(alignment: .bottom) {
             VStack(spacing: 4) {
                 if let err = confirmError {
@@ -135,9 +118,7 @@ struct PlanRevealScreen: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
                 }
-                Button {
-                    Task { await confirmPlan(plan) }
-                } label: {
+                Button(action: onConfirm) {
                     Group {
                         if isConfirming {
                             ProgressView()
@@ -222,42 +203,70 @@ struct PlanRevealScreen: View {
         .background(Color.yellow.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
+}
 
-    // MARK: - API
+// MARK: - Previews
 
-    private func fetchPlan() async {
-        guard let planVersionId = onboardingStore.firstPlanVersionId else {
-            screenState = .error("Plan ID not available. Please go back and try again.")
-            return
-        }
-        screenState = .loading
-        let result: ApiResult<PlanVersionResponse> = await apiClient.planVersion(
-            id: planVersionId,
-            weeks: 1
+private let mockPlan = PlanVersionResponse(
+    plan_version_id: "pv_preview",
+    source: .architect,
+    start_date: "2026-03-10",
+    horizon_days: 7,
+    phase_label: "base_building",
+    coaching_notes: "We're starting with a gentle base-building phase to establish your aerobic foundation before adding intensity.",
+    rationale_bullets: [
+        "Your recent weekly mileage of 25 km suggests a solid foundation",
+        "Building to 35 km/week over 4 weeks before adding tempo work",
+        "Rest days placed after back-to-back run days for recovery"
+    ],
+    warning_flags: ["Avoid running on consecutive days if shin pain returns"],
+    weeks: [
+        PlanVersionWeek(
+            week_number: 1,
+            start_date: "2026-03-10",
+            days: [
+                PlanDay(date: "2026-03-10", workout: Workout(type: .easy, label: "Easy Run", description: "Relaxed pace, focus on form", target_distance_m: 5000, target_duration_s: 1800, target_pace_s_per_km: 360, intensity: .easy, notes: nil), notes: nil),
+                PlanDay(date: "2026-03-11", workout: Workout(type: .rest, label: "Rest Day", description: nil, target_distance_m: nil, target_duration_s: nil, target_pace_s_per_km: nil, intensity: .very_easy, notes: nil), notes: nil),
+                PlanDay(date: "2026-03-12", workout: Workout(type: .tempo, label: "Tempo Run", description: "Warm up 10 min, tempo 20 min, cool down 10 min", target_distance_m: 8000, target_duration_s: 2400, target_pace_s_per_km: 300, intensity: .moderate, notes: "Keep tempo effort conversational-plus"), notes: nil),
+            ]
         )
-        switch result {
-        case .success(let plan):
-            screenState = .loaded(plan)
-        case .failure(_, let message):
-            screenState = .error(message)
-        }
+    ]
+)
+
+#Preview("Loading") {
+    NavigationStack {
+        PlanRevealContent(screenState: .loading, confirmError: nil)
+            .navigationTitle("Your plan")
+            .navigationBarTitleDisplayMode(.inline)
     }
+}
 
-    private func confirmPlan(_ plan: PlanVersionResponse) async {
-        guard let planVersionId = onboardingStore.firstPlanVersionId else { return }
-        confirmError = nil
-        screenState = .confirming
+#Preview("Loaded") {
+    NavigationStack {
+        PlanRevealContent(screenState: .loaded(mockPlan), confirmError: nil)
+            .navigationTitle("Your plan")
+            .navigationBarTitleDisplayMode(.inline)
+    }
+}
 
-        let result: ApiResult<ConfirmPlanResponse> = await apiClient.confirmPlan(
-            planVersionId: planVersionId
+#Preview("Confirm Error") {
+    NavigationStack {
+        PlanRevealContent(
+            screenState: .loaded(mockPlan),
+            confirmError: "Failed to confirm plan. Please try again."
         )
-        switch result {
-        case .success:
-            // RootView observes onboardingStore.isComplete and re-routes automatically
-            onboardingStore.markComplete()
-        case .failure(_, let message):
-            confirmError = message
-            screenState = .loaded(plan)
-        }
+        .navigationTitle("Your plan")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+#Preview("Error") {
+    NavigationStack {
+        PlanRevealContent(
+            screenState: .error("Could not load your plan. Please try again."),
+            confirmError: nil
+        )
+        .navigationTitle("Your plan")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
