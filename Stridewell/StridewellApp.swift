@@ -15,6 +15,7 @@ extension EnvironmentValues {
     @Entry var onboardingStore: OnboardingStore = OnboardingStore()
     @Entry var planStore: PlanStore = PlanStore()
     @Entry var chatStore: ChatStore = ChatStore()
+    @Entry var settingsStore: SettingsStore = SettingsStore()
 }
 
 // MARK: - App
@@ -26,6 +27,7 @@ struct StridewellApp: App {
     @State private var onboardingStore = OnboardingStore()
     @State private var planStore = PlanStore()
     @State private var chatStore = ChatStore()
+    @State private var settingsStore = SettingsStore()
     private let apiClient: APIClient
 
     init() {
@@ -46,6 +48,7 @@ struct StridewellApp: App {
                 .environment(\.onboardingStore, onboardingStore)
                 .environment(\.planStore, planStore)
                 .environment(\.chatStore, chatStore)
+                .environment(\.settingsStore, settingsStore)
         }
     }
 }

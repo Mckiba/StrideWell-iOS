@@ -1,0 +1,159 @@
+//
+//  SettingsStore.swift
+//  Stridewell
+//
+//  Centralized state and actions for the Settings screen.
+//  Views read state and call action methods — no API calls or business
+//  logic lives in the view layer.
+//
+
+import Foundation
+
+@Observable
+final class SettingsStore {
+
+    // MARK: - Strava Connection
+
+    enum StravaState: Equatable {
+        case loading
+        case disconnected
+        case connected(expiresAt: String?, scope: String?)
+        case expired(expiresAt: String, scope: String?)
+        case connecting
+        case disconnecting
+        case error(String)
+    }
+
+    private(set) var stravaState: StravaState = .loading
+
+    // MARK: - Notification Preferences (local-only V1)
+
+    var reflectionReminders: Bool {
+        didSet { UserDefaults.standard.set(reflectionReminders, forKey: Self.reflectionRemindersKey) }
+    }
+
+    var planUpdateAlerts: Bool {
+        didSet { UserDefaults.standard.set(planUpdateAlerts, forKey: Self.planUpdateAlertsKey) }
+    }
+
+    // MARK: - Account Deletion
+
+    enum DeleteState: Equatable {
+        case idle
+        case deleting
+        case error(String)
+    }
+
+    private(set) var deleteState: DeleteState = .idle
+
+    // MARK: - Persistence Keys
+
+    private static let reflectionRemindersKey = "Settings.reflectionReminders"
+    private static let planUpdateAlertsKey    = "Settings.planUpdateAlerts"
+
+    // MARK: - Init
+
+    init() {
+        reflectionReminders = UserDefaults.standard.object(forKey: Self.reflectionRemindersKey) as? Bool ?? true
+        planUpdateAlerts    = UserDefaults.standard.object(forKey: Self.planUpdateAlertsKey) as? Bool ?? true
+    }
+
+    /// Preview/test initializer with explicit state.
+    init(stravaState: StravaState, reflectionReminders: Bool = true, planUpdateAlerts: Bool = true, deleteState: DeleteState = .idle) {
+        self.stravaState = stravaState
+        self.reflectionReminders = reflectionReminders
+        self.planUpdateAlerts = planUpdateAlerts
+        self.deleteState = deleteState
+    }
+
+    // MARK: - Strava Actions
+
+    func loadStravaStatus(apiClient: APIClient) async {
+        stravaState = .loading
+        let result: ApiResult<StravaStatusResponse> = await apiClient.stravaStatus()
+        switch result {
+        case .success(let response):
+            if !response.connected {
+                stravaState = .disconnected
+            } else if let expiresAt = response.expires_at, Self.isExpired(expiresAt) {
+                stravaState = .expired(expiresAt: expiresAt, scope: response.scope)
+            } else {
+                stravaState = .connected(expiresAt: response.expires_at, scope: response.scope)
+            }
+        case .failure(_, let message):
+            stravaState = .error(message)
+        }
+    }
+
+    func setConnecting() {
+        stravaState = .connecting
+    }
+
+    func exchangeStravaCode(_ code: String, apiClient: APIClient) async {
+        let result: ApiResult<StravaConnectResponse> = await apiClient.stravaConnect(code: code)
+        switch result {
+        case .success:
+            // Refresh to get actual expiry/scope from server
+            await loadStravaStatus(apiClient: apiClient)
+        case .failure(_, let message):
+            stravaState = .error(message)
+        }
+    }
+
+    func disconnectStrava(apiClient: APIClient) async {
+        stravaState = .disconnecting
+        let result: ApiResult<StravaDisconnectResponse> = await apiClient.stravaDisconnect()
+        switch result {
+        case .success:
+            stravaState = .disconnected
+        case .failure(_, let message):
+            stravaState = .error(message)
+        }
+    }
+
+    // MARK: - Account Deletion
+
+    func executeDeleteAccount(apiClient: APIClient) async -> Bool {
+        deleteState = .deleting
+        let result: ApiResult<EmptyResponse> = await apiClient.deleteAccount()
+        switch result {
+        case .success:
+            return true
+        case .failure(_, let message):
+            deleteState = .error(message)
+            return false
+        }
+    }
+
+    // MARK: - Sign Out
+
+    /// Resets all stores and signs out. authStore.signOut() is called last
+    /// because it triggers RootView re-routing.
+    func signOut(
+        authStore: AuthStore,
+        onboardingStore: OnboardingStore,
+        planStore: PlanStore,
+        chatStore: ChatStore
+    ) {
+        chatStore.reset()
+        planStore.reset()
+        onboardingStore.reset()
+        authStore.signOut()
+    }
+
+    // MARK: - Helpers
+
+    private static func isExpired(_ isoString: String) -> Bool {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: isoString) {
+            return date < Date()
+        }
+        // Retry without fractional seconds
+        formatter.formatOptions = [.withInternetDateTime]
+        if let date = formatter.date(from: isoString) {
+            return date < Date()
+        }
+        return false
+    }
+}

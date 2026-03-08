@@ -31,7 +31,7 @@ struct MainContainerView: View {
 
             Tab("Settings", systemImage: "gearshape") {
                 NavigationStack {
-                    SettingsStubScreen()
+                    SettingsScreen()
                 }
             }
         }

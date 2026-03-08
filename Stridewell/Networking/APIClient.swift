@@ -74,6 +74,11 @@ final class APIClient {
                 return .failure(status: http.statusCode, message: msg)
             }
 
+            // Handle 204 No Content (empty body)
+            if data.isEmpty, let empty = EmptyResponse() as? T {
+                return .success(empty)
+            }
+
             do {
                 let decoded = try JSONDecoder().decode(T.self, from: data)
                 return .success(decoded)

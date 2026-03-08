@@ -40,6 +40,9 @@ enum APIEndpoints {
     static let stravaDisconnect  = "/oauth/strava/disconnect"
     static let stravaStatus      = "/auth/strava-status"
 
+    // MARK: Account (M12)
+    static let deleteAccount         = "/auth/account"
+
     // MARK: Notifications (M15)
     static let notificationsRegister = "/notifications/register"
 }
