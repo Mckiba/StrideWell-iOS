@@ -2,38 +2,70 @@
 //  MainContainerView.swift
 //  Stridewell
 //
-//  M7: TabView with Home | Plan | Chat | Settings.
+//  TabView with Home | Plan | Chat | Settings.
 //  Each tab wraps its content in a NavigationStack for scoped push navigation.
+//  Selection binding enables deep link routing from push notifications.
 //
 
 import SwiftUI
 
 struct MainContainerView: View {
+
+    @Environment(\.notificationStore) private var notificationStore
+
+    @State private var selectedTab: MainTab = .home
+
+    // MARK: - Tab
+
+    enum MainTab: Hashable {
+        case home, plan, chat, settings
+    }
+
+    // MARK: - Body
+
     var body: some View {
-        TabView {
-            Tab("Home", systemImage: "house") {
+        TabView(selection: $selectedTab) {
+            Tab("Home", systemImage: "house", value: MainTab.home) {
                 NavigationStack {
                     HomeScreen()
                 }
             }
 
-            Tab("Plan", systemImage: "calendar") {
+            Tab("Plan", systemImage: "calendar", value: MainTab.plan) {
                 NavigationStack {
                     PlanScreen()
                 }
             }
 
-            Tab("Chat", systemImage: "bubble.left.and.bubble.right") {
+            Tab("Chat", systemImage: "bubble.left.and.bubble.right", value: MainTab.chat) {
                 NavigationStack {
                     ChatScreen()
                 }
             }
 
-            Tab("Settings", systemImage: "gearshape") {
+            Tab("Settings", systemImage: "gearshape", value: MainTab.settings) {
                 NavigationStack {
                     SettingsScreen()
                 }
             }
+        }
+        .task {
+            // Request APNs permission on first entry to the main app (post-onboarding).
+            // Safe to call every launch — re-registration is idempotent on the backend.
+            await notificationStore.requestPermission()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .deepLinkReceived)) { notification in
+            guard let raw = notification.object as? String,
+                  let deepLink = NotificationStore.DeepLink(rawValue: raw) else { return }
+            notificationStore.pendingDeepLink = deepLink
+        }
+        .onChange(of: notificationStore.pendingDeepLink) { _, deepLink in
+            guard let deepLink else { return }
+            switch deepLink {
+            case .planChange, .planReveal: selectedTab = .plan
+            case .home:                    selectedTab = .home
+            }
+            notificationStore.clearDeepLink()
         }
     }
 }

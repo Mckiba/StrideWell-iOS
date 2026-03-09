@@ -1,0 +1,11 @@
+{
+  "Simulator Target Bundle": "com.stridewell.Stridewell",
+  "aps": {
+    "alert": {
+      "title": "Test",
+      "body": "Unknown deep link — should be ignored, no crash."
+    },
+    "sound": "default"
+  },
+  "deep_link": "reflection"
+}

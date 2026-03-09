@@ -1,0 +1,11 @@
+{
+  "Simulator Target Bundle": "com.stridewell.Stridewell",
+  "aps": {
+    "alert": {
+      "title": "Training Plan Updated",
+      "body": "Your coach revised this week's plan."
+    },
+    "sound": "default"
+  },
+  "deep_link": "plan_change"
+}

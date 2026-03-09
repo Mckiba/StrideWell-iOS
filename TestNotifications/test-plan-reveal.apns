@@ -1,0 +1,11 @@
+{
+  "Simulator Target Bundle": "com.stridewell.Stridewell",
+  "aps": {
+    "alert": {
+      "title": "Your Plan is Ready",
+      "body": "Your first training plan has been built."
+    },
+    "sound": "default"
+  },
+  "deep_link": "plan_reveal"
+}

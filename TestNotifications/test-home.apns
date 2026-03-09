@@ -1,0 +1,11 @@
+{
+  "Simulator Target Bundle": "com.stridewell.Stridewell",
+  "aps": {
+    "alert": {
+      "title": "Activity Synced",
+      "body": "Your run has been recorded."
+    },
+    "sound": "default"
+  },
+  "deep_link": "home"
+}
