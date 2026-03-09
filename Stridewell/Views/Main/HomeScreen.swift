@@ -54,6 +54,9 @@ struct HomeScreen: View {
     private var homeContent: some View {
         ScrollView {
             VStack(spacing: Spacing.md) {
+                if planStore.isOffline {
+                    OfflineBannerView(lastFetchDate: planStore.lastFetched(for: "today"))
+                }
                 todayWorkoutSection
                 planChangeBannerSection
                 reflectionPromptSection
@@ -223,15 +226,17 @@ struct HomeScreen: View {
         switch today {
         case .success(let day):
             planStore.setTodayPlanDay(day)
-        case .failure(let status, _):
+        case .failure(let status, let message):
             if status == 404 {
                 screenState = .empty
                 return
             }
-            if case .failure(_, let message) = today {
+            // Serve persistent cache when network is unavailable
+            guard planStore.serveCachedTodayOffline() != nil else {
                 screenState = .error(message)
+                return
             }
-            return
+            // Cache served — fall through to populate week/runs and show content
         }
 
         // Week fetch is non-fatal — plan change detection won't work without it

@@ -64,6 +64,11 @@ struct PlanScreen: View {
     private var planContent: some View {
         ScrollView {
             VStack(spacing: Spacing.md) {
+                if planStore.isOffline {
+                    OfflineBannerView(
+                        lastFetchDate: planStore.lastFetched(for: DateUtils.format(selectedMonday))
+                    )
+                }
                 planChangeBannerSection
                 weekNavigator
                 weekDaysList
@@ -224,6 +229,10 @@ struct PlanScreen: View {
         case .failure(let status, let message):
             if status == 404 {
                 screenState = .empty
+            } else if let cached = planStore.serveCachedWeekOffline(for: startDate) {
+                // Serve persistent cache when network is unavailable
+                displayedWeek = cached
+                screenState = cached.days.isEmpty ? .empty : .loaded
             } else {
                 screenState = .error(message)
             }
