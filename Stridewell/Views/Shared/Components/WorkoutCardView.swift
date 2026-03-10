@@ -81,3 +81,58 @@ struct WorkoutCardView: View {
         return DateUtils.dayNumberFormatter.string(from: d)
     }
 }
+
+#Preview {
+    let easy = PlanDay(
+        date: "2026-03-09",
+        workout: Workout(
+            type: .easy,
+            label: "Easy Run",
+            description: nil,
+            target_distance_m: 8000,
+            target_duration_s: nil,
+            target_pace_s_per_km: 360,
+            intensity: .easy,
+            notes: nil
+        ),
+        notes: nil
+    )
+    let long = PlanDay(
+        date: "2026-03-14",
+        workout: Workout(
+            type: .long_run,
+            label: "Long Run",
+            description: nil,
+            target_distance_m: 20000,
+            target_duration_s: nil,
+            target_pace_s_per_km: 390,
+            intensity: .moderate,
+            notes: nil
+        ),
+        notes: nil
+    )
+    let rest = PlanDay(
+        date: "2026-03-10",
+        workout: Workout(
+            type: .rest,
+            label: "Rest Day",
+            description: nil,
+            target_distance_m: nil,
+            target_duration_s: nil,
+            target_pace_s_per_km: nil,
+            intensity: nil,
+            notes: nil
+        ),
+        notes: nil
+    )
+
+    return VStack(spacing: 0) {
+        WorkoutCardView(day: easy, isToday: true)
+        Divider().padding(.leading, 56)
+        WorkoutCardView(day: rest)
+        Divider().padding(.leading, 56)
+        WorkoutCardView(day: long)
+    }
+    .padding(.vertical)
+}
+

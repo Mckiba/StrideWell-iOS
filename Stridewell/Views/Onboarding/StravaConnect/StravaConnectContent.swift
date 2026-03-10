@@ -33,7 +33,7 @@ struct StravaConnectContent: View {
             
             VStack() {
                 
-//                Text("You, in Context").font(.largeTitle).padding(.vertical, 40)
+                //                Text("You, in Context").font(.largeTitle).padding(.vertical, 40)
                 Spacer()
                 
                 // Modal
@@ -53,40 +53,26 @@ struct StravaConnectContent: View {
                             .frame(height: 44)
                             .padding(.bottom, 4)
                         
-                        // Connect button
                         
                         switch screenState {
                             
                         case .starting, .connecting, .analyzing:
                             EmptyView()
                         case .connected:
-                            Button("Continue", action: onContinue)
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.large)
-                                .frame(maxWidth: .infinity)
+                            PrimaryButton("Continue", size: .medium){
+                                onContinue()
+                            }.padding(.horizontal, 48)
+                                .padding(.vertical, 8)
                         case .sessionError:
-                            Button("Try again", action: onRetrySession)
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.large)
-                                .frame(maxWidth: .infinity)
+                            PrimaryButton("Try again", size: .small){
+                                onRetrySession()
+                            }.padding(.horizontal, 48)
+                                .padding(.vertical, 8)
                         case .idle, .error:
-                            Button {
+                            PrimaryButton("Connect", size: .medium ){
                                 onConnect()
-                            } label: {
-                                Text("Connect")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(Color(hex: "#1e1e1e"))
-                                    .padding(.vertical, 12)
-                                    .padding(.horizontal, 28)
-                                    .background(Color.white)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(Color(hex: "#d9d9d9"), lineWidth: 1)
-                                    )
-                                    .cornerRadius(8)
-                            }
-                            .padding(.top, 6)
-                            
+                            }                          .padding(.horizontal, 48)
+                                .padding(.vertical, 8)
                         }
                     }
                     .padding(.horizontal, 40)
@@ -117,7 +103,7 @@ struct StravaConnectContent: View {
                     Text("Skipping the onboarding will result in a default plan. For a more personal experience the early onboarding and Strava integration is recommended")
                         .foregroundStyle(.white)
                     
-                    Button("Skip", action: {})
+                    PrimaryButton("Skip",size: .large,action: {})
                 }
                 .frame(maxWidth: .infinity, alignment: .leading) // expand
                 .padding(20)
@@ -179,21 +165,12 @@ struct StravaConnectContent: View {
 }
 
 
-
-// Color(hex:) initialiser lives in DesignSystem.swift
-
-
-
-
-
 struct OnboardingBackground: View {
     var body: some View {
         Image("OnboardingBackground")
             .resizable()
             .scaledToFill()
             .ignoresSafeArea()
-        //            .blur(radius: 2)
-        //            .opacity(0.70)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
     }
@@ -211,35 +188,34 @@ struct OnboardingBackground: View {
 #Preview("Connecting") {
     NavigationStack {
         StravaConnectContent(screenState: .connecting)
-             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 #Preview("Connected") {
     NavigationStack {
         StravaConnectContent(screenState: .connected)
-             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 #Preview("Analyzing") {
     NavigationStack {
         StravaConnectContent(screenState: .analyzing)
-             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 #Preview("Session Error") {
     NavigationStack {
         StravaConnectContent(screenState: .sessionError("Unable to start session. Please try again."))
-             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 #Preview("OAuth Error") {
     NavigationStack {
         StravaConnectContent(screenState: .error("Could not connect to Strava"))
-             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
-
