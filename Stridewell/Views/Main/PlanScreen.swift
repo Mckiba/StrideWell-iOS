@@ -12,6 +12,7 @@ struct PlanScreen: View {
 
     @Environment(\.apiClient) private var apiClient
     @Environment(\.planStore) private var planStore
+    @Environment(\.authStore) private var authStore
 
     @State private var screenState: LoadableState<Void> = .loading
     @State private var retryTrigger = false
@@ -22,7 +23,7 @@ struct PlanScreen: View {
 
     var body: some View {
         ZStack {
-            MapBackground()
+            HeatmapBackgroundView(userId: authStore.userId ?? "")
 
             switch screenState {
             case .loading:
@@ -50,6 +51,7 @@ struct PlanScreen: View {
                 planContent
             }
         }
+        .environment(\.colorScheme, .light)
         .navigationTitle("Plan")
         .navigationBarTitleDisplayMode(.large)
         .task(id: retryTrigger) { await loadWeek(for: selectedMonday) }

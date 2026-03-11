@@ -20,7 +20,7 @@ struct SettingsScreen: View {
 
     var body: some View {
         ZStack {
-            MapBackground()
+            HeatmapBackgroundView(userId: authStore.userId ?? "")
 
             ScrollView {
                 VStack(spacing: Spacing.lg) {
@@ -32,6 +32,7 @@ struct SettingsScreen: View {
                 .padding(.vertical, Spacing.md)
             }
         }
+        .environment(\.colorScheme, .light)
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
         .task { await settingsStore.loadStravaStatus(apiClient: apiClient) }

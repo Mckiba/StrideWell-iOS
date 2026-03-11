@@ -71,6 +71,34 @@ enum DateUtils {
         return f
     }()
 
+    // MARK: - Activity Card Formatters
+
+    /// "February 18, 2025" — apply .textCase(.uppercase) in the view.
+    static func activityDate(_ iso: String) -> String {
+        guard let date = parseISO8601(iso) else { return String(iso.prefix(10)) }
+        return activityDateFormatter.string(from: date)
+    }
+
+    /// "6:16 PM" — apply .textCase(.uppercase) in the view.
+    static func activityTime(_ iso: String) -> String {
+        guard let date = parseISO8601(iso) else { return "" }
+        return activityTimeFormatter.string(from: date)
+    }
+
+    private static let activityDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMMM d, yyyy"
+        return f
+    }()
+
+    private static let activityTimeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "h:mm a"
+        f.amSymbol = "AM"
+        f.pmSymbol = "PM"
+        return f
+    }()
+
     // MARK: - Workout Date Formatters (used by WorkoutCardView)
 
     /// Abbreviated day name: "Mon", "Tue", …

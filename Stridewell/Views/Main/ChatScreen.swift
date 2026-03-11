@@ -14,6 +14,7 @@ struct ChatScreen: View {
     @Environment(\.apiClient) private var apiClient
     @Environment(\.chatStore) private var chatStore
     @Environment(\.planStore) private var planStore
+    @Environment(\.authStore) private var authStore
 
     @State private var inputText = ""
     @State private var screenState: ScreenState = .empty
@@ -35,16 +36,21 @@ struct ChatScreen: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            if screenState == .empty {
-                emptyState
-            } else {
-                messageThread
-            }
+        ZStack {
+            HeatmapBackgroundView(userId: authStore.userId ?? "")
 
-            Divider()
-            inputBar
+            VStack(spacing: 0) {
+                if screenState == .empty {
+                    emptyState
+                } else {
+                    messageThread
+                }
+
+                Divider()
+                inputBar
+            }
         }
+        .environment(\.colorScheme, .light)
         .navigationTitle("Chat")
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -13,6 +13,7 @@
 
 /* Begin PBXFileReference section */
 		1B15C5912F49457F00C29007 /* Stridewell.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stridewell.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1B76CAF62F610E8600E22955 /* Stridewell.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Stridewell.xcodeproj; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -52,6 +53,7 @@
 		1B15C5882F49457F00C29007 = {
 			isa = PBXGroup;
 			children = (
+				1B76CAF62F610E8600E22955 /* Stridewell.xcodeproj */,
 				1B15C5932F49457F00C29007 /* Stridewell */,
 				1B15C5922F49457F00C29007 /* Products */,
 			);

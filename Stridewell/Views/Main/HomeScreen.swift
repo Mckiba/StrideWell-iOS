@@ -24,9 +24,6 @@ struct HomeScreen: View {
         ZStack {
             HeatmapBackgroundView(userId: authStore.userId ?? "")
 
-            // Scrim so foreground content remains readable over the heatmap
-            Color.black.opacity(0.55).ignoresSafeArea()
-
             switch screenState {
             case .loading:
                 LoadingStateView(message: "Loading your plan...")
@@ -46,6 +43,7 @@ struct HomeScreen: View {
                 homeContent
             }
         }
+        .environment(\.colorScheme, .light)
         .navigationTitle("Home")
         .navigationBarTitleDisplayMode(.large)
         .task(id: retryTrigger) { await loadData() }
@@ -167,46 +165,13 @@ struct HomeScreen: View {
                     .padding(.vertical, Spacing.md)
                 }
             } else {
-                CardView(padding: Spacing.sm) {
-                    VStack(spacing: 0) {
-                        ForEach(Array(recentRuns.enumerated()), id: \.element.id) { index, run in
-                            runRow(run)
-                            if index < recentRuns.count - 1 {
-                                Divider().padding(.horizontal, Spacing.sm)
-                            }
-                        }
+                VStack(spacing: Spacing.sm) {
+                    ForEach(recentRuns) { run in
+                        ActivityCard(run: run)
                     }
                 }
             }
         }
-    }
-
-    private func runRow(_ run: Run) -> some View {
-        HStack(spacing: Spacing.md) {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(run.sport_type.replacingOccurrences(of: "_", with: " ").capitalized)
-                    .font(.cardTitle)
-                Text(Self.formatRunDate(run.start_time))
-                    .font(.cardCaption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: Spacing.xs) {
-                Text(FormatUtils.distance(run.distance_m))
-                    .font(.cardBody)
-                if let pace = run.avg_pace_s_per_km {
-                    Text(FormatUtils.pace(pace))
-                        .font(.cardCaption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .padding(.horizontal, Spacing.sm)
-        .padding(.vertical, Spacing.sm)
-    }
-
-    private static func formatRunDate(_ isoString: String) -> String {
-        DateUtils.displayDate(isoString)
     }
 
     // MARK: - Data Loading
