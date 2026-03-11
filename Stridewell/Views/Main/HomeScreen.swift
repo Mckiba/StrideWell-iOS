@@ -12,6 +12,7 @@ struct HomeScreen: View {
 
     @Environment(\.apiClient) private var apiClient
     @Environment(\.planStore) private var planStore
+    @Environment(\.authStore) private var authStore
 
     @State private var screenState: LoadableState<Void> = .loading
     @State private var retryTrigger = false
@@ -21,7 +22,10 @@ struct HomeScreen: View {
 
     var body: some View {
         ZStack {
-            MapBackground()
+            HeatmapBackgroundView(userId: authStore.userId ?? "")
+
+            // Scrim so foreground content remains readable over the heatmap
+            Color.black.opacity(0.55).ignoresSafeArea()
 
             switch screenState {
             case .loading:
