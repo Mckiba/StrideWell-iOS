@@ -7,7 +7,7 @@ import UIKit
 final class HeatmapCache {
 
     /// Bump this whenever RouteRenderer or RegionCalculator logic changes to bust stale images.
-    private let cacheVersion = 4
+    private let cacheVersion = 5
 
     private let fileManager = FileManager.default
 

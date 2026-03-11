@@ -46,6 +46,9 @@ enum RouteRenderer {
         mapConfig.showsTraffic = false
         options.preferredConfiguration = mapConfig
 
+        // Force light-mode tiles regardless of the device's appearance setting.
+        options.traitCollection = UITraitCollection(userInterfaceStyle: .light)
+
         let snapshotter = MKMapSnapshotter(options: options)
 
         return try await withCheckedThrowingContinuation { continuation in

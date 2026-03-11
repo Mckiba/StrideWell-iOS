@@ -63,6 +63,7 @@ struct HeatmapBackgroundView: View {
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .ignoresSafeArea()
+                .overlay(Color.white.opacity(0.70).ignoresSafeArea())
                 .transition(.opacity)
 
         case .insufficient, .error:
