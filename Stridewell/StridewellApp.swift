@@ -17,6 +17,7 @@ extension EnvironmentValues {
     @Entry var chatStore: ChatStore = ChatStore()
     @Entry var settingsStore: SettingsStore = SettingsStore()
     @Entry var notificationStore: NotificationStore = NotificationStore()
+    @Entry var locationStore: LocationStore = LocationStore()
 }
 
 // MARK: - App
@@ -32,6 +33,7 @@ struct StridewellApp: App {
     @State private var chatStore = ChatStore()
     @State private var settingsStore = SettingsStore()
     @State private var notificationStore = NotificationStore()
+    @State private var locationStore = LocationStore()
     private let apiClient: APIClient
 
     init() {
@@ -54,6 +56,7 @@ struct StridewellApp: App {
                 .environment(\.chatStore, chatStore)
                 .environment(\.settingsStore, settingsStore)
                 .environment(\.notificationStore, notificationStore)
+                .environment(\.locationStore, locationStore)
                 .onReceive(NotificationCenter.default.publisher(for: .apnsTokenReceived)) { notification in
                     guard let token = notification.object as? String,
                           authStore.isAuthenticated else { return }

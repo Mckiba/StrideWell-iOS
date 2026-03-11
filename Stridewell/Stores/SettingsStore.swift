@@ -138,6 +138,10 @@ final class SettingsStore {
         chatStore.reset()
         planStore.reset()
         onboardingStore.reset()
+        // Clear heatmap disk cache before signing out
+        if let userId = authStore.userId {
+            HeatmapCache().clearAll(userId: userId)
+        }
         authStore.signOut()
     }
 
