@@ -53,7 +53,7 @@ struct HomeScreen: View {
     
     private var homeContent: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.md) {
+            VStack(alignment: .center, spacing: Spacing.md) {
                 if planStore.isOffline {
                     OfflineBannerView(lastFetchDate: planStore.lastFetched(for: "today"))
                 }
@@ -76,9 +76,13 @@ struct HomeScreen: View {
             if let (title, day) = nextDisplayedWorkout {
                 Text(title)
                     .font(.sectionTitle)
-                //WorkoutCardView(day: day, isToday: title == "Today")
-                ActivityBannerView(title1: day.workout.label,detail: day.date,  title2: day.workout.target_distance_m?.description, subtitle: day.workout.description, image: Image("bg2"))
-                
+                ActivityBannerView(
+                    title1:   day.workout.label,
+                    detail:   day.date,
+                    workout:  day.workout,
+                    subtitle: day.workout.description,
+                    image:    Image("bg2")
+                )
             }
         }
     }
@@ -257,8 +261,9 @@ struct HomeScreen: View {
     }
     
     // MARK: - Date Helpers
-    
+
     private var currentWeekStart: String {
         DateUtils.mondayString(containing: Date())
     }
+
 }

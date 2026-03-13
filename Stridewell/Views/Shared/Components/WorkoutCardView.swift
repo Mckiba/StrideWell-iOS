@@ -10,6 +10,8 @@ struct WorkoutCardView: View {
     let day: PlanDay
     var isToday: Bool = false
 
+    @Environment(\.settingsStore) private var settingsStore
+
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
 
@@ -55,12 +57,13 @@ struct WorkoutCardView: View {
 
     private var metricLine: String? {
         if isRest { return nil }
+        let unit = settingsStore.unitSystem
         var parts: [String] = []
         if let d = day.workout.target_distance_m {
-            parts.append(FormatUtils.distance(d))
+            parts.append(FormatUtils.distance(d, unit: unit))
         }
         if let p = day.workout.target_pace_s_per_km {
-            parts.append(FormatUtils.pace(p))
+            parts.append(FormatUtils.pace(p, unit: unit))
         } else if let dur = day.workout.target_duration_s {
             parts.append(FormatUtils.duration(dur))
         }

@@ -84,6 +84,10 @@ struct SettingsScreen: View {
 
     private var trainingPreferencesSection: some View {
         SettingsTrainingPreferencesSection(
+            unitSystem: Binding(
+                get: { settingsStore.unitSystem },
+                set: { settingsStore.unitSystem = $0 }
+            ),
             reflectionReminders: Binding(
                 get: { settingsStore.reflectionReminders },
                 set: { settingsStore.reflectionReminders = $0 }

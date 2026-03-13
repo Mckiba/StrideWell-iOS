@@ -49,11 +49,6 @@ struct GoalSummary: Codable {
         totalWeeks > 0 ? Double(weeksCompleted) / Double(totalWeeks) : 0
     }
 
-    /// Total distance converted to miles.
-    var totalMiles: Double {
-        total_distance_m / 1609.34
-    }
-
     /// Race date formatted as "March 7th" for display.
     var formattedRaceDate: String? {
         guard let dateStr = goal_race_date,

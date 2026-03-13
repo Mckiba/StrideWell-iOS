@@ -13,6 +13,7 @@ struct WorkoutDetailSheet: View {
     let day: PlanDay
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.settingsStore) private var settingsStore
 
     var body: some View {
         NavigationStack {
@@ -88,16 +89,17 @@ struct WorkoutDetailSheet: View {
     }
 
     private var targetsSection: some View {
-        CardView {
+        let unit = settingsStore.unitSystem
+        return CardView {
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Targets")
                     .font(.cardTitle)
 
                 if let d = day.workout.target_distance_m {
-                    targetRow(label: "Distance", value: FormatUtils.distance(d))
+                    targetRow(label: "Distance", value: FormatUtils.distance(d, unit: unit))
                 }
                 if let p = day.workout.target_pace_s_per_km {
-                    targetRow(label: "Pace", value: FormatUtils.pace(p))
+                    targetRow(label: "Pace", value: FormatUtils.pace(p, unit: unit))
                 }
                 if let dur = day.workout.target_duration_s {
                     targetRow(label: "Duration", value: FormatUtils.duration(dur))

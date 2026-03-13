@@ -7,11 +7,14 @@ import SwiftUI
 
 struct ActivityBannerView: View {
 
-    let title1:   String        // bold first line (required)
-    var detail:   String? = nil // trailing text on the title1 row, e.g. a date (optional)
-    var title2:   String? = nil // bold second line (optional)
-    let subtitle: String?        // regular third line (required)
-    var image:    Image? = nil  // optional 60×60 thumbnail
+    let title1:   String           // bold first line (required)
+    var detail:   String?  = nil   // trailing text on the title1 row, e.g. a date (optional)
+    var title2:   String?  = nil   // bold second line — pass either this OR workout, not both
+    var workout:  Workout? = nil   // when set, metric line (distance · pace/duration) is computed here
+    let subtitle: String?          // regular third line (required)
+    var image:    Image?   = nil   // optional 60×60 thumbnail
+
+    @Environment(\.settingsStore) private var settingsStore
 
     var body: some View {
         HStack( spacing: Spacing.md) {
@@ -41,8 +44,8 @@ struct ActivityBannerView: View {
                     }
                 }
 
-                if let title2 {
-                    Text(title2)
+                if let line = resolvedTitle2 {
+                    Text(line)
                         .font(.sofiaSans(size: 12, weight: .bold))
                         .foregroundStyle(AppColor.textPrimary)
                         .multilineTextAlignment(.center)
@@ -63,6 +66,31 @@ struct ActivityBannerView: View {
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.sm))
         .shadow(color: Color.black.opacity(0.25), radius: 30, x: 0, y: 4)
         .environment(\.colorScheme, .light)
+    }
+
+    // MARK: - Computed
+
+    /// Returns `title2` if set directly, otherwise derives the metric line from `workout`.
+    private var resolvedTitle2: String? {
+        if let title2 { return title2 }
+        return metricLine
+    }
+
+    /// Builds "distance · pace" or "distance · duration" from the workout targets,
+    /// formatted for the user's current unit system.
+    private var metricLine: String? {
+        guard let workout else { return nil }
+        let unit = settingsStore.unitSystem
+        var parts: [String] = []
+        if let d = workout.target_distance_m {
+            parts.append(FormatUtils.distance(d, unit: unit))
+        }
+        if let p = workout.target_pace_s_per_km {
+            parts.append(FormatUtils.pace(p, unit: unit))
+        } else if let dur = workout.target_duration_s {
+            parts.append(FormatUtils.duration(dur))
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: "  ·  ")
     }
 }
 

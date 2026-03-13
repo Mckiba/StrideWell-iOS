@@ -13,6 +13,7 @@ struct ActivityCard: View {
 
     let run: Run
 
+    @Environment(\.settingsStore) private var settingsStore
     @State private var routeCoordinates: [CLLocationCoordinate2D] = []
 
     var body: some View {
@@ -75,15 +76,16 @@ struct ActivityCard: View {
     }
 
     private var statsRow: some View {
-        HStack(spacing: Spacing.lg) {
-            ActivityStat(label: "DISTANCE", value: FormatUtils.distance(run.distance_m))
+        let unit = settingsStore.unitSystem
+        return HStack(spacing: Spacing.lg) {
+            ActivityStat(label: "DISTANCE", value: FormatUtils.distance(run.distance_m, unit: unit))
             Spacer()
 
             ActivityStat(label: "TIME",     value: FormatUtils.duration(run.duration_s))
             Spacer()
 
-            ActivityStat(label: "AVG PACE", value: run.avg_pace_s_per_km.map { FormatUtils.pace($0) } ?? "—")
-                }
+            ActivityStat(label: "AVG PACE", value: run.avg_pace_s_per_km.map { FormatUtils.pace($0, unit: unit) } ?? "—")
+        }
     }
 }
 

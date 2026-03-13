@@ -5,19 +5,15 @@
 //  Goal Card — shows the user's training goal, race date, week progress,
 //  and total miles run since plan start.
 //
-//  Layout (Figma-derived):
-//    Row 1 — goal name (Sofia Sans Bold 24)
-//    Row 2 — race date (Sofia Sans Regular 18), omit if no race date
-//    Row 3 — week progress bar
-//    Row 4 — "Weeks Completed" | "Distance Completed" labels (Sofia Sans Regular 12)
-//    Row 5 — "8/10" | "285.2 mi" values (Sofia Sans Bold 20)
-//
+
 
 import SwiftUI
 
 struct GoalCardView: View {
 
     let summary: GoalSummary
+
+    @Environment(\.settingsStore) private var settingsStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
@@ -57,7 +53,7 @@ struct GoalCardView: View {
                     Text("Distance Completed")
                         .font(.sofiaSans(size: 12, weight: .regular))
                         .foregroundStyle(AppColor.textSecondary)
-                    Text(String(format: "%.1f mi", summary.totalMiles))
+                    Text(FormatUtils.distance(summary.total_distance_m, unit: settingsStore.unitSystem))
                         .font(.sofiaSans(size: 20, weight: .bold))
                         .foregroundStyle(AppColor.textPrimary)
                 }

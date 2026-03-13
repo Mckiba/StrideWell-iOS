@@ -26,6 +26,12 @@ final class SettingsStore {
 
     private(set) var stravaState: StravaState = .loading
 
+    // MARK: - Unit System Preference
+
+    var unitSystem: UnitSystem {
+        didSet { UserDefaults.standard.set(unitSystem.rawValue, forKey: Self.unitSystemKey) }
+    }
+
     // MARK: - Notification Preferences (local-only V1)
 
     var reflectionReminders: Bool {
@@ -48,19 +54,23 @@ final class SettingsStore {
 
     // MARK: - Persistence Keys
 
+    private static let unitSystemKey          = "Settings.unitSystem"
     private static let reflectionRemindersKey = "Settings.reflectionReminders"
     private static let planUpdateAlertsKey    = "Settings.planUpdateAlerts"
 
     // MARK: - Init
 
     init() {
+        let rawUnit = UserDefaults.standard.string(forKey: Self.unitSystemKey)
+        unitSystem          = UnitSystem(rawValue: rawUnit ?? "") ?? .metric
         reflectionReminders = UserDefaults.standard.object(forKey: Self.reflectionRemindersKey) as? Bool ?? true
         planUpdateAlerts    = UserDefaults.standard.object(forKey: Self.planUpdateAlertsKey) as? Bool ?? true
     }
 
     /// Preview/test initializer with explicit state.
-    init(stravaState: StravaState, reflectionReminders: Bool = true, planUpdateAlerts: Bool = true, deleteState: DeleteState = .idle) {
+    init(stravaState: StravaState, unitSystem: UnitSystem = .metric, reflectionReminders: Bool = true, planUpdateAlerts: Bool = true, deleteState: DeleteState = .idle) {
         self.stravaState = stravaState
+        self.unitSystem = unitSystem
         self.reflectionReminders = reflectionReminders
         self.planUpdateAlerts = planUpdateAlerts
         self.deleteState = deleteState

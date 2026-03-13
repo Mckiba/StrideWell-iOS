@@ -7,6 +7,7 @@ import SwiftUI
 
 struct SettingsTrainingPreferencesSection: View {
 
+    @Binding var unitSystem: UnitSystem
     @Binding var reflectionReminders: Bool
     @Binding var planUpdateAlerts: Bool
 
@@ -18,6 +19,8 @@ struct SettingsTrainingPreferencesSection: View {
             CardView {
                 VStack(spacing: 0) {
                     goalRow
+                    Divider()
+                    unitsRow
                     Divider()
                     reflectionToggle
                     Divider()
@@ -42,6 +45,26 @@ struct SettingsTrainingPreferencesSection: View {
             Image(systemName: "chevron.right")
                 .font(.cardCaption)
                 .foregroundStyle(.tertiary)
+        }
+        .padding(.vertical, Spacing.sm)
+    }
+
+    private var unitsRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                Text("Units")
+                    .font(.cardTitle)
+                Text("Distance and pace display")
+                    .font(.cardCaption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Picker("Units", selection: $unitSystem) {
+                Text("km").tag(UnitSystem.metric)
+                Text("mi").tag(UnitSystem.imperial)
+            }
+            .pickerStyle(.segmented)
+            .fixedSize()
         }
         .padding(.vertical, Spacing.sm)
     }
@@ -77,6 +100,7 @@ struct SettingsTrainingPreferencesSection: View {
 
 #Preview {
     SettingsTrainingPreferencesSection(
+        unitSystem: .constant(.metric),
         reflectionReminders: .constant(true),
         planUpdateAlerts: .constant(false)
     )
