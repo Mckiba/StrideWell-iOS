@@ -13,7 +13,8 @@ struct HomeScreen: View {
     @Environment(\.apiClient) private var apiClient
     @Environment(\.planStore) private var planStore
     @Environment(\.authStore) private var authStore
-    
+    @Environment(\.weatherStore) private var weatherStore
+
     @State private var screenState: LoadableState<Void> = .loading
     @State private var retryTrigger = false
     @State private var recentRuns: [Run] = []
@@ -23,7 +24,10 @@ struct HomeScreen: View {
     var body: some View {
         ZStack(alignment: .center) {
             HeatmapBackgroundView(userId: authStore.userId ?? "")
-            
+            StormOverlayView(condition: weatherStore.activeCondition)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+
             switch screenState {
             case .loading:
                 LoadingStateView(message: "Loading your plan...")
@@ -43,7 +47,10 @@ struct HomeScreen: View {
                 homeContent
             }
         }
-        .task(id: retryTrigger) { await loadData() }
+        .task(id: retryTrigger) {
+            weatherStore.fetchIfNeeded()
+            await loadData()
+        }
         .sheet(isPresented: $showReflection) { ReflectionScreen() }
         .navigationDestination(isPresented: $showPlanChange) { PlanChangeScreen() }
     }

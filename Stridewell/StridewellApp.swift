@@ -19,6 +19,7 @@ extension EnvironmentValues {
     @Entry var notificationStore: NotificationStore = NotificationStore()
     @Entry var locationStore: LocationStore = LocationStore()
     @Entry var heatmapViewModel: HeatmapViewModel? = nil
+    @Entry var weatherStore: WeatherStore = WeatherStore()
 }
 
 // MARK: - App
@@ -35,6 +36,7 @@ struct StridewellApp: App {
     @State private var settingsStore = SettingsStore()
     @State private var notificationStore = NotificationStore()
     @State private var locationStore = LocationStore()
+    @State private var weatherStore = WeatherStore()
     private let apiClient: APIClient
     private let heatmapViewModel: HeatmapViewModel
 
@@ -61,6 +63,7 @@ struct StridewellApp: App {
                 .environment(\.notificationStore, notificationStore)
                 .environment(\.locationStore, locationStore)
                 .environment(\.heatmapViewModel, heatmapViewModel)
+                .environment(\.weatherStore, weatherStore)
                 .onReceive(NotificationCenter.default.publisher(for: .apnsTokenReceived)) { notification in
                     guard let token = notification.object as? String,
                           authStore.isAuthenticated else { return }
