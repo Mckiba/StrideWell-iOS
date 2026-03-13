@@ -62,10 +62,9 @@ struct ActivityBannerView: View {
         .padding(Spacing.sm)
         .frame(minWidth: 277)
         // No maxWidth: .infinity — card hugs its content width
-        .background(Color.white)
+        .background(AppColor.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.sm))
         .shadow(color: Color.black.opacity(0.25), radius: 30, x: 0, y: 4)
-        .environment(\.colorScheme, .light)
     }
 
     // MARK: - Computed

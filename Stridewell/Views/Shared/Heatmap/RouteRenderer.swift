@@ -21,11 +21,12 @@ enum RouteRenderer {
         coordinateGroups: [[CLLocationCoordinate2D]],
         region: MKCoordinateRegion,
         size: CGSize,
-        config: Config = Config()
+        config: Config = Config(),
+        userInterfaceStyle: UIUserInterfaceStyle = .light
     ) async throws -> UIImage {
         // Keep the full Snapshot (not just .image) so we can use snapshot.point(for:)
         // for correct Mercator-projected coordinate→pixel conversion.
-        let snapshot = try await makeSnapshot(region: region, size: size)
+        let snapshot = try await makeSnapshot(region: region, size: size, userInterfaceStyle: userInterfaceStyle)
         return drawRoutes(on: snapshot, coordinateGroups: coordinateGroups, config: config)
     }
 
@@ -33,7 +34,8 @@ enum RouteRenderer {
 
     private static func makeSnapshot(
         region: MKCoordinateRegion,
-        size: CGSize
+        size: CGSize,
+        userInterfaceStyle: UIUserInterfaceStyle = .light
     ) async throws -> MKMapSnapshotter.Snapshot {
 
         let options = MKMapSnapshotter.Options()
@@ -46,8 +48,8 @@ enum RouteRenderer {
         mapConfig.showsTraffic = false
         options.preferredConfiguration = mapConfig
 
-        // Force light-mode tiles regardless of the device's appearance setting.
-        options.traitCollection = UITraitCollection(userInterfaceStyle: .light)
+        // Apply the requested appearance style to the map tiles.
+        options.traitCollection = UITraitCollection(userInterfaceStyle: userInterfaceStyle)
 
         let snapshotter = MKMapSnapshotter(options: options)
 

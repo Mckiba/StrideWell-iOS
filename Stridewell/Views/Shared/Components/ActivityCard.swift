@@ -23,10 +23,9 @@ struct ActivityCard: View {
         }
         .padding(.horizontal, Spacing.md)
         .padding(.vertical, Spacing.xs)
-        .background(Color.white)
+        .background(AppColor.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
         .shadow(color: .black.opacity(0.10), radius: 8, x: 0, y: 2)
-        .environment(\.colorScheme, .light)
         .task {
             if let encoded = run.route?.summary_polyline, !encoded.isEmpty {
                 routeCoordinates = await Task.detached(priority: .utility) {

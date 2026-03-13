@@ -51,7 +51,6 @@ struct PlanScreen: View {
                 planContent
             }
         }
-        .environment(\.colorScheme, .light)
         .navigationBarTitleDisplayMode(.large)
         .task(id: retryTrigger) { await loadWeek(for: selectedMonday) }
         .sheet(item: $selectedDay) { day in

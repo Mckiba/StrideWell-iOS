@@ -11,6 +11,7 @@ struct HeatmapBackgroundView: View {
     @Environment(\.apiClient) private var apiClient
     @Environment(\.locationStore) private var locationStore
     @Environment(\.heatmapViewModel) private var sharedViewModel
+    @Environment(\.colorScheme) private var colorScheme
     let userId: String
 
     /// Fallback for previews or contexts where no shared ViewModel is injected.
@@ -19,6 +20,9 @@ struct HeatmapBackgroundView: View {
 
     /// The active ViewModel — shared takes priority, local is a safety fallback.
     private var viewModel: HeatmapViewModel? { sharedViewModel ?? localViewModel }
+
+    /// Maps the current SwiftUI color scheme to UIKit for the snapshot renderer.
+    private var uiStyle: UIUserInterfaceStyle { colorScheme == .dark ? .dark : .light }
 
     var body: some View {
         GeometryReader { geo in
@@ -58,12 +62,18 @@ struct HeatmapBackgroundView: View {
 
                 let coord = locationStore.coordinate
                 locationFired = coord != nil
-                vm.load(userId: userId, userLocation: coord)
+                vm.load(userId: userId, userLocation: coord, userInterfaceStyle: uiStyle)
             }
             .onChange(of: locationStore.didReceiveLocation) { _, received in
                 guard received, !locationFired, let vm = viewModel else { return }
                 locationFired = true
-                vm.invalidateAndRegenerate(userId: userId, userLocation: locationStore.coordinate)
+                vm.invalidateAndRegenerate(userId: userId, userLocation: locationStore.coordinate,
+                                           userInterfaceStyle: uiStyle)
+            }
+            .onChange(of: colorScheme) { _, _ in
+                guard let vm = viewModel else { return }
+                vm.invalidateAndRegenerate(userId: userId, userLocation: locationStore.coordinate,
+                                           userInterfaceStyle: uiStyle)
             }
         }
         .ignoresSafeArea()
@@ -80,7 +90,9 @@ struct HeatmapBackgroundView: View {
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .ignoresSafeArea()
-                .overlay(Color.white.opacity(0.85))
+                .overlay(colorScheme == .dark
+                    ? Color(hex: "#121212").opacity(0.88)
+                    : Color.white.opacity(0.85))
                 .transition(.opacity)
 
         case .insufficient, .error:

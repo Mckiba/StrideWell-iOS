@@ -22,15 +22,16 @@ final class HeatmapCache {
 
     // MARK: - Cache Key
 
-    func cacheKey(userId: String, runCount: Int, hasLocation: Bool) -> String {
-        let locSuffix = hasLocation ? "_loc" : "_noloc"
-        return "\(userId)_\(runCount)_v\(cacheVersion)\(locSuffix)"
+    func cacheKey(userId: String, runCount: Int, hasLocation: Bool, isDark: Bool) -> String {
+        let locSuffix  = hasLocation ? "_loc" : "_noloc"
+        let darkSuffix = isDark ? "_dark" : "_light"
+        return "\(userId)_\(runCount)_v\(cacheVersion)\(locSuffix)\(darkSuffix)"
     }
 
     // MARK: - Read
 
-    func load(userId: String, runCount: Int, hasLocation: Bool) -> UIImage? {
-        let key = cacheKey(userId: userId, runCount: runCount, hasLocation: hasLocation)
+    func load(userId: String, runCount: Int, hasLocation: Bool, isDark: Bool) -> UIImage? {
+        let key = cacheKey(userId: userId, runCount: runCount, hasLocation: hasLocation, isDark: isDark)
         let url = cacheDirectory.appendingPathComponent("\(key).jpg")
 
         guard let data = try? Data(contentsOf: url),
@@ -42,8 +43,8 @@ final class HeatmapCache {
 
     // MARK: - Write
 
-    func save(_ image: UIImage, userId: String, runCount: Int, hasLocation: Bool) {
-        let key = cacheKey(userId: userId, runCount: runCount, hasLocation: hasLocation)
+    func save(_ image: UIImage, userId: String, runCount: Int, hasLocation: Bool, isDark: Bool) {
+        let key = cacheKey(userId: userId, runCount: runCount, hasLocation: hasLocation, isDark: isDark)
         let url = cacheDirectory.appendingPathComponent("\(key).jpg")
 
         guard let data = image.jpegData(compressionQuality: 0.85) else { return }

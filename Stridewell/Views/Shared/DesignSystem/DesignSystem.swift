@@ -37,13 +37,31 @@ enum CornerRadius {
 /// Semantic color tokens. Using these instead of raw system color names means
 /// any palette change only requires editing this enum.
 enum AppColor {
-    static let surface:          Color = Color(uiColor: .systemBackground)
-    static let surfaceElevated:  Color = Color(uiColor: .secondarySystemBackground)
-    static let surfaceTertiary:  Color = Color(uiColor: .tertiarySystemBackground)
+    // Adaptive system surfaces — automatically correct in both modes
+    static let surface:             Color = Color(uiColor: .systemBackground)
+    static let surfaceElevated:     Color = Color(uiColor: .secondarySystemBackground)
+    static let surfaceTertiary:     Color = Color(uiColor: .tertiarySystemBackground)
+
+    // Card surface: white in light mode, deep charcoal (#1E1E1E) in dark mode
+    static let cardSurface: Color = Color(uiColor: UIColor { t in
+        t.userInterfaceStyle == .dark ? UIColor(hex: "#1E1E1E") : .white
+    })
+
+    // Adaptive text
     static let textPrimary:      Color = .primary
     static let textSecondary:    Color = .secondary
     static let textTertiary:     Color = Color(uiColor: .tertiaryLabel)
-    static let accent:           Color = Color(hex: "#289FFF")
+
+    // Accent: #289FFF in light, #5E9CFF (higher contrast) in dark
+    static let accent: Color = Color(uiColor: UIColor { t in
+        t.userInterfaceStyle == .dark ? UIColor(hex: "#5E9CFF") : UIColor(hex: "#289FFF")
+    })
+
+    // Progress bar empty segment: light gray in light, subtle charcoal in dark
+    static let progressTrackEmpty: Color = Color(uiColor: UIColor { t in
+        t.userInterfaceStyle == .dark ? UIColor(hex: "#38383A") : UIColor(hex: "#E8E8E8")
+    })
+
     static let destructive:      Color = .red
 }
 

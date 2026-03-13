@@ -43,7 +43,6 @@ struct HomeScreen: View {
                 homeContent
             }
         }
-        .environment(\.colorScheme, .light)
         .task(id: retryTrigger) { await loadData() }
         .sheet(isPresented: $showReflection) { ReflectionScreen() }
         .navigationDestination(isPresented: $showPlanChange) { PlanChangeScreen() }

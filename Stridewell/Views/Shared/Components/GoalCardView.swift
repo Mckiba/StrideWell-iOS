@@ -61,7 +61,7 @@ struct GoalCardView: View {
         }
         .padding(Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
+        .background(AppColor.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.input))
         .shadow(color: Color.black.opacity(0.25), radius: 4, x: 0, y: 4)
     }
@@ -73,7 +73,7 @@ struct GoalCardView: View {
         HStack(spacing: 4) {
             ForEach(0..<max(summary.totalWeeks, 1), id: \.self) { index in
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(index < summary.weeksCompleted ? AppColor.accent : Color(hex: "#E8E8E8"))
+                    .fill(index < summary.weeksCompleted ? AppColor.accent : AppColor.progressTrackEmpty)
                     .frame(height: 8)
             }
         }

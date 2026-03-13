@@ -32,7 +32,6 @@ struct SettingsScreen: View {
                 .padding(.vertical, Spacing.md)
             }
         }
-        .environment(\.colorScheme, .light)
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
         .task { await settingsStore.loadStravaStatus(apiClient: apiClient) }

@@ -31,24 +31,24 @@ final class HeatmapViewModel {
     // MARK: - Public
 
     /// Called on view appear. Loads from cache or kicks off generation.
-    func load(userId: String, userLocation: CLLocationCoordinate2D?) {
+    func load(userId: String, userLocation: CLLocationCoordinate2D?, userInterfaceStyle: UIUserInterfaceStyle = .light) {
         state = .loading
         generationTask = Task {
-            await generate(userId: userId, userLocation: userLocation)
+            await generate(userId: userId, userLocation: userLocation, userInterfaceStyle: userInterfaceStyle)
         }
     }
 
-    /// Called when a new run syncs or location changes. Cancels any in-flight generation.
-    func invalidateAndRegenerate(userId: String, userLocation: CLLocationCoordinate2D?) {
+    /// Called when a new run syncs, location changes, or color scheme changes. Cancels any in-flight generation.
+    func invalidateAndRegenerate(userId: String, userLocation: CLLocationCoordinate2D?, userInterfaceStyle: UIUserInterfaceStyle = .light) {
         generationTask?.cancel()
         generationTask = Task {
-            await generate(userId: userId, userLocation: userLocation)
+            await generate(userId: userId, userLocation: userLocation, userInterfaceStyle: userInterfaceStyle)
         }
     }
 
     // MARK: - Private
 
-    private func generate(userId: String, userLocation: CLLocationCoordinate2D?) async {
+    private func generate(userId: String, userLocation: CLLocationCoordinate2D?, userInterfaceStyle: UIUserInterfaceStyle) async {
         let result = await apiClient.heatmap()
 
         guard !Task.isCancelled else { return }
@@ -67,21 +67,24 @@ final class HeatmapViewModel {
             }
 
             let hasLocation = userLocation != nil
+            let isDark = userInterfaceStyle == .dark
             if let cached = cache.load(userId: userId, runCount: response.run_count,
-                                       hasLocation: hasLocation) {
+                                       hasLocation: hasLocation, isDark: isDark) {
                 state = .ready(cached)
                 return
             }
 
             // Cache miss — generate
-            await runGeneration(response: response, userId: userId, userLocation: userLocation)
+            await runGeneration(response: response, userId: userId, userLocation: userLocation,
+                                userInterfaceStyle: userInterfaceStyle)
         }
     }
 
     private func runGeneration(
         response: HeatmapResponse,
         userId: String,
-        userLocation: CLLocationCoordinate2D?
+        userLocation: CLLocationCoordinate2D?,
+        userInterfaceStyle: UIUserInterfaceStyle
     ) async {
         do {
             // Decode polylines off main thread
@@ -105,17 +108,18 @@ final class HeatmapViewModel {
 
             print("[Heatmap] region center=(\(region.center.latitude), \(region.center.longitude)) span=(\(region.span.latitudeDelta), \(region.span.longitudeDelta))")
 
-            // Render basemap + routes
+            // Render basemap + routes with the requested map tile appearance
             let image = try await RouteRenderer.render(
                 coordinateGroups: coordinateGroups,
                 region: region,
-                size: targetSize
+                size: targetSize,
+                userInterfaceStyle: userInterfaceStyle
             )
 
             guard !Task.isCancelled else { return }
 
             cache.save(image, userId: userId, runCount: response.run_count,
-                       hasLocation: userLocation != nil)
+                       hasLocation: userLocation != nil, isDark: userInterfaceStyle == .dark)
 
             state = .ready(image)
 

@@ -43,7 +43,7 @@ struct WorkoutCardView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
+        .background(AppColor.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
         .shadow(color: Color.black.opacity(0.14), radius: 15, x: 0, y: 12)
         .contentShape(Rectangle())
