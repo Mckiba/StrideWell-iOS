@@ -2,9 +2,6 @@
 //  WorkoutCardView.swift
 //  Stridewell
 //
-//  Minimal workout row — no badges or icons per V1 design spec.
-//  Used on PlanRevealScreen (M6), HomeScreen (M7), and PlanScreen (M8).
-//
 
 import SwiftUI
 
@@ -14,35 +11,39 @@ struct WorkoutCardView: View {
     var isToday: Bool = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: Spacing.md) {
-            // Date column — fixed width so workout labels align across rows
-            VStack(alignment: .center, spacing: 2) {
-                Text(dayAbbreviation)
-                    .font(.dateDay)
-                    .foregroundStyle(AppColor.textSecondary)
-                Text(dayNumber)
-                    .font(.dateNumber)
-                    .foregroundStyle(isToday ? AppColor.accent : AppColor.textPrimary)
-            }
-            .frame(width: 36)
+        VStack(alignment: .leading, spacing: 5) {
 
-            // Workout content
-            VStack(alignment: .leading, spacing: 3) {
+            // Row 1: label (left) + date (right)
+            HStack(alignment: .center) {
                 Text(day.workout.label)
-                    .font(.body.weight(isToday ? .semibold : .regular))
-                    .foregroundStyle(isRest ? AppColor.textSecondary : (isToday ? AppColor.accent : AppColor.textPrimary))
-
-                if let metric = metricLine {
-                    Text(metric)
-                        .font(.cardBody)
-                        .foregroundStyle(AppColor.textSecondary)
-                }
+                    .font(.activityName)
+                    .foregroundStyle(AppColor.textPrimary)
+                Spacer()
+                Text(cardDate)
+                    .font(.activityTimestamp)
+                    .foregroundStyle(AppColor.textPrimary)
             }
 
-            Spacer()
+            // Row 2: metric (distance · pace or duration)
+            if let metric = metricLine {
+                Text(metric)
+                    .font(.activityStatLabel)
+                    .foregroundStyle(AppColor.textPrimary)
+            }
+
+            // Row 3: notes / description
+            if let notes = notesLine {
+                Text(notes)
+                    .font(.activityStatLabel)
+                    .foregroundStyle(AppColor.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .padding(.vertical, Spacing.sm + 2)  // 10pt — keeps rows compact
-        .padding(.horizontal, Spacing.md)
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+        .shadow(color: Color.black.opacity(0.14), radius: 15, x: 0, y: 12)
         .contentShape(Rectangle())
     }
 
@@ -52,7 +53,6 @@ struct WorkoutCardView: View {
         day.workout.type == .rest || day.workout.type == .recovery
     }
 
-    /// First available metric: distance, then pace, then duration.
     private var metricLine: String? {
         if isRest { return nil }
         var parts: [String] = []
@@ -64,21 +64,16 @@ struct WorkoutCardView: View {
         } else if let dur = day.workout.target_duration_s {
             parts.append(FormatUtils.duration(dur))
         }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        return parts.isEmpty ? nil : parts.joined(separator: "  ·  ")
     }
 
-    // MARK: - Date helpers (delegates to shared DateUtils)
-
-    private var parsedDate: Date? { DateUtils.parse(day.date) }
-
-    private var dayAbbreviation: String {
-        guard let d = parsedDate else { return "" }
-        return DateUtils.dayAbbrevFormatter.string(from: d)
+    private var notesLine: String? {
+        day.workout.notes ?? day.workout.description
     }
 
-    private var dayNumber: String {
-        guard let d = parsedDate else { return "" }
-        return DateUtils.dayNumberFormatter.string(from: d)
+    private var cardDate: String {
+        guard let d = DateUtils.parse(day.date) else { return "" }
+        return DateUtils.workoutCardDateFormatter.string(from: d)
     }
 }
 
@@ -88,12 +83,12 @@ struct WorkoutCardView: View {
         workout: Workout(
             type: .easy,
             label: "Easy Run",
-            description: nil,
-            target_distance_m: 8000,
+            description: "Flat route is ideal",
+            target_distance_m: 9656,
             target_duration_s: nil,
             target_pace_s_per_km: 360,
             intensity: .easy,
-            notes: nil
+            notes: "Try to keep hr below 150bpm"
         ),
         notes: nil
     )
@@ -126,13 +121,13 @@ struct WorkoutCardView: View {
         notes: nil
     )
 
-    return VStack(spacing: 0) {
-        WorkoutCardView(day: easy, isToday: true)
-        Divider().padding(.leading, 56)
-        WorkoutCardView(day: rest)
-        Divider().padding(.leading, 56)
-        WorkoutCardView(day: long)
+    return ScrollView {
+        VStack(spacing: 12) {
+            WorkoutCardView(day: easy, isToday: true)
+            WorkoutCardView(day: rest)
+            WorkoutCardView(day: long)
+        }
+        .padding()
     }
-    .padding(.vertical)
+    .background(Color(uiColor: .systemGroupedBackground))
 }
-

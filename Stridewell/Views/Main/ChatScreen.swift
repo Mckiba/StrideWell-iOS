@@ -51,7 +51,6 @@ struct ChatScreen: View {
             }
         }
         .environment(\.colorScheme, .light)
-        .navigationTitle("Chat")
         .navigationBarTitleDisplayMode(.inline)
     }
 

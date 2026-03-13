@@ -52,7 +52,6 @@ struct PlanScreen: View {
             }
         }
         .environment(\.colorScheme, .light)
-        .navigationTitle("Plan")
         .navigationBarTitleDisplayMode(.large)
         .task(id: retryTrigger) { await loadWeek(for: selectedMonday) }
         .sheet(item: $selectedDay) { day in
@@ -140,24 +139,20 @@ struct PlanScreen: View {
         let days = displayedWeek?.days ?? []
         let todayString = DateUtils.format(Date())
 
-        return CardView(padding: 0) {
+        return Group {
             if days.isEmpty {
-                Text("No workouts scheduled")
-                    .font(.cardBody)
-                    .foregroundStyle(.secondary)
-                    .padding(Spacing.md)
-                    .frame(maxWidth: .infinity)
+                CardView {
+                    Text("No workouts scheduled")
+                        .font(.cardBody)
+                        .foregroundStyle(.secondary)
+                        .padding(Spacing.md)
+                        .frame(maxWidth: .infinity)
+                }
             } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(days.enumerated()), id: \.element.id) { index, day in
+                VStack(spacing: Spacing.sm) {
+                    ForEach(days) { day in
                         WorkoutCardView(day: day, isToday: day.date == todayString)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedDay = day
-                            }
-                        if index < days.count - 1 {
-                            Divider().padding(.leading, 68)
-                        }
+                            .onTapGesture { selectedDay = day }
                     }
                 }
             }

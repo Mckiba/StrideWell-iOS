@@ -6,7 +6,7 @@ enum RegionCalculator {
 
     /// Degrees of lat/lng span when centering on user location.
     /// 0.1° ≈ 11 km × 8 km at typical running latitudes — covers most urban running ranges.
-    static let locationSpan: Double = 0.05
+    static let locationSpan: Double = 0.03
 
     static let paddingFactor: Double = 1.15
 

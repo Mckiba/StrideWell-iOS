@@ -67,6 +67,11 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		1B76CBCE2F61D1B200E22955 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -124,6 +129,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1B15C5922F49457F00C29007 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 1B76CBCE2F61D1B200E22955 /* Products */;
+					ProjectRef = 1B76CAF62F610E8600E22955 /* Stridewell.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				1B15C5902F49457F00C29007 /* Stridewell */,
@@ -301,7 +312,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = mckiba.Stridewell;
+				PRODUCT_BUNDLE_IDENTIFIER = com.stridewell;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -340,7 +351,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = mckiba.Stridewell;
+				PRODUCT_BUNDLE_IDENTIFIER = com.stridewell;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

@@ -24,6 +24,9 @@ final class PlanStore {
     /// Today's PlanDay from GET /plan/today.
     private(set) var todayPlanDay: PlanDay? = nil
 
+    /// Goal + plan progress data from GET /plan/goal-summary. Used by GoalCardView.
+    private(set) var goalSummary: GoalSummary? = nil
+
     /// Current week data from GET /plan/week (used by HomeScreen).
     private(set) var currentWeek: PlanWeekResponse? = nil
 
@@ -85,6 +88,10 @@ final class PlanStore {
     }
 
     // MARK: - Actions
+
+    func setGoalSummary(_ summary: GoalSummary) {
+        goalSummary = summary
+    }
 
     func setTodayPlanDay(_ day: PlanDay) {
         todayPlanDay = day
@@ -170,6 +177,7 @@ final class PlanStore {
         currentPlanVersionId = nil
         lastSeenPlanVersionId = nil
         todayPlanDay = nil
+        goalSummary = nil
         currentWeek = nil
         weekCache = [:]
         isOffline = false

@@ -2,15 +2,23 @@ import SwiftUI
 
 /// Renders the user's personal run heatmap as a full-screen background layer.
 /// Falls back to a dark gradient for new users or on any error — never shows error UI.
+///
+/// Reads a shared HeatmapViewModel from the environment (injected at app startup).
+/// All screens share the same instance so the rendered image is never re-generated
+/// on tab switches — eliminating the black flash when navigating between tabs.
 struct HeatmapBackgroundView: View {
 
     @Environment(\.apiClient) private var apiClient
     @Environment(\.locationStore) private var locationStore
+    @Environment(\.heatmapViewModel) private var sharedViewModel
     let userId: String
 
-    @State private var viewModel: HeatmapViewModel?
-    /// Prevents double-render when the 1.5s poll captures the location before .onChange fires.
+    /// Fallback for previews or contexts where no shared ViewModel is injected.
+    @State private var localViewModel: HeatmapViewModel?
     @State private var locationFired = false
+
+    /// The active ViewModel — shared takes priority, local is a safety fallback.
+    private var viewModel: HeatmapViewModel? { sharedViewModel ?? localViewModel }
 
     var body: some View {
         GeometryReader { geo in
@@ -23,15 +31,24 @@ struct HeatmapBackgroundView: View {
                 }
             }
             .task {
-                let vm = HeatmapViewModel(apiClient: apiClient)
-                vm.targetSize = geo.size
-                viewModel = vm
+                let vm: HeatmapViewModel
+                if let shared = sharedViewModel {
+                    // Shared ViewModel already exists — update size, skip if already loaded
+                    vm = shared
+                    vm.targetSize = geo.size
+                } else {
+                    // No shared ViewModel injected (e.g. preview) — create a local one
+                    let newVm = HeatmapViewModel(apiClient: apiClient)
+                    newVm.targetSize = geo.size
+                    localViewModel = newVm
+                    vm = newVm
+                }
 
-                // Request location permission + one-shot fix
+                // Already loading or loaded by a previous screen — don't re-trigger
+                guard case .idle = vm.state else { return }
+
                 locationStore.requestLocation()
 
-                // If no cached coordinate, poll up to 1.5 s for the OS location response.
-                // Users with a cached location (2nd+ launch) exit immediately.
                 if locationStore.coordinate == nil {
                     for _ in 0..<15 {
                         try? await Task.sleep(for: .milliseconds(100))

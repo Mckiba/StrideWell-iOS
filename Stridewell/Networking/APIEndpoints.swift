@@ -25,6 +25,7 @@ enum APIEndpoints {
     static let planWeek          = "/plan/week"
     static let planVersion       = "/plan/version"  // GET /plan/version/:id?weeks=N
     static let latestDecision    = "/plan/latest-decision"
+    static let goalSummary       = "/plan/goal-summary"
 
     // MARK: Runs (M7, Heatmap)
     static let runsRecent        = "/runs/recent"

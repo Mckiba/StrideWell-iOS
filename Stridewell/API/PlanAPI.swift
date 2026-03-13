@@ -26,4 +26,11 @@ extension APIClient {
     func planWeek(start: String) async -> ApiResult<PlanWeekResponse> {
         await get(path: "\(APIEndpoints.planWeek)?start=\(start)")
     }
+
+    /// Fetch goal + plan progress data for the Goal Card.
+    /// Returns race goal info, plan duration, and total miles run since plan start.
+    /// 404 if no active plan.
+    func goalSummary() async -> ApiResult<GoalSummary> {
+        await get(path: APIEndpoints.goalSummary)
+    }
 }

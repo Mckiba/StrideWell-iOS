@@ -20,7 +20,7 @@ struct ActivityCard: View {
             routeThumbnail
             infoColumn
         }
-        .padding(.horizontal, Spacing.sm)
+        .padding(.horizontal, Spacing.md)
         .padding(.vertical, Spacing.xs)
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
@@ -41,7 +41,7 @@ struct ActivityCard: View {
         Group {
             if routeCoordinates.count > 1 {
                 RoutePathShape(coordinates: routeCoordinates)
-                    .stroke(AppColor.textPrimary, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+                    .stroke(AppColor.accent, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
             } else {
                 // Placeholder shown while decoding or when no polyline is available.
                 RoundedRectangle(cornerRadius: CornerRadius.sm)
@@ -71,16 +71,19 @@ struct ActivityCard: View {
         }
         .font(.activityTimestamp)
         .textCase(.uppercase)
-        .foregroundStyle(Color(hex: "#626262"))
+        .foregroundStyle(AppColor.textPrimary)
     }
 
     private var statsRow: some View {
         HStack(spacing: Spacing.lg) {
             ActivityStat(label: "DISTANCE", value: FormatUtils.distance(run.distance_m))
-            ActivityStat(label: "TIME",     value: FormatUtils.duration(run.duration_s))
-            ActivityStat(label: "AVG PACE", value: run.avg_pace_s_per_km.map { FormatUtils.pace($0) } ?? "—")
             Spacer()
-        }
+
+            ActivityStat(label: "TIME",     value: FormatUtils.duration(run.duration_s))
+            Spacer()
+
+            ActivityStat(label: "AVG PACE", value: run.avg_pace_s_per_km.map { FormatUtils.pace($0) } ?? "—")
+                }
     }
 }
 

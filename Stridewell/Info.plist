@@ -8,6 +8,10 @@
 		<string>Inter-Bold.ttf</string>
 		<string>Inter-Medium.ttf</string>
 		<string>Inter-SemiBold.ttf</string>
+		<string>SofiaSans-Regular.ttf</string>
+		<string>SofiaSans-Bold.ttf</string>
+		<string>SofiaSans-SemiBold.ttf</string>
+		<string>SofiaSans-Medium.ttf</string>
 	</array>
 </dict>
 </plist>

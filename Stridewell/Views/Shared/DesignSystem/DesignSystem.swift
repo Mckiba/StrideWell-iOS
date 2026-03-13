@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 // MARK: - Spacing
 
@@ -42,7 +43,7 @@ enum AppColor {
     static let textPrimary:      Color = .primary
     static let textSecondary:    Color = .secondary
     static let textTertiary:     Color = Color(uiColor: .tertiaryLabel)
-    static let accent:           Color = .accentColor
+    static let accent:           Color = Color(hex: "#289FFF")
     static let destructive:      Color = .red
 }
 
@@ -73,9 +74,22 @@ extension Font {
         default:        return .custom("Inter-Regular",  size: size)
         }
     }
+    
+    
+    // MARK: - Sofia Sans Custom Font
+    /// Returns a Sofia Sans font at the given size and weight.
+    /// Requires SofiaSans-{Regular,Medium,SemiBold,Bold}.ttf registered in Info.plist.
+    static func sofiaSans(size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        switch weight {
+        case .bold:     return .custom("SofiaSans-Bold",     size: size)
+        case .semibold: return .custom("SofiaSans-SemiBold", size: size)
+        case .medium:   return .custom("SofiaSans-Medium",   size: size)
+        default:        return .custom("SofiaSans-Regular",  size: size)
+        }
+    }
 
     // MARK: - Activity Card Typography (Inter)
-    static let activityTimestamp: Font = .inter(size: 12, weight: .bold)   // date + time stamp
+    static let activityTimestamp: Font = .sofiaSans(size: 12, weight: .bold)   // date + time stamp
     static let activityName:      Font = .inter(size: 12, weight: .bold)   // run name
     static let activityStatLabel: Font = .inter(size: 10)                  // "DISTANCE" / "TIME" / "AVG PACE"
     static let activityStatValue: Font = .inter(size: 11, weight: .bold)   // "4.8 km" / "26:08" / "5:30 /km"
@@ -95,3 +109,32 @@ extension Color {
         self.init(.sRGB, red: r, green: g, blue: b, opacity: 1)
     }
 }
+
+// MARK: - UIColor Hex / RGB Initialisers
+// Mirrors the Color(hex:) pattern above for UIKit contexts (e.g. Core Graphics rendering).
+
+extension UIColor {
+    /// Initialise from a hex string with an optional alpha component.
+    /// e.g. `UIColor(hex: "#FC4C02", alpha: 0.75)`
+    convenience init(hex: String, alpha: CGFloat = 1.0) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let r = CGFloat((int >> 16) & 0xff) / 255
+        let g = CGFloat((int >> 8)  & 0xff) / 255
+        let b = CGFloat(int         & 0xff) / 255
+        self.init(red: r, green: g, blue: b, alpha: alpha)
+    }
+
+    /// Initialise from 0–255 integer RGB values with an optional alpha component.
+    /// e.g. `UIColor(r: 252, g: 76, b: 2, alpha: 0.75)`
+    convenience init(r: Int, g: Int, b: Int, alpha: CGFloat = 1.0) {
+        self.init(
+            red:   CGFloat(r) / 255,
+            green: CGFloat(g) / 255,
+            blue:  CGFloat(b) / 255,
+            alpha: alpha
+        )
+    }
+}
+

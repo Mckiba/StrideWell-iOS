@@ -115,6 +115,13 @@ enum DateUtils {
         return f
     }()
 
+    /// Card-style date: "Monday, Feb 23"
+    static let workoutCardDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE, MMM d"
+        return f
+    }()
+
     // MARK: - Monday Computation
 
     /// Returns the Monday (ISO 8601 week start) of the week containing `date`.

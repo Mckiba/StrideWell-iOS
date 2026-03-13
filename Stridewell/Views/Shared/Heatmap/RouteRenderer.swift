@@ -12,8 +12,8 @@ enum HeatmapError: Error {
 enum RouteRenderer {
 
     struct Config {
-        /// Route line color. Orange punches through the dark scrim and reads as "heat" density.
-        var lineColor: UIColor = UIColor.systemOrange.withAlphaComponent(0.75)
+        /// Route line color. Accepts any UIColor — use UIColor(hex:alpha:) or UIColor(r:g:b:alpha:)
+        var lineColor: UIColor = UIColor(hex: "#289FFF", alpha: 0.75)
         var lineWidth: CGFloat = 2.5
     }
 
