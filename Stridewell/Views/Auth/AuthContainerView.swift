@@ -7,8 +7,6 @@ import SwiftUI
 
 struct AuthContainerView: View {
     var body: some View {
-        NavigationStack {
-            WelcomeScreen()
-        }
+        LandingScreen()
     }
 }

@@ -17,80 +17,84 @@ struct SignUpScreen: View {
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
 
-    private var passwordsMatch: Bool { password == confirmPassword }
-    private var canSubmit: Bool {
-        !email.isEmpty && !password.isEmpty && !confirmPassword.isEmpty
-            && passwordsMatch && !isLoading
-    }
+    @FocusState private var isFocused: Bool
+
+    // MARK: - Body
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            // Heading
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                Text("Let's get you started!")
+                    .font(.title)
+                    .fontWeight(.semibold)
+
+                Text("It's quick and easy.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.top, Spacing.xs)
+
             // Fields
-            VStack(spacing: 14) {
-                TextField("Email", text: $email)
-                    .keyboardType(.emailAddress)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder)
+            VStack(spacing: Spacing.sm) {
+                IconTextField(hint: "Email Address", symbol: "envelope", value: $email)
 
-                SecureField("Password", text: $password)
-                    .textFieldStyle(.roundedBorder)
+                IconTextField(hint: "Password", symbol: "lock", isPassword: true, value: $password)
 
-                SecureField("Confirm password", text: $confirmPassword)
-                    .textFieldStyle(.roundedBorder)
+                IconTextField(hint: "Confirm Password", symbol: "lock", isPassword: true, value: $confirmPassword)
+            }
+            .padding(.top, Spacing.sm)
+
+            // Error box
+            if let message = errorMessage {
+                errorBox(message)
             }
 
-            // Validation hint
-            if !confirmPassword.isEmpty && !passwordsMatch {
-                Text("Passwords don't match")
-                    .font(.footnote)
-                    .foregroundStyle(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-            // API error
-            if let error = errorMessage {
-                Text(error)
-                    .font(.footnote)
-                    .foregroundStyle(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-            // Submit
-            Button {
-                Task { await signUp() }
-            } label: {
-                Group {
-                    if isLoading {
-                        ProgressView()
-                            .tint(.white)
-                    } else {
-                        Text("Create account")
-                    }
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(!canSubmit)
+            // Create account button
+            PrimaryButton(
+                title: "Create Account",
+                isEnabled: canSubmit, isLoading: isLoading, size: .large, action: { Task { await signUp() } }
+            )
 
             Spacer()
+
+            // Terms
+            Text("By creating an account, you agree to our [Terms](https://stridewell.app/terms) and [Privacy Policy](https://stridewell.app/privacy)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 32)
-        .navigationTitle("Create account")
-        .navigationBarTitleDisplayMode(.large)
+        .padding(.horizontal, Spacing.lg)
+        .padding(.top, Spacing.lg)
+        .allowsHitTesting(!isLoading)
+        .opacity(isLoading ? 0.7 : 1)
+        .focused($isFocused)
+        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 
-    // MARK: - Registration
+    // MARK: - Validation
+
+    private var canSubmit: Bool {
+        !email.trimmingCharacters(in: .whitespaces).isEmpty &&
+        !password.isEmpty &&
+        !confirmPassword.isEmpty
+    }
+
+    // MARK: - Sign Up
 
     private func signUp() async {
         isLoading = true
         errorMessage = nil
 
-        // 1. Register
+        guard password == confirmPassword else {
+            errorMessage = "Passwords don't match"
+            isLoading = false
+            return
+        }
+
         let result: ApiResult<LoginResponse> = await apiClient.register(
-            email: email,
+            email: email.trimmingCharacters(in: .whitespaces),
             password: password
         )
 
@@ -103,7 +107,7 @@ struct SignUpScreen: View {
             authStore.signIn(token: response.token, userId: response.user_id)
         }
 
-        // 2. Check onboarding status — non-blocking; new users will have none
+        // Check onboarding status — non-blocking; new users will have none
         let statusResult: ApiResult<OnboardingState> = await apiClient.onboardingStatus()
         if case .success(let state) = statusResult {
             onboardingStore.update(from: state)
@@ -111,5 +115,21 @@ struct SignUpScreen: View {
 
         isLoading = false
         // RootView observes authStore.isAuthenticated and re-routes automatically
+    }
+
+    // MARK: - Error Box
+
+    @ViewBuilder
+    private func errorBox(_ message: String) -> some View {
+        HStack(spacing: Spacing.xs) {
+            Image(systemName: "exclamationmark.triangle.fill")
+            Text(message)
+                .font(.callout)
+        }
+        .foregroundStyle(AppColor.destructive)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Spacing.sm)
+        .background(AppColor.destructive.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
     }
 }

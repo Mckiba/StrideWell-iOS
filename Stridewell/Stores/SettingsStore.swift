@@ -8,6 +8,34 @@
 //
 
 import Foundation
+import SwiftUI
+
+// MARK: - AppTheme
+
+enum AppTheme: String, CaseIterable {
+    case device
+    case light
+    case dark
+
+    var label: String {
+        switch self {
+        case .device: return "Device"
+        case .light:  return "Light"
+        case .dark:   return "Dark"
+        }
+    }
+
+    /// Maps to `preferredColorScheme` — nil follows the system setting.
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .device: return nil
+        case .light:  return .light
+        case .dark:   return .dark
+        }
+    }
+}
+
+// MARK: - SettingsStore
 
 @Observable
 final class SettingsStore {
@@ -42,6 +70,12 @@ final class SettingsStore {
         didSet { UserDefaults.standard.set(planUpdateAlerts, forKey: Self.planUpdateAlertsKey) }
     }
 
+    // MARK: - Appearance
+
+    var appTheme: AppTheme {
+        didSet { UserDefaults.standard.set(appTheme.rawValue, forKey: Self.appThemeKey) }
+    }
+
     // MARK: - Account Deletion
 
     enum DeleteState: Equatable {
@@ -57,6 +91,7 @@ final class SettingsStore {
     private static let unitSystemKey          = "Settings.unitSystem"
     private static let reflectionRemindersKey = "Settings.reflectionReminders"
     private static let planUpdateAlertsKey    = "Settings.planUpdateAlerts"
+    private static let appThemeKey            = "Settings.appTheme"
 
     // MARK: - Init
 
@@ -65,14 +100,17 @@ final class SettingsStore {
         unitSystem          = UnitSystem(rawValue: rawUnit ?? "") ?? .metric
         reflectionReminders = UserDefaults.standard.object(forKey: Self.reflectionRemindersKey) as? Bool ?? true
         planUpdateAlerts    = UserDefaults.standard.object(forKey: Self.planUpdateAlertsKey) as? Bool ?? true
+        let rawTheme = UserDefaults.standard.string(forKey: Self.appThemeKey)
+        appTheme            = AppTheme(rawValue: rawTheme ?? "") ?? .device
     }
 
     /// Preview/test initializer with explicit state.
-    init(stravaState: StravaState, unitSystem: UnitSystem = .metric, reflectionReminders: Bool = true, planUpdateAlerts: Bool = true, deleteState: DeleteState = .idle) {
+    init(stravaState: StravaState, unitSystem: UnitSystem = .metric, reflectionReminders: Bool = true, planUpdateAlerts: Bool = true, appTheme: AppTheme = .device, deleteState: DeleteState = .idle) {
         self.stravaState = stravaState
         self.unitSystem = unitSystem
         self.reflectionReminders = reflectionReminders
         self.planUpdateAlerts = planUpdateAlerts
+        self.appTheme = appTheme
         self.deleteState = deleteState
     }
 

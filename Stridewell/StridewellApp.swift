@@ -54,6 +54,7 @@ struct StridewellApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(authStore: authStore, onboardingStore: onboardingStore)
+                .preferredColorScheme(settingsStore.appTheme.colorScheme)
                 .environment(\.authStore, authStore)
                 .environment(\.apiClient, apiClient)
                 .environment(\.onboardingStore, onboardingStore)

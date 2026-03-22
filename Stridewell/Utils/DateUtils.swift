@@ -99,6 +99,20 @@ enum DateUtils {
         return f
     }()
 
+    // MARK: - Plan Day Date Formatter
+
+    /// "Friday, March 20" — for YYYY-MM-DD plan day dates shown on the home screen.
+    static func planDayDate(_ dateString: String) -> String {
+        guard let date = parse(dateString) else { return dateString }
+        return planDayDateFormatter.string(from: date)
+    }
+
+    private static let planDayDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE, MMMM d"
+        return f
+    }()
+
     // MARK: - Workout Date Formatters (used by WorkoutCardView)
 
     /// Abbreviated day name: "Mon", "Tue", …

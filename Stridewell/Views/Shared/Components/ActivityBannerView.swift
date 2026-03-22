@@ -17,7 +17,7 @@ struct ActivityBannerView: View {
     @Environment(\.settingsStore) private var settingsStore
 
     var body: some View {
-        HStack( spacing: Spacing.md) {
+        HStack(spacing: Spacing.md) {
 
             // Thumbnail — only rendered when an image is provided
             if let image {
@@ -31,7 +31,6 @@ struct ActivityBannerView: View {
             // Text column
             VStack(alignment: .leading, spacing: Spacing.sm) {
 
-                // title1 row — detail pushed to trailing edge when present
                 HStack {
                     Text(title1)
                         .font(.sofiaSans(size: 12, weight: .bold))
@@ -60,8 +59,7 @@ struct ActivityBannerView: View {
             }
         }
         .padding(Spacing.sm)
-        .frame(minWidth: 277)
-        // No maxWidth: .infinity — card hugs its content width
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppColor.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.sm))
         .shadow(color: Color.black.opacity(0.25), radius: 30, x: 0, y: 4)

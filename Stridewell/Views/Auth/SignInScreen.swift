@@ -10,58 +10,93 @@ struct SignInScreen: View {
     @Environment(\.authStore) private var authStore
     @Environment(\.apiClient) private var apiClient
     @Environment(\.onboardingStore) private var onboardingStore
+    @Environment(\.dismiss) private var dismiss
 
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
+    @State private var forgotPassword: Bool = false
+
+    @FocusState private var isFocused: Bool
+
+    // MARK: - Body
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            // Heading
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                Text("Welcome Back")
+                    .font(.largeTitle)
+                    .fontWeight(.semibold)
+
+                Text("Please sign in to continue.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.top, Spacing.xs)
+
             // Fields
-            VStack(spacing: 14) {
-                TextField("Email", text: $email)
-                    .keyboardType(.emailAddress)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder)
+            VStack(spacing: Spacing.sm) {
+                IconTextField(hint: "Email Address", symbol: "envelope", value: $email)
 
-                SecureField("Password", text: $password)
-                    .textFieldStyle(.roundedBorder)
+                IconTextField(hint: "Password", symbol: "lock", isPassword: true, value: $password)
             }
+            .padding(.top, Spacing.sm)
 
-            // Error
-            if let error = errorMessage {
-                Text(error)
-                    .font(.footnote)
-                    .foregroundStyle(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            // Forgot password
+            Button("Forgot Password?") {
+                forgotPassword = true
             }
+            .font(.subheadline)
+            .foregroundStyle(.primary)
+            .frame(maxWidth: .infinity, alignment: .trailing)
 
             // Sign in button
-            Button {
-                Task { await signIn() }
-            } label: {
-                Group {
-                    if isLoading {
-                        ProgressView()
-                            .tint(.white)
-                    } else {
-                        Text("Sign in")
-                    }
-                }
-                .frame(maxWidth: .infinity)
+            PrimaryButton(
+                title: "Sign In",
+                isEnabled: canSignIn, isLoading: isLoading, size: .large, action: { Task { await signIn() } }
+            )
+
+            // Error box
+            if let message = errorMessage {
+                errorBox(message)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(email.isEmpty || password.isEmpty || isLoading)
+
+            // Sign up link
+            HStack(spacing: Spacing.xs) {
+                Text("Don't have an account?")
+                    .foregroundStyle(.secondary)
+
+                Button("Sign Up") {
+                    dismiss()
+                }
+                .fontWeight(.semibold)
+            }
+            .font(.subheadline)
+            .frame(maxWidth: .infinity)
+            .padding(.top, Spacing.xs)
 
             Spacer()
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 32)
-        .navigationTitle("Sign in")
-        .navigationBarTitleDisplayMode(.large)
+        .padding(.horizontal, Spacing.lg)
+        .padding(.top, Spacing.lg)
+        .allowsHitTesting(!isLoading)
+        .opacity(isLoading ? 0.7 : 1)
+        .focused($isFocused)
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $forgotPassword) {
+            ForgotPasswordScreen()
+                .presentationDetents([.height(260)])
+                .presentationBackground(Color(uiColor: .systemBackground))
+        }
+    }
+
+    // MARK: - Validation
+
+    private var canSignIn: Bool {
+        !email.trimmingCharacters(in: .whitespaces).isEmpty && !password.isEmpty
     }
 
     // MARK: - Sign In
@@ -70,13 +105,12 @@ struct SignInScreen: View {
         isLoading = true
         errorMessage = nil
 
-        // 1. Authenticate
-        let loginResult: ApiResult<LoginResponse> = await apiClient.login(
-            email: email,
+        let result: ApiResult<LoginResponse> = await apiClient.login(
+            email: email.trimmingCharacters(in: .whitespaces),
             password: password
         )
 
-        switch loginResult {
+        switch result {
         case .failure(_, let message):
             errorMessage = message
             isLoading = false
@@ -85,13 +119,29 @@ struct SignInScreen: View {
             authStore.signIn(token: response.token, userId: response.user_id)
         }
 
-        // 2. Check onboarding status — don't block login if this fails
+        // Check onboarding status — non-blocking
         let statusResult: ApiResult<OnboardingState> = await apiClient.onboardingStatus()
         if case .success(let state) = statusResult {
             onboardingStore.update(from: state)
         }
 
         isLoading = false
-        // RootView observes authStore + onboardingStore and re-routes automatically
+        // RootView observes authStore.isAuthenticated and re-routes automatically
+    }
+
+    // MARK: - Error Box
+
+    @ViewBuilder
+    private func errorBox(_ message: String) -> some View {
+        HStack(spacing: Spacing.xs) {
+            Image(systemName: "exclamationmark.triangle.fill")
+            Text(message)
+                .font(.callout)
+        }
+        .foregroundStyle(AppColor.destructive)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Spacing.sm)
+        .background(AppColor.destructive.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
     }
 }

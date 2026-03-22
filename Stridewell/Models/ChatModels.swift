@@ -35,3 +35,10 @@ struct ChatMessageResponse: Decodable {
     let conversation_id: String
     let message: ChatMessage
 }
+
+// MARK: - History (M14)
+
+struct ChatHistoryResponse: Decodable {
+    let messages: [ChatMessage]
+    let has_more: Bool
+}

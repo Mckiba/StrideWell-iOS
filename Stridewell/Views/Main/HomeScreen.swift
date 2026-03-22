@@ -84,7 +84,7 @@ struct HomeScreen: View {
                     .font(.sectionTitle)
                 ActivityBannerView(
                     title1:   day.workout.label,
-                    detail:   day.date,
+                    detail:   DateUtils.planDayDate(day.date),
                     workout:  day.workout,
                     subtitle: day.workout.description,
                     image:    Image("bg2")

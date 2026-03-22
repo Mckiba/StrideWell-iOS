@@ -107,7 +107,7 @@ extension Font {
     }
 
     // MARK: - Activity Card Typography (Inter)
-    static let activityTimestamp: Font = .sofiaSans(size: 12, weight: .bold)   // date + time stamp
+    static let activityTimestamp: Font = .sofiaSans(size: 12, weight: .regular)   // date + time stamp
     static let activityName:      Font = .inter(size: 12, weight: .bold)   // run name
     static let activityStatLabel: Font = .inter(size: 10)                  // "DISTANCE" / "TIME" / "AVG PACE"
     static let activityStatValue: Font = .inter(size: 11, weight: .bold)   // "4.8 km" / "26:08" / "5:30 /km"

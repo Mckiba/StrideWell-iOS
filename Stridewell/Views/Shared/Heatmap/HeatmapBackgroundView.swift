@@ -48,8 +48,12 @@ struct HeatmapBackgroundView: View {
                     vm = newVm
                 }
 
-                // Already loading or loaded by a previous screen — don't re-trigger
-                guard case .idle = vm.state else { return }
+                // Already loading or loaded — don't re-trigger.
+                // .error is allowed through so a transient failure can be retried.
+                switch vm.state {
+                case .idle, .error: break
+                default: return
+                }
 
                 locationStore.requestLocation()
 
@@ -63,6 +67,12 @@ struct HeatmapBackgroundView: View {
                 let coord = locationStore.coordinate
                 locationFired = coord != nil
                 vm.load(userId: userId, userLocation: coord, userInterfaceStyle: uiStyle)
+            }
+            .onAppear {
+                // Within-session recovery: if a transient failure set state to .error,
+                // retry whenever the view becomes visible again (e.g. returning to a tab).
+                guard let vm = viewModel, case .error = vm.state else { return }
+                vm.load(userId: userId, userLocation: locationStore.coordinate, userInterfaceStyle: uiStyle)
             }
             .onChange(of: locationStore.didReceiveLocation) { _, received in
                 guard received, !locationFired, let vm = viewModel else { return }

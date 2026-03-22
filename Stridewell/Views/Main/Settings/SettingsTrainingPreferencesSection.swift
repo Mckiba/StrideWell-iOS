@@ -10,6 +10,7 @@ struct SettingsTrainingPreferencesSection: View {
     @Binding var unitSystem: UnitSystem
     @Binding var reflectionReminders: Bool
     @Binding var planUpdateAlerts: Bool
+    @Binding var appTheme: AppTheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
@@ -21,6 +22,8 @@ struct SettingsTrainingPreferencesSection: View {
                     goalRow
                     Divider()
                     unitsRow
+                    Divider()
+                    themeRow
                     Divider()
                     reflectionToggle
                     Divider()
@@ -69,6 +72,27 @@ struct SettingsTrainingPreferencesSection: View {
         .padding(.vertical, Spacing.sm)
     }
 
+    private var themeRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                Text("Appearance")
+                    .font(.cardTitle)
+                Text("App colour scheme")
+                    .font(.cardCaption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Picker("Appearance", selection: $appTheme) {
+                ForEach(AppTheme.allCases, id: \.self) { theme in
+                    Text(theme.label).tag(theme)
+                }
+            }
+            .pickerStyle(.segmented)
+            .fixedSize()
+        }
+        .padding(.vertical, Spacing.sm)
+    }
+
     private var reflectionToggle: some View {
         Toggle(isOn: $reflectionReminders) {
             VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -102,7 +126,8 @@ struct SettingsTrainingPreferencesSection: View {
     SettingsTrainingPreferencesSection(
         unitSystem: .constant(.metric),
         reflectionReminders: .constant(true),
-        planUpdateAlerts: .constant(false)
+        planUpdateAlerts: .constant(false),
+        appTheme: .constant(.device)
     )
     .padding()
 }

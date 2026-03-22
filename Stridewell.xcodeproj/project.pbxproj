@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1B76CF692F63EBB600E22955 /* WeatherKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B76CF682F63EBB600E22955 /* WeatherKit.framework */; };
 		1B99F9F12F596AB2006E1FA4 /* SVGKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1B99F9F02F596AB2006E1FA4 /* SVGKit */; };
 		1B99F9F32F596AB2006E1FA4 /* SVGKitSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1B99F9F22F596AB2006E1FA4 /* SVGKitSwift */; };
 /* End PBXBuildFile section */
@@ -14,6 +15,7 @@
 /* Begin PBXFileReference section */
 		1B15C5912F49457F00C29007 /* Stridewell.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stridewell.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1B76CAF62F610E8600E22955 /* Stridewell.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Stridewell.xcodeproj; sourceTree = SOURCE_ROOT; };
+		1B76CF682F63EBB600E22955 /* WeatherKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WeatherKit.framework; path = System/Library/Frameworks/WeatherKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -43,6 +45,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1B99F9F32F596AB2006E1FA4 /* SVGKitSwift in Frameworks */,
+				1B76CF692F63EBB600E22955 /* WeatherKit.framework in Frameworks */,
 				1B99F9F12F596AB2006E1FA4 /* SVGKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -55,6 +58,7 @@
 			children = (
 				1B76CAF62F610E8600E22955 /* Stridewell.xcodeproj */,
 				1B15C5932F49457F00C29007 /* Stridewell */,
+				1B76CF672F63EBB500E22955 /* Frameworks */,
 				1B15C5922F49457F00C29007 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -70,6 +74,14 @@
 		1B76CBCE2F61D1B200E22955 /* Products */ = {
 			isa = PBXGroup;
 			name = Products;
+			sourceTree = "<group>";
+		};
+		1B76CF672F63EBB500E22955 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1B76CF682F63EBB600E22955 /* WeatherKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

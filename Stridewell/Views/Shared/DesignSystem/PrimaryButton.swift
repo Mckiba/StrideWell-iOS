@@ -5,113 +5,117 @@
 //  Created by McKiba Williams on 3/8/26.
 //
 
-
 import SwiftUI
 
+// MARK: - ButtonSize
+
+enum ButtonSize {
+    case small
+    case medium
+    case large
+
+    var font: Font {
+        switch self {
+        case .small:           return .body
+        case .medium, .large:  return .cardTitle
+        }
+    }
+
+    var verticalPadding: CGFloat {
+        switch self {
+        case .small:   return Spacing.xs
+        case .medium:  return Spacing.sm
+        case .large:   return Spacing.md
+        }
+    }
+
+    var horizontalPadding: CGFloat {
+        switch self {
+        case .small:   return Spacing.sm
+        case .medium:  return Spacing.lg
+        case .large:   return Spacing.xl
+        }
+    }
+
+    var cornerRadius: CGFloat {
+        switch self {
+        case .small:           return CornerRadius.md
+        case .medium, .large:  return CornerRadius.bubble
+        }
+    }
+}
+
+// MARK: - ButtonIcon
+
+/// Typed icon source — distinguishes SF Symbols from asset-catalog images.
+enum ButtonIcon {
+    case system(String)   // SF Symbol   — Image(systemName:)
+    case asset(String)    // Asset catalog — Image(_:)
+}
+
+// MARK: - PrimaryButton
 
 struct PrimaryButton: View {
 
     // MARK: - Properties
 
     let title: String
-    let action: () -> Void
+    var icon: ButtonIcon? = nil           // optional leading icon
     var isEnabled: Bool = true
     var isLoading: Bool = false
     var size: ButtonSize = .medium
+    var backgroundColor: Color? = nil    // explicit fill override
+    var foregroundColor: Color? = nil    // explicit label/icon color override
+    let action: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
-
-    // MARK: - Button Sizes
-
-    enum ButtonSize {
-        case small
-        case medium
-        case large
-
-        var font: Font {
-            switch self {
-            case .small:
-                return .body
-            case .medium, .large:
-                return .cardTitle
-            }
-        }
-
-        var verticalPadding: CGFloat {
-            switch self {
-            case .small:
-                return Spacing.xs // 12px
-            case .medium:
-                return Spacing.sm // 16px
-            case .large:
-                return Spacing.md // 20px
-            }
-        }
-
-        var horizontalPadding: CGFloat {
-            switch self {
-            case .small:
-                return Spacing.sm // 16px
-            case .medium:
-                return Spacing.lg // 24px
-            case .large:
-                return Spacing.xl // 32px
-            }
-        }
-
-        var cornerRadius: CGFloat {
-            switch self {
-            case .small:
-                return CornerRadius.md // 12px
-            case .medium, .large:
-                return CornerRadius.bubble // 12px
-            }
-        }
-    }
 
     // MARK: - Body
 
     var body: some View {
         Button(action: {
-            if isEnabled && !isLoading {
-                action()
-            }
+            if isEnabled && !isLoading { action() }
         }) {
-            HStack(spacing: Spacing.xs) {
+            HStack(spacing: Spacing.lg) {
                 if isLoading {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: foregroundColor))
+                        .progressViewStyle(CircularProgressViewStyle(tint: resolvedForegroundColor))
                         .scaleEffect(0.8)
+                } else if let icon {
+                    switch icon {
+                    case .system(let name):
+                        Image(systemName: name)
+                            .foregroundColor(resolvedForegroundColor)
+                    case .asset(let name):
+                        Image(name)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 18)
+                    }
                 }
 
                 Text(title)
                     .font(size.font)
-                    .foregroundColor(foregroundColor)
+                    .foregroundColor(resolvedForegroundColor)
             }
             .padding(.vertical, size.verticalPadding)
             .padding(.horizontal, size.horizontalPadding)
             .frame(maxWidth: .infinity)
-            .background(backgroundColor)
+            .background(resolvedBackgroundColor)
             .cornerRadius(size.cornerRadius)
         }
         .disabled(!isEnabled || isLoading)
     }
 
-    // MARK: - Computed Properties
+    // MARK: - Color Resolution
 
-    /// Inverts the system background: black in light mode, white in dark mode.
-    private var baseColor: Color {
-        colorScheme == .dark ? Color.white : Color.black
+    private var resolvedBackgroundColor: Color {
+        let base = backgroundColor ?? (colorScheme == .dark ? Color.white : Color.black)
+        return (!isEnabled || isLoading) ? base.opacity(0.35) : base
     }
 
-    /// Button fill — dimmed when disabled or loading.
-    private var backgroundColor: Color {
-        (!isEnabled || isLoading) ? baseColor.opacity(0.35) : baseColor
-    }
-
-    /// Label/spinner color — always contrasts against `backgroundColor`.
-    private var foregroundColor: Color {
-        colorScheme == .dark ? Color.black : Color.white
+    private var resolvedForegroundColor: Color {
+        foregroundColor ?? (colorScheme == .dark ? Color.black : Color.white)
     }
 }
 
@@ -119,93 +123,60 @@ struct PrimaryButton: View {
 
 extension PrimaryButton {
 
-    /// Create a primary button with default settings
+    /// Default: no icon, system-inverted colors.
     init(_ title: String, action: @escaping () -> Void) {
         self.title = title
         self.action = action
     }
 
-    /// Create a primary button with custom size
+    /// Size variant: no icon, system-inverted colors.
     init(_ title: String, size: ButtonSize, action: @escaping () -> Void) {
         self.title = title
         self.size = size
         self.action = action
     }
-}
 
-// MARK: - Login Button Component
-struct LoginButton: View {
-    let icon: String
-    let text: String
-    let backgroundColor: Color
-    let foregroundColor: Color
-    let action: () async -> Void
-    
-    @State private var isLoading = false
-    
-    var body: some View {
-        Button {
-            Task {
-                isLoading = true
-                await action()
-                isLoading = false
-            }
-        } label: {
-            HStack(spacing: Spacing.xs) {
-                if isLoading {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: foregroundColor))
-                        .scaleEffect(0.8)
-                } else {
-                    Image(systemName: icon)
-                }
-                
-                Text(text)
-            }
-            .font(.cardTitle)
-            .foregroundColor(foregroundColor)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, Spacing.lg)
-            .background(backgroundColor, in: .rect(cornerRadius: CornerRadius.bubble))
-        }
-        .disabled(isLoading)
-        .animation(.easeInOut(duration: 0.25), value: isLoading)
+    /// Icon variant: leading icon (SF Symbol or asset) with explicit fill and label colors.
+    init(_ title: String, icon: ButtonIcon, backgroundColor: Color, foregroundColor: Color,
+         size: ButtonSize = .large, action: @escaping () -> Void) {
+        self.title = title
+        self.icon = icon
+        self.backgroundColor = backgroundColor
+        self.foregroundColor = foregroundColor
+        self.size = size
+        self.action = action
     }
 }
-
-
 
 // MARK: - Preview
 
 #Preview {
     VStack(spacing: Spacing.md) {
-        PrimaryButton("Small Button", size: .small) {
-            print("Small button tapped")
-        }
-        
-        PrimaryButton("Large Button Disabled", size: .large) {
-            print("Small button tapped")
-        }.disabled(true)
+        PrimaryButton("Default Button") {}
 
+        PrimaryButton("Small Button", size: .small) {}
 
-        PrimaryButton("Medium Button (Default)", size: .medium) {
-            print("Medium button tapped")
-        }
+        PrimaryButton("Large Button", size: .large) {}
 
-        PrimaryButton("Large Button", size: .large) {
-            print("Large button tapped")
-        }
+        PrimaryButton("Disabled Button") {}
+            .disabled(true)
 
-        PrimaryButton("Disabled Button") {
-            print("This shouldn't print")
-        }
-        .disabled(true)
+        PrimaryButton(title: "Loading Button", isLoading: true) {}
 
-        PrimaryButton(
-            title: "Loading Button",
-            action: {},
-            isLoading: true
-        )
+        PrimaryButton("Continue with Apple",
+                      icon: .system("applelogo"),
+                      backgroundColor: .white,
+                      foregroundColor: .black) {}
+
+        PrimaryButton("Continue with Google",
+                      icon: .asset("Google"),
+                      backgroundColor: Color(uiColor: .secondarySystemBackground),
+                      foregroundColor: Color(uiColor: .label)) {}
+
+        PrimaryButton("Sign up with Email",
+                      icon: .system("envelope.fill"),
+                      backgroundColor: AppColor.accent,
+                      foregroundColor: .white) {}
     }
     .padding()
 }

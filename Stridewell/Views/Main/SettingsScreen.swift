@@ -94,6 +94,10 @@ struct SettingsScreen: View {
             planUpdateAlerts: Binding(
                 get: { settingsStore.planUpdateAlerts },
                 set: { settingsStore.planUpdateAlerts = $0 }
+            ),
+            appTheme: Binding(
+                get: { settingsStore.appTheme },
+                set: { settingsStore.appTheme = $0 }
             )
         )
     }

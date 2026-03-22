@@ -19,6 +19,7 @@ struct ChatScreen: View {
     @State private var inputText = ""
     @State private var screenState: ScreenState = .empty
     @State private var pendingMessage: String? = nil
+    @State private var initialLoadDone = false
 
     enum ScreenState: Equatable {
         case empty          // no messages — show suggested prompts
@@ -40,53 +41,18 @@ struct ChatScreen: View {
             HeatmapBackgroundView(userId: authStore.userId ?? "")
 
             VStack(spacing: 0) {
-                if screenState == .empty {
-                    emptyState
-                } else {
-                    messageThread
-                }
+                conversationView
 
                 Divider()
                 inputBar
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    // MARK: - Empty State (Suggested Prompts)
-
-    private var emptyState: some View {
-        ScrollView {
-            VStack(spacing: Spacing.lg) {
-                Spacer().frame(height: Spacing.xxl)
-
-                Image(systemName: "bubble.left.and.bubble.right")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.tertiary)
-
-                Text("Ask your coach anything")
-                    .font(.sectionTitle)
-                    .foregroundStyle(.secondary)
-
-                VStack(spacing: Spacing.sm) {
-                    ForEach(suggestedPrompts, id: \.self) { prompt in
-                        Button {
-                            Task { await sendMessage(content: prompt) }
-                        } label: {
-                            Text(prompt)
-                                .font(.cardBody)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, Spacing.md)
-                                .padding(.vertical, Spacing.sm)
-                                .background(AppColor.surfaceElevated)
-                                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, Spacing.lg)
-            }
-            .frame(maxWidth: .infinity)
+        .onAppear {
+            if !chatStore.messages.isEmpty { screenState = .active }
+            guard !initialLoadDone else { return }
+            initialLoadDone = true
+            Task { await chatStore.loadInitialHistory(api: apiClient) }
         }
     }
 
@@ -98,18 +64,75 @@ struct ChatScreen: View {
         ]
     }
 
-    // MARK: - Message Thread
+    // MARK: - Empty Header
 
-    private var messageThread: some View {
+    private var emptyHeader: some View {
+        VStack(spacing: Spacing.lg) {
+            Spacer().frame(height: Spacing.xxl)
+
+            Image(systemName: "bubble.left.and.bubble.right")
+                .font(.system(size: 40))
+                .foregroundStyle(.tertiary)
+
+            Text("Ask your coach anything")
+                .font(.sectionTitle)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.bottom, Spacing.md)
+    }
+
+    // MARK: - Suggested Prompts
+
+    private var suggestedPromptsSection: some View {
+        VStack(spacing: Spacing.sm) {
+            ForEach(suggestedPrompts, id: \.self) { prompt in
+                Button {
+                    Task { await sendMessage(content: prompt) }
+                } label: {
+                    Text(prompt)
+                        .font(.cardBody)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, Spacing.md)
+                        .padding(.vertical, Spacing.sm)
+                        .background(AppColor.surfaceElevated)
+                        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, Spacing.lg)
+        .padding(.top, chatStore.messages.isEmpty ? 0 : Spacing.lg)
+    }
+
+    // MARK: - Conversation View
+
+    private var conversationView: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Spacing.sm) {
+
+                    // Scroll-to-top sentinel — appears when there are older pages.
+                    // onAppear fires when the user scrolls up far enough to reveal it.
+                    if chatStore.hasMoreHistory {
+                        HStack { Spacer(); ProgressView(); Spacer() }
+                            .id("history-sentinel")
+                            .onAppear {
+                                Task { await chatStore.loadMoreHistory(api: apiClient) }
+                            }
+                    }
+
+                    if chatStore.messages.isEmpty && !chatStore.isLoadingHistory {
+                        emptyHeader
+                    }
+
                     ForEach(chatStore.messages) { msg in
                         ChatBubbleView(
                             content: msg.content,
                             isUser: msg.role == .user,
                             subtitle: msg.role == .user ? nil : msg.agent_used?.rawValue
                         )
+                        .id(msg.id)
                     }
 
                     if screenState == .waiting {
@@ -129,12 +152,22 @@ struct ChatScreen: View {
                         .id("error")
                     }
 
+                    suggestedPromptsSection
+
                     Color.clear.frame(height: Spacing.sm).id("bottom")
                 }
                 .padding(.vertical, Spacing.md)
             }
-            .onChange(of: chatStore.messages.count) {
-                withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo("bottom") }
+            // Auto-scroll to bottom only when a new message is appended (last ID changed),
+            // not when older history is prepended — this preserves scroll position.
+            .onChange(of: chatStore.messages.last?.id) { _, _ in
+                if !chatStore.isLoadingHistory {
+                    withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo("bottom") }
+                }
+            }
+            // Jump to bottom (no animation) after the initial history load completes.
+            .onChange(of: initialLoadDone) { _, done in
+                if done { proxy.scrollTo("bottom", anchor: .bottom) }
             }
             .onChange(of: screenState) {
                 switch screenState {
