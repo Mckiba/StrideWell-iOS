@@ -26,4 +26,5 @@ struct Run: Codable, Identifiable {
 
 struct RecentRunsResponse: Codable {
     let runs: [Run]
+    let hasMore: Bool?  // nil when fetched via the HomeScreen 3-item call on older server
 }
