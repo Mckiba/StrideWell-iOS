@@ -19,7 +19,7 @@ struct MainContainerView: View {
     // MARK: - Tab
 
     enum MainTab: Hashable {
-        case home, plan, chat, settings
+        case home, plan, chat, activities, settings
     }
 
     // MARK: - Body
@@ -42,6 +42,12 @@ struct MainContainerView: View {
                     Tab("Chat", systemImage: "bubble.left.and.bubble.right", value: MainTab.chat) {
                         NavigationStack {
                             ChatScreen()
+                        }
+                    }
+
+                    Tab("Activities", systemImage: "figure.run", value: MainTab.activities) {
+                        NavigationStack {
+                            ActivitiesScreen()
                         }
                     }
 
@@ -68,6 +74,9 @@ struct MainContainerView: View {
                     case .home:                    selectedTab = .home
                     }
                     notificationStore.clearDeepLink()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .switchToActivities)) { _ in
+                    selectedTab = .activities
                 }
 
             // Residue strip: settles rain/snow particles over the tab bar area.

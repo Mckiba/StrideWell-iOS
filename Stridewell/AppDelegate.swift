@@ -68,6 +68,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 // MARK: - Notification Names
 
 extension Notification.Name {
-    static let apnsTokenReceived = Notification.Name("com.stridewell.apnsTokenReceived")
-    static let deepLinkReceived  = Notification.Name("com.stridewell.deepLinkReceived")
+    static let apnsTokenReceived  = Notification.Name("com.stridewell.apnsTokenReceived")
+    static let deepLinkReceived   = Notification.Name("com.stridewell.deepLinkReceived")
+    static let switchToActivities = Notification.Name("com.stridewell.switchToActivities")
 }

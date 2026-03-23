@@ -17,7 +17,7 @@ struct ActivityBannerView: View {
     @Environment(\.settingsStore) private var settingsStore
 
     var body: some View {
-        HStack(spacing: Spacing.md) {
+        HStack(alignment: .top, spacing: Spacing.md) {
 
             // Thumbnail — only rendered when an image is provided
             if let image {
@@ -47,19 +47,19 @@ struct ActivityBannerView: View {
                     Text(line)
                         .font(.sofiaSans(size: 12, weight: .bold))
                         .foregroundStyle(AppColor.textPrimary)
-                        .multilineTextAlignment(.center)
+                        .multilineTextAlignment(.leading)
                 }
 
                 if let subtitle{
                     Text(subtitle)
                         .font(.sofiaSans(size: 12, weight: .regular))
                         .foregroundStyle(AppColor.textPrimary)
-                        .multilineTextAlignment(.center)
+                        .multilineTextAlignment(.leading)
                 }
             }
         }
         .padding(Spacing.sm)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(width: 277, height: 99, alignment: .leading)
         .background(AppColor.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.sm))
         .shadow(color: Color.black.opacity(0.25), radius: 30, x: 0, y: 4)
@@ -105,9 +105,10 @@ struct ActivityBannerView: View {
 
             // title1 + detail (date) + subtitle — expands to full width
             ActivityBannerView(
-                title1:   "Great Workout!",
-                detail:   "March 7",
-                subtitle: "Let's talk about that last workout"
+                title1:   "Time to check In!",
+                subtitle: "Let's check in to see how you're doing.",
+                image:    Image("bg1")
+
             )
 
             // All fields

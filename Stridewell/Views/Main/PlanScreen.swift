@@ -13,11 +13,13 @@ struct PlanScreen: View {
     @Environment(\.apiClient) private var apiClient
     @Environment(\.planStore) private var planStore
     @Environment(\.authStore) private var authStore
+    @Environment(\.settingsStore) private var settingsStore
 
     @State private var screenState: LoadableState<Void> = .loading
     @State private var retryTrigger = false
     @State private var selectedMonday: Date = DateUtils.mondayOfWeek(containing: Date())
     @State private var displayedWeek: PlanWeekResponse? = nil
+    @State private var weekRuns: [Run] = []
     @State private var selectedDay: PlanDay? = nil
     @State private var showPlanChange = false
 
@@ -71,6 +73,12 @@ struct PlanScreen: View {
                 }
                 planChangeBannerSection
                 weekNavigator
+                WeekOverviewCard(
+                    days: displayedWeek?.days ?? [],
+                    weekRuns: weekRuns,
+                    monday: selectedMonday,
+                    unit: settingsStore.unitSystem
+                )
                 weekDaysList
                 metadataSection
             }
@@ -192,6 +200,7 @@ struct PlanScreen: View {
             ? DateUtils.previousMonday(from: selectedMonday)
             : DateUtils.nextMonday(from: selectedMonday)
         selectedMonday = newMonday
+        weekRuns = []
         Task { await loadWeek(for: newMonday) }
     }
 
@@ -200,10 +209,14 @@ struct PlanScreen: View {
     private func loadWeek(for monday: Date, forceRefresh: Bool = false) async {
         let startDate = DateUtils.format(monday)
 
+        // Fetch synced runs for this week in parallel with the plan data.
+        async let runsResult = apiClient.runsForWeek(monday: monday)
+
         // Check cache first (unless force-refreshing)
         if !forceRefresh, let cached = planStore.cachedWeek(for: startDate) {
             displayedWeek = cached
             screenState = cached.days.isEmpty ? .empty : .loaded
+            if case .success(let r) = await runsResult { weekRuns = r.runs }
             await prefetchAdjacentWeeks(around: monday)
             return
         }
@@ -214,6 +227,9 @@ struct PlanScreen: View {
         }
 
         let result = await apiClient.planWeek(start: startDate)
+
+        // Resolve runs fetch alongside plan result
+        if case .success(let r) = await runsResult { weekRuns = r.runs }
 
         switch result {
         case .success(let week):

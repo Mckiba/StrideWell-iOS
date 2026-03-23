@@ -11,7 +11,7 @@ enum Config {
         #if DEBUG
         URL(string: "http://10.0.0.112:3000")!
         #else
-        URL(string: "http://localhost:3000")!
+        URL(string: "https://stridewell-api-production.up.railway.app")!
         #endif
     }
 

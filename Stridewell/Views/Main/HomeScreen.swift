@@ -64,9 +64,9 @@ struct HomeScreen: View {
                     OfflineBannerView(lastFetchDate: planStore.lastFetched(for: "today"))
                 }
                 goalSection
-                todayWorkoutSection
                 planChangeBannerSection
                 reflectionPromptSection
+                todayWorkoutSection
                 recentActivitiesSection
             }
             .padding(.horizontal, Spacing.md)
@@ -165,8 +165,8 @@ struct HomeScreen: View {
     
     private var reflectionPromptSection: some View {
         ActivityBannerView(
-            title1:   "Daily Check-in",
-            subtitle: "How are you feeling today?",
+            title1:   "Time to check In!",
+            subtitle: "Lets check in to see how you're doing",
             image: Image("bg1")
             
         )
@@ -183,7 +183,7 @@ struct HomeScreen: View {
                     .font(.sectionTitle)
                 Spacer()
                 Button("View all") {
-                    // Future: Navigate to full activity list
+                    NotificationCenter.default.post(name: .switchToActivities, object: nil)
                 }
                 .font(.cardCaption)
             }
