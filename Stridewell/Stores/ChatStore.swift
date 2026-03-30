@@ -18,6 +18,11 @@ final class ChatStore {
     private(set) var conversationId: String?
     private(set) var messages: [ChatMessage] = []
 
+    // MARK: - Banner Auto-Send
+    /// Set before switching to the Chat tab to trigger an automatic first message.
+    /// ChatScreen consumes and clears this on appear / onChange.
+    var pendingInitialMessage: String? = nil
+
     // MARK: - History State (M14)
 
     /// True when there are older messages on the server not yet loaded.

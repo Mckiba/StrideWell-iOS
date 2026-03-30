@@ -9,18 +9,20 @@
 import SwiftUI
 
 struct HomeScreen: View {
-    
+
     @Environment(\.apiClient) private var apiClient
     @Environment(\.planStore) private var planStore
     @Environment(\.authStore) private var authStore
     @Environment(\.weatherStore) private var weatherStore
+    @Environment(\.activityStore) private var activityStore
+    @Environment(\.chatStore) private var chatStore
 
     @State private var screenState: LoadableState<Void> = .loading
     @State private var retryTrigger = false
     @State private var recentRuns: [Run] = []
     @State private var showReflection = false
     @State private var showPlanChange = false
-    
+
     var body: some View {
         ZStack(alignment: .center) {
             HeatmapBackgroundView(userId: authStore.userId ?? "")
@@ -31,18 +33,18 @@ struct HomeScreen: View {
             switch screenState {
             case .loading:
                 LoadingStateView(message: "Loading your plan...")
-                
+
             case .empty:
                 EmptyStateView(
                     title: "No plan yet",
                     subtitle: "Complete onboarding to get your training plan."
                 )
-                
+
             case .error(let message):
                 ErrorStateView(message: message) {
                     retryTrigger.toggle()
                 }
-                
+
             case .loaded:
                 homeContent
             }
@@ -54,18 +56,17 @@ struct HomeScreen: View {
         .sheet(isPresented: $showReflection) { ReflectionScreen() }
         .navigationDestination(isPresented: $showPlanChange) { PlanChangeScreen() }
     }
-    
+
     // MARK: - Home Content
-    
+
     private var homeContent: some View {
         ScrollView {
-            VStack(alignment: .center, spacing: Spacing.md) {
+            VStack(alignment: .leading, spacing: Spacing.md) {
                 if planStore.isOffline {
                     OfflineBannerView(lastFetchDate: planStore.lastFetched(for: "today"))
                 }
                 goalSection
-                planChangeBannerSection
-                reflectionPromptSection
+                bannerCarousel
                 todayWorkoutSection
                 recentActivitiesSection
             }
@@ -73,10 +74,11 @@ struct HomeScreen: View {
             .padding(.vertical, Spacing.md)
         }
         .refreshable { await loadData() }
+        .scrollContentBackground(.hidden)
     }
-    
+
     // MARK: - Section 1: Today / Next Workout
-    
+
     private var todayWorkoutSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             if let (title, day) = nextDisplayedWorkout {
@@ -90,22 +92,32 @@ struct HomeScreen: View {
                     image:    Image("bg2")
                 )
             }
+            if weatherStore.activeCondition != .clear {
+                ResidueView(
+                    type: weatherStore.activeCondition == .rain ? .rain : .snow,
+                    strength: weatherStore.activeCondition == .rain ? 250 : 150
+                )
+                .frame(maxWidth: .infinity)
+                .frame(height: 120)
+                .ignoresSafeArea(.container, edges: .bottom)
+                .allowsHitTesting(false)
+            }
         }
     }
-    
+
     /// Returns the label + day to feature at the top of the home screen.
     /// Shows "Today" if today is a real workout; otherwise finds the next
     /// non-rest day from the current (or cached next) week.
     private var nextDisplayedWorkout: (String, PlanDay)? {
         let todayString = DateUtils.format(Date())
-        
+
         // Today is a real workout — show it
         if let today = planStore.todayPlanDay,
            today.workout.type != .rest,
            today.workout.type != .recovery {
             return ("Today", today)
         }
-        
+
         // Rest day or missing today — find next upcoming workout this week
         let thisWeekDays = planStore.currentWeek?.days ?? []
         if let next = thisWeekDays.first(where: {
@@ -115,7 +127,7 @@ struct HomeScreen: View {
         }) {
             return ("Next Workout", next)
         }
-        
+
         // Nothing left this week — check next week from cache
         let nextMondayStr = DateUtils.format(DateUtils.nextMonday(from: DateUtils.mondayOfWeek(containing: Date())))
         if let nextWeek = planStore.cachedWeek(for: nextMondayStr),
@@ -124,58 +136,78 @@ struct HomeScreen: View {
            }) {
             return ("Next Workout", next)
         }
-        
+
         return nil
     }
-    
+
     // MARK: - Section 2: Goal Card
-    
+
     @ViewBuilder
     private var goalSection: some View {
         if let summary = planStore.goalSummary {
             GoalCardView(summary: summary)
         }
     }
-    
-    // MARK: - Section 3: Plan Change Banner
-    
-    @ViewBuilder
-    private var planChangeBannerSection: some View {
+
+    // MARK: - Section 3: Banner Carousel
+    //
+    // SnapCarousel containing all active banners. Plan change and activity
+    // banners appear conditionally; the reflection prompt is always the last card.
+
+    private var bannerItems: [BannerItem] {
+        var items: [BannerItem] = []
+
         if planStore.hasPlanChanged {
-            CardView {
-                HStack {
-                    VStack(alignment: .leading, spacing: Spacing.xs) {
-                        Text("Your plan was updated")
-                            .font(.cardTitle)
-                        Text("Tap to see what changed")
-                            .font(.cardCaption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .contentShape(Rectangle())
-            .onTapGesture { showPlanChange = true }
+            items.append(BannerItem(
+                id:       "plan-change",
+                title1:   "Let's Review the Plan",
+                subtitle: "Your plan has been updated based on your recent runs and reflections",
+                image:    Image("bg1"),
+                onTap:    { showPlanChange = true },
+                onDismiss: { planStore.markPlanChangeSeen() }
+            ))
         }
-    }
-    
-    // MARK: - Section 3: Reflection Prompt
-    
-    private var reflectionPromptSection: some View {
-        ActivityBannerView(
+
+        if activityStore.showActivityBanner {
+            items.append(BannerItem(
+                id:       "activity-\(activityStore.lastSyncedRunId ?? "pending")",
+                title1:   "Great work out there!",
+                subtitle: "Let's talk about that last run",
+                image:    Image("bg2"),
+                onTap: {
+                    chatStore.pendingInitialMessage = "Let's talk about my last run."
+                    activityStore.dismissBanner()
+                    NotificationCenter.default.post(name: .switchToChat, object: nil)
+                },
+                onDismiss: { activityStore.dismissBanner() }
+            ))
+        }
+
+        items.append(BannerItem(
+            id:       "reflection",
             title1:   "Time to check In!",
             subtitle: "Lets check in to see how you're doing",
-            image: Image("bg1")
-            
-        )
-        .contentShape(Rectangle())
-        .onTapGesture { showReflection = true }
+            image:    Image("bg1"),
+            onTap:    { showReflection = true }
+        ))
+
+        return items
     }
-    
+
+    private var bannerCarousel: some View {
+        SnapCarousel(items: bannerItems) { item in
+            ActivityBannerView(
+                title1:    item.title1,
+                subtitle:  item.subtitle,
+                image:     item.image,
+                onTap:     item.onTap,
+                onDismiss: item.onDismiss
+            )
+        }
+    }
+
     // MARK: - Section 4: Recent Activities
-    
+
     private var recentActivitiesSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
@@ -187,7 +219,7 @@ struct HomeScreen: View {
                 }
                 .font(.cardCaption)
             }
-            
+
             if recentRuns.isEmpty {
                 CardView {
                     VStack(spacing: Spacing.sm) {
@@ -210,27 +242,27 @@ struct HomeScreen: View {
             }
         }
     }
-    
+
     // MARK: - Data Loading
-    
+
     private func loadData() async {
         if case .loaded = screenState {
             // Already loaded — pull-to-refresh, skip loading spinner
         } else {
             screenState = .loading
         }
-        
+
         // Fetch today, week, recent runs, and goal summary in parallel
         async let todayResult = apiClient.planToday()
         async let weekResult = apiClient.planWeek(start: currentWeekStart)
         async let runsResult = apiClient.recentRuns()
         async let goalResult = apiClient.goalSummary()
-        
+
         let today: ApiResult<PlanDay> = await todayResult
         let week: ApiResult<PlanWeekResponse> = await weekResult
         let runs: ApiResult<RecentRunsResponse> = await runsResult
         let goal: ApiResult<GoalSummary> = await goalResult
-        
+
         switch today {
         case .success(let day):
             planStore.setTodayPlanDay(day)
@@ -246,26 +278,26 @@ struct HomeScreen: View {
             }
             // Cache served — fall through to populate week/runs and show content
         }
-        
+
         // Week fetch is non-fatal — plan change detection won't work without it
         // but today's workout still shows.
         if case .success(let weekData) = week {
             planStore.setWeekData(weekData)
         }
-        
+
         // Runs fetch is non-fatal — empty state shown if it fails
         if case .success(let runsData) = runs {
             recentRuns = runsData.runs
         }
-        
+
         // Goal summary is non-fatal — card simply doesn't render on 404 or error
         if case .success(let goalData) = goal {
             planStore.setGoalSummary(goalData)
         }
-        
+
         screenState = .loaded
     }
-    
+
     // MARK: - Date Helpers
 
     private var currentWeekStart: String {

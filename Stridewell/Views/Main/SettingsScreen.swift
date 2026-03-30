@@ -13,6 +13,7 @@ struct SettingsScreen: View {
     @Environment(\.planStore) private var planStore
     @Environment(\.chatStore) private var chatStore
     @Environment(\.settingsStore) private var settingsStore
+    @Environment(\.activityStore) private var activityStore
 
     @State private var showDisconnectAlert = false
     @State private var showDeleteStep1 = false
@@ -59,7 +60,8 @@ struct SettingsScreen: View {
                             authStore: authStore,
                             onboardingStore: onboardingStore,
                             planStore: planStore,
-                            chatStore: chatStore
+                            chatStore: chatStore,
+                            activityStore: activityStore
                         )
                     }
                 }
@@ -111,7 +113,8 @@ struct SettingsScreen: View {
                     authStore: authStore,
                     onboardingStore: onboardingStore,
                     planStore: planStore,
-                    chatStore: chatStore
+                    chatStore: chatStore,
+                    activityStore: activityStore
                 )
             },
             onDeleteAccount: { showDeleteStep1 = true }

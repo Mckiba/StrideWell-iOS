@@ -7,16 +7,39 @@ import SwiftUI
 
 struct ActivityBannerView: View {
 
-    let title1:   String           // bold first line (required)
-    var detail:   String?  = nil   // trailing text on the title1 row, e.g. a date (optional)
-    var title2:   String?  = nil   // bold second line — pass either this OR workout, not both
-    var workout:  Workout? = nil   // when set, metric line (distance · pace/duration) is computed here
-    let subtitle: String?          // regular third line (required)
-    var image:    Image?   = nil   // optional 60×60 thumbnail
+    let title1:    String           // bold first line (required)
+    var detail:    String?  = nil   // trailing text on the title1 row, e.g. a date (optional)
+    var title2:    String?  = nil   // bold second line — pass either this OR workout, not both
+    var workout:   Workout? = nil   // when set, metric line (distance · pace/duration) is computed here
+    let subtitle:  String?          // regular third line (required)
+    var image:     Image?   = nil   // optional 60×60 thumbnail
+    var onTap:     (() -> Void)? = nil   // called when the card body is tapped
+    var onDismiss: (() -> Void)? = nil   // when set, renders an X button at top-trailing
 
     @Environment(\.settingsStore) private var settingsStore
 
     var body: some View {
+        ZStack(alignment: .topTrailing) {
+            cardContent
+
+            // Dismiss button — only rendered when onDismiss is provided
+            if let onDismiss {
+                Button {
+                    onDismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(AppColor.textPrimary.opacity(0.6))
+                        .padding(6)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: - Card Content
+
+    private var cardContent: some View {
         HStack(alignment: .top, spacing: Spacing.md) {
 
             // Thumbnail — only rendered when an image is provided
@@ -50,7 +73,7 @@ struct ActivityBannerView: View {
                         .multilineTextAlignment(.leading)
                 }
 
-                if let subtitle{
+                if let subtitle {
                     Text(subtitle)
                         .font(.sofiaSans(size: 12, weight: .regular))
                         .foregroundStyle(AppColor.textPrimary)
@@ -58,11 +81,13 @@ struct ActivityBannerView: View {
                 }
             }
         }
-        .padding(Spacing.sm)
-        .frame(width: 277, height: 99, alignment: .leading)
+        .padding(Spacing.md)
+        .frame(minWidth: 300, minHeight: 99, alignment: .leading)
         .background(AppColor.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.sm))
-        .shadow(color: Color.black.opacity(0.25), radius: 30, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
+        .contentShape(Rectangle())
+        .onTapGesture { onTap?() }
     }
 
     // MARK: - Computed
@@ -108,15 +133,29 @@ struct ActivityBannerView: View {
                 title1:   "Time to check In!",
                 subtitle: "Let's check in to see how you're doing.",
                 image:    Image("bg1")
-
             )
 
             // All fields
             ActivityBannerView(
                 title1:   "Easy Run",
                 detail:   "Monday, Feb 23",
-                title2:   "Keep it up!",
+                title2:   "6 Miles",
                 subtitle: "Let's talk about that last workout",
+                image:    Image("bg2")
+            )
+
+            // Activity banner with callbacks
+            ActivityBannerView(
+                title1:    "Great work out there!",
+                subtitle:  "Let's talk about that last run",
+                image:     Image("bg2"),
+                onTap:     { },
+                onDismiss: { }
+            )
+
+            ActivityBannerView(
+                title1:   "Lets Review the Plan",
+                subtitle: "Let's discuss some changes to your plan based on the last runs you've done/reflection you've submitted ",
                 image:    Image("bg2")
             )
         }

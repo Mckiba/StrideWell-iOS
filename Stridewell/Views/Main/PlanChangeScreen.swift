@@ -12,6 +12,7 @@ struct PlanChangeScreen: View {
 
     @Environment(\.apiClient) private var apiClient
     @Environment(\.planStore) private var planStore
+    @Environment(\.chatStore) private var chatStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var screenState: LoadableState<DecisionRecord> = .loading
@@ -74,6 +75,9 @@ struct PlanChangeScreen: View {
 
                 // Dismiss button
                 gotItButton
+
+                // Chat entry — routes to Explainer Agent via existing orchestrator intent detection
+                discussWithCoachButton
             }
             .padding(.horizontal, Spacing.md)
             .padding(.vertical, Spacing.md)
@@ -200,6 +204,23 @@ struct PlanChangeScreen: View {
         }
         .buttonStyle(.borderedProminent)
         .padding(.top, Spacing.sm)
+    }
+
+    // MARK: - Discuss With Coach Button
+
+    private var discussWithCoachButton: some View {
+        Button {
+            planStore.markPlanChangeSeen()
+            chatStore.pendingInitialMessage = "Can you walk me through why my plan changed?"
+            NotificationCenter.default.post(name: .switchToChat, object: nil)
+            dismiss()
+        } label: {
+            Text("Discuss with coach")
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Spacing.sm)
+        }
+        .buttonStyle(.bordered)
     }
 
     // MARK: - Data Loading

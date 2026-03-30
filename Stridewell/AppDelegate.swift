@@ -3,6 +3,7 @@
 //  Stridewell
 //
 
+import GoogleSignIn
 import UIKit
 import UserNotifications
 
@@ -16,6 +17,16 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     ) -> Bool {
         UNUserNotificationCenter.current().delegate = self
         return true
+    }
+
+    // MARK: - Google Sign-In URL Handling
+
+    func application(
+        _ app: UIApplication,
+        open url: URL,
+        options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+    ) -> Bool {
+        return GIDSignIn.sharedInstance.handle(url)
     }
 
     // MARK: - Remote Notification Registration
@@ -44,21 +55,28 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 extension AppDelegate: UNUserNotificationCenterDelegate {
 
     /// Show banner, sound, and badge even when the app is foregrounded.
+    /// Also broadcasts the full payload so stores can react without navigating.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        let userInfo = notification.request.content.userInfo
+        NotificationCenter.default.post(name: .foregroundPushReceived, object: userInfo)
         completionHandler([.banner, .sound, .badge])
     }
 
-    /// Handle notification tap — extract deep_link and broadcast for SwiftUI to route.
+    /// Handle notification tap — update stores with full payload, then route via deep_link.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        if let deepLink = response.notification.request.content.userInfo["deep_link"] as? String {
+        let userInfo = response.notification.request.content.userInfo
+        // Update activityStore / planStore with run_id / plan_version_id — same handler as foreground push.
+        // This covers the case where the push arrived while the app was backgrounded and the user tapped it.
+        NotificationCenter.default.post(name: .foregroundPushReceived, object: userInfo)
+        if let deepLink = userInfo["deep_link"] as? String {
             NotificationCenter.default.post(name: .deepLinkReceived, object: deepLink)
         }
         completionHandler()
@@ -68,7 +86,9 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 // MARK: - Notification Names
 
 extension Notification.Name {
-    static let apnsTokenReceived  = Notification.Name("com.stridewell.apnsTokenReceived")
-    static let deepLinkReceived   = Notification.Name("com.stridewell.deepLinkReceived")
-    static let switchToActivities = Notification.Name("com.stridewell.switchToActivities")
+    static let apnsTokenReceived    = Notification.Name("com.stridewell.apnsTokenReceived")
+    static let deepLinkReceived     = Notification.Name("com.stridewell.deepLinkReceived")
+    static let foregroundPushReceived = Notification.Name("com.stridewell.foregroundPushReceived")
+    static let switchToActivities   = Notification.Name("com.stridewell.switchToActivities")
+    static let switchToChat         = Notification.Name("com.stridewell.switchToChat")
 }

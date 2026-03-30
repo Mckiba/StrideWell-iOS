@@ -181,11 +181,13 @@ final class SettingsStore {
         authStore: AuthStore,
         onboardingStore: OnboardingStore,
         planStore: PlanStore,
-        chatStore: ChatStore
+        chatStore: ChatStore,
+        activityStore: ActivityStore
     ) {
         chatStore.reset()
         planStore.reset()
         onboardingStore.reset()
+        activityStore.reset()
         // Clear heatmap disk cache before signing out
         if let userId = authStore.userId {
             HeatmapCache().clearAll(userId: userId)

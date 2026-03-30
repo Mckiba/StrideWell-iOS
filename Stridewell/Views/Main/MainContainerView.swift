@@ -78,6 +78,9 @@ struct MainContainerView: View {
                 .onReceive(NotificationCenter.default.publisher(for: .switchToActivities)) { _ in
                     selectedTab = .activities
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .switchToChat)) { _ in
+                    selectedTab = .chat
+                }
 
             // Residue strip: settles rain/snow particles over the tab bar area.
             // Only active when weather is rain or snow — zero overhead when clear.

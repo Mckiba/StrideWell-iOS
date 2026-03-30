@@ -165,6 +165,12 @@ final class PlanStore {
 
     // MARK: - Plan Change
 
+    /// Called from the foreground push handler when a plan_change push arrives.
+    /// Updates the version ID so the plan change banner surfaces on HomeScreen.
+    func setCurrentPlanVersionId(_ id: String) {
+        currentPlanVersionId = id
+    }
+
     /// Called when the user dismisses PlanChangeScreen.
     func markPlanChangeSeen() {
         lastSeenPlanVersionId = currentPlanVersionId

@@ -21,6 +21,7 @@ extension EnvironmentValues {
     @Entry var heatmapViewModel: HeatmapViewModel? = nil
     @Entry var weatherStore: WeatherStore = WeatherStore()
     @Entry var activitiesStore: ActivitiesStore = ActivitiesStore()
+    @Entry var activityStore: ActivityStore = ActivityStore()
 }
 
 // MARK: - App
@@ -39,6 +40,7 @@ struct StridewellApp: App {
     @State private var locationStore = LocationStore()
     @State private var weatherStore = WeatherStore()
     @State private var activitiesStore = ActivitiesStore()
+    @State private var activityStore = ActivityStore()
     private let apiClient: APIClient
     private let heatmapViewModel: HeatmapViewModel
 
@@ -68,10 +70,24 @@ struct StridewellApp: App {
                 .environment(\.heatmapViewModel, heatmapViewModel)
                 .environment(\.weatherStore, weatherStore)
                 .environment(\.activitiesStore, activitiesStore)
+                .environment(\.activityStore, activityStore)
                 .onReceive(NotificationCenter.default.publisher(for: .apnsTokenReceived)) { notification in
                     guard let token = notification.object as? String,
                           authStore.isAuthenticated else { return }
                     Task { _ = await apiClient.registerDeviceToken(token) }
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .foregroundPushReceived)) { notification in
+                    guard let userInfo = notification.object as? [AnyHashable: Any],
+                          let deepLink = userInfo["deep_link"] as? String else { return }
+                    if deepLink == "home", let runId = userInfo["run_id"] as? String {
+                        let summary = (userInfo["aps"] as? [String: Any])
+                            .flatMap { $0["alert"] as? [String: Any] }
+                            .flatMap { $0["body"] as? String } ?? ""
+                        activityStore.setLastSyncedRun(runId: runId, summary: summary)
+                    }
+                    if deepLink == "plan_change", let pvId = userInfo["plan_version_id"] as? String {
+                        planStore.setCurrentPlanVersionId(pvId)
+                    }
                 }
         }
     }

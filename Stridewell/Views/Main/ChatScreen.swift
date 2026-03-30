@@ -50,9 +50,29 @@ struct ChatScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if !chatStore.messages.isEmpty { screenState = .active }
-            guard !initialLoadDone else { return }
+            guard !initialLoadDone else {
+                // Screen already loaded — consume any pending message set while it was visible
+                if let msg = chatStore.pendingInitialMessage {
+                    chatStore.pendingInitialMessage = nil
+                    Task { await sendMessage(content: msg) }
+                }
+                return
+            }
             initialLoadDone = true
-            Task { await chatStore.loadInitialHistory(api: apiClient) }
+            Task {
+                await chatStore.loadInitialHistory(api: apiClient)
+                // Auto-send initial message from banner tap, guarded by consumption
+                if let msg = chatStore.pendingInitialMessage {
+                    chatStore.pendingInitialMessage = nil
+                    await sendMessage(content: msg)
+                }
+            }
+        }
+        // Handles messages set while the screen is already visible and onAppear won't re-fire
+        .onChange(of: chatStore.pendingInitialMessage) { _, msg in
+            guard let msg else { return }
+            chatStore.pendingInitialMessage = nil
+            Task { await sendMessage(content: msg) }
         }
     }
 
@@ -235,7 +255,6 @@ struct ChatScreen: View {
             conversationId: chatStore.conversationId,
             message: trimmed
         )
-
         handleResult(result)
     }
 
