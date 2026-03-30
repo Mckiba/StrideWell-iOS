@@ -103,7 +103,7 @@ struct StravaConnectContent: View {
                     Text("Skipping the onboarding will result in a default plan. For a more personal experience the early onboarding and Strava integration is recommended")
                         .foregroundStyle(.white)
                     
-                    PrimaryButton("Skip",size: .large,action: {})
+                    PrimaryButton("Skip", size: .large, action: onSkip)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading) // expand
                 .padding(20)

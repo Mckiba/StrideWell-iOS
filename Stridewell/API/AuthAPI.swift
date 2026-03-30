@@ -23,6 +23,16 @@ struct LoginResponse: Decodable {
     let user_id: String
 }
 
+struct AppleSignInRequest: Encodable {
+    let id_token: String
+    let nonce: String
+}
+
+struct GoogleSignInRequest: Encodable {
+    let id_token: String
+    let nonce: String
+}
+
 // MARK: - APIClient Extension
 
 extension APIClient {
@@ -38,6 +48,20 @@ extension APIClient {
         await post(
             path: APIEndpoints.login,
             body: LoginRequest(email: email, password: password)
+        )
+    }
+
+    func appleSignIn(idToken: String, nonce: String) async -> ApiResult<LoginResponse> {
+        await post(
+            path: APIEndpoints.appleSignIn,
+            body: AppleSignInRequest(id_token: idToken, nonce: nonce)
+        )
+    }
+
+    func googleSignIn(idToken: String, nonce: String) async -> ApiResult<LoginResponse> {
+        await post(
+            path: APIEndpoints.googleSignIn,
+            body: GoogleSignInRequest(id_token: idToken, nonce: nonce)
         )
     }
 }
