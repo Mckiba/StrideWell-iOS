@@ -15,6 +15,7 @@ enum APIEndpoints {
     static let me                = "/auth/me"
     static let appleSignIn       = "/auth/apple"
     static let googleSignIn      = "/auth/google"
+    static let forgotPassword    = "/auth/forgot-password"
 
     // MARK: Onboarding (M3–M7)
     static let onboardingStart   = "/onboarding/start"

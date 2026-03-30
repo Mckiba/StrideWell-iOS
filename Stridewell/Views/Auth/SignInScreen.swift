@@ -88,7 +88,7 @@ struct SignInScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $forgotPassword) {
             ForgotPasswordScreen()
-                .presentationDetents([.height(260)])
+                .presentationDetents([.medium])
                 .presentationBackground(Color(uiColor: .systemBackground))
         }
     }

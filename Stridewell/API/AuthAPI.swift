@@ -7,6 +7,13 @@ import Foundation
 
 // MARK: - Request / Response Types
 
+/// Response shape for GET /auth/me.
+struct MeResponse: Decodable {
+    let id: String
+    let email: String?
+    let onboarding_status: OnboardingStatus?
+}
+
 struct RegisterRequest: Encodable {
     let email: String
     let password: String
@@ -21,6 +28,14 @@ struct LoginRequest: Encodable {
 struct LoginResponse: Decodable {
     let token: String
     let user_id: String
+}
+
+struct ForgotPasswordRequest: Encodable {
+    let email: String
+}
+
+struct ForgotPasswordResponse: Decodable {
+    let message: String
 }
 
 struct AppleSignInRequest: Encodable {
@@ -62,6 +77,19 @@ extension APIClient {
         await post(
             path: APIEndpoints.googleSignIn,
             body: GoogleSignInRequest(id_token: idToken, nonce: nonce)
+        )
+    }
+
+    /// Validates the stored JWT and returns the current user profile.
+    /// A 401 response triggers the onUnauthorized handler, clearing auth state.
+    func me() async -> ApiResult<MeResponse> {
+        await get(path: APIEndpoints.me)
+    }
+
+    func forgotPassword(email: String) async -> ApiResult<ForgotPasswordResponse> {
+        await post(
+            path: APIEndpoints.forgotPassword,
+            body: ForgotPasswordRequest(email: email)
         )
     }
 }
