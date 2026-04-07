@@ -194,7 +194,6 @@ struct PlanChangeScreen: View {
 
     private var gotItButton: some View {
         Button {
-            planStore.markPlanChangeSeen()
             dismiss()
         } label: {
             Text("Got it")
@@ -210,7 +209,6 @@ struct PlanChangeScreen: View {
 
     private var discussWithCoachButton: some View {
         Button {
-            planStore.markPlanChangeSeen()
             chatStore.pendingInitialMessage = "Can you walk me through why my plan changed?"
             NotificationCenter.default.post(name: .switchToChat, object: nil)
             dismiss()
