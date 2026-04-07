@@ -25,6 +25,10 @@ final class ChatStore {
 
     // MARK: - History State (M14)
 
+    /// True when chat history is being served from the UserDefaults seed
+    /// because the network is unavailable. Sending is blocked while offline.
+    private(set) var isOffline: Bool = false
+
     /// True when there are older messages on the server not yet loaded.
     private(set) var hasMoreHistory: Bool = false
 
@@ -57,9 +61,14 @@ final class ChatStore {
         defer { isLoadingHistory = false }
 
         guard case .success(let response) = await api.chatHistory(before: nil, limit: 50) else {
-            return   // keep UserDefaults seed on failure
+            // On network failure: serve the UserDefaults seed as offline cache
+            if !messages.isEmpty {
+                isOffline = true
+            }
+            return
         }
 
+        isOffline = false
         messages = response.messages               // ascending: oldest → newest
         hasMoreHistory = response.has_more
         oldestCursor = response.messages.first?.created_at
@@ -102,6 +111,7 @@ final class ChatStore {
     func reset() {
         conversationId = nil
         messages = []
+        isOffline = false
         hasMoreHistory = false
         isLoadingHistory = false
         oldestCursor = nil

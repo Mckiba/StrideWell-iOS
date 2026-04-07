@@ -35,6 +35,10 @@ final class PlanStore {
     /// survives app restarts. Used by PlanScreen for instant week navigation.
     private(set) var weekCache: [String: PlanWeekResponse] = [:]
 
+    /// Cached recent runs from the home feed — persisted to UserDefaults.
+    /// Served offline when the /runs/recent call fails.
+    private(set) var cachedRecentRuns: [Run] = []
+
     // MARK: - Offline State
 
     /// True when plan data is being served from cache due to a network failure.
@@ -60,10 +64,12 @@ final class PlanStore {
 
     // MARK: - Persistence Keys
 
-    private static let lastSeenKey      = "PlanStore.lastSeenPlanVersionId"
-    private static let cachedTodayKey   = "PlanStore.cachedToday"
-    private static let weekCacheKey     = "PlanStore.weekCache"
-    private static let lastFetchTimeKey = "PlanStore.lastFetchTime"
+    private static let lastSeenKey        = "PlanStore.lastSeenPlanVersionId"
+    private static let cachedTodayKey     = "PlanStore.cachedToday"
+    private static let weekCacheKey       = "PlanStore.weekCache"
+    private static let lastFetchTimeKey   = "PlanStore.lastFetchTime"
+    private static let cachedGoalKey      = "PlanStore.cachedGoal"
+    private static let cachedRecentRunsKey = "PlanStore.cachedRecentRuns"
 
     // MARK: - Init
 
@@ -85,12 +91,41 @@ final class PlanStore {
            let times = try? JSONDecoder().decode([String: Date].self, from: data) {
             lastFetchTime = times
         }
+
+        // Goal summary
+        if let data = UserDefaults.standard.data(forKey: Self.cachedGoalKey),
+           let goal = try? JSONDecoder().decode(GoalSummary.self, from: data) {
+            goalSummary = goal
+        }
+
+        // Recent runs (HomeScreen home feed)
+        if let data = UserDefaults.standard.data(forKey: Self.cachedRecentRunsKey),
+           let runs = try? JSONDecoder().decode([Run].self, from: data) {
+            cachedRecentRuns = runs
+        }
+
+        // Pre-populate currentWeek so HomeScreen "Next Workout" works offline
+        let thisWeekStart = DateUtils.format(DateUtils.mondayOfWeek(containing: Date()))
+        if let thisWeek = weekCache[thisWeekStart] {
+            currentWeek = thisWeek
+            currentPlanVersionId = thisWeek.plan_version_id
+        }
     }
 
     // MARK: - Actions
 
     func setGoalSummary(_ summary: GoalSummary) {
         goalSummary = summary
+        if let data = try? JSONEncoder().encode(summary) {
+            UserDefaults.standard.set(data, forKey: Self.cachedGoalKey)
+        }
+    }
+
+    func setRecentRuns(_ runs: [Run]) {
+        cachedRecentRuns = runs
+        if let data = try? JSONEncoder().encode(runs) {
+            UserDefaults.standard.set(data, forKey: Self.cachedRecentRunsKey)
+        }
     }
 
     func setTodayPlanDay(_ day: PlanDay) {
@@ -123,12 +158,25 @@ final class PlanStore {
     }
 
     /// Stores a fetched week in the cache, persists to disk, and updates plan version tracking.
+    /// Evicts entries beyond the 8 most-recently-fetched weeks to bound memory and disk usage.
     func cacheWeek(_ week: PlanWeekResponse) {
         weekCache[week.start_date] = week
         currentPlanVersionId = week.plan_version_id
         isOffline = false
-        // Persist to disk for offline serving
         lastFetchTime[week.start_date] = Date()
+
+        // Keep only the 8 most recently fetched weeks (by fetch time, not calendar order)
+        if weekCache.count > 8 {
+            let oldest = lastFetchTime
+                .sorted { $0.value < $1.value }
+                .prefix(weekCache.count - 8)
+                .map(\.key)
+            for key in oldest {
+                weekCache.removeValue(forKey: key)
+                lastFetchTime.removeValue(forKey: key)
+            }
+        }
+
         persistWeekCache()
         persistLastFetchTime()
 
@@ -188,11 +236,14 @@ final class PlanStore {
         weekCache = [:]
         isOffline = false
         cachedToday = nil
+        cachedRecentRuns = []
         lastFetchTime = [:]
         UserDefaults.standard.removeObject(forKey: Self.lastSeenKey)
         UserDefaults.standard.removeObject(forKey: Self.cachedTodayKey)
         UserDefaults.standard.removeObject(forKey: Self.weekCacheKey)
         UserDefaults.standard.removeObject(forKey: Self.lastFetchTimeKey)
+        UserDefaults.standard.removeObject(forKey: Self.cachedGoalKey)
+        UserDefaults.standard.removeObject(forKey: Self.cachedRecentRunsKey)
     }
 
     // MARK: - Private Persistence

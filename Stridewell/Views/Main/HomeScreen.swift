@@ -55,6 +55,9 @@ struct HomeScreen: View {
         }
         .sheet(isPresented: $showReflection) { ReflectionScreen() }
         .navigationDestination(isPresented: $showPlanChange) { PlanChangeScreen() }
+        .onReceive(NotificationCenter.default.publisher(for: .openReflection)) { _ in
+            showReflection = true
+        }
     }
 
     // MARK: - Home Content
@@ -84,23 +87,7 @@ struct HomeScreen: View {
             if let (title, day) = nextDisplayedWorkout {
                 Text(title)
                     .font(.sectionTitle)
-                ActivityBannerView(
-                    title1:   day.workout.label,
-                    detail:   DateUtils.planDayDate(day.date),
-                    workout:  day.workout,
-                    subtitle: day.workout.description,
-                    image:    Image("bg2")
-                )
-            }
-            if weatherStore.activeCondition != .clear {
-                ResidueView(
-                    type: weatherStore.activeCondition == .rain ? .rain : .snow,
-                    strength: weatherStore.activeCondition == .rain ? 250 : 150
-                )
-                .frame(maxWidth: .infinity)
-                .frame(height: 120)
-                .ignoresSafeArea(.container, edges: .bottom)
-                .allowsHitTesting(false)
+                WorkoutCard(day: day, isToday: title == "Today")
             }
         }
     }
@@ -283,14 +270,23 @@ struct HomeScreen: View {
         // but today's workout still shows.
         if case .success(let weekData) = week {
             planStore.setWeekData(weekData)
+        } else if week.isOffline {
+            let start = DateUtils.mondayString(containing: Date())
+            if let cached = planStore.serveCachedWeekOffline(for: start) {
+                planStore.setWeekData(cached)
+            }
         }
 
-        // Runs fetch is non-fatal — empty state shown if it fails
+        // Runs fetch is non-fatal — save on success, serve from cache on offline failure
         if case .success(let runsData) = runs {
             recentRuns = runsData.runs
+            planStore.setRecentRuns(runsData.runs)
+        } else if runs.isOffline && recentRuns.isEmpty {
+            recentRuns = planStore.cachedRecentRuns
         }
 
         // Goal summary is non-fatal — card simply doesn't render on 404 or error
+        // On offline, the goal is already loaded from UserDefaults at PlanStore init.
         if case .success(let goalData) = goal {
             planStore.setGoalSummary(goalData)
         }

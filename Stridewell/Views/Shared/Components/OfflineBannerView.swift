@@ -32,7 +32,7 @@ struct OfflineBannerView: View {
 
     private var label: String {
         guard let date = lastFetchDate else {
-            return "Offline — using cached plan"
+            return "Offline — using cached data"
         }
         return "Offline — cached \(Self.dateFormatter.string(from: date))"
     }

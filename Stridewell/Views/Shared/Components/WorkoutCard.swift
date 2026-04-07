@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-struct WorkoutCardView: View {
+struct WorkoutCard: View {
 
     let day: PlanDay
     var isToday: Bool = false
@@ -13,9 +13,8 @@ struct WorkoutCardView: View {
     @Environment(\.settingsStore) private var settingsStore
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
 
-            // Row 1: label (left) + date (right)
             HStack(alignment: .center) {
                 Text(day.workout.label)
                     .font(.activityName)
@@ -26,11 +25,15 @@ struct WorkoutCardView: View {
                     .foregroundStyle(AppColor.textPrimary)
             }
 
-            // Row 2: metric (distance · pace or duration)
-            if let metric = metricLine {
-                Text(metric)
-                    .font(.activityStatLabel)
-                    .foregroundStyle(AppColor.textPrimary)
+            // Row 2: three stat columns (hidden for rest/recovery)
+            if !isRest {
+                HStack(spacing: Spacing.lg) {
+                    WorkoutStat(label: "DISTANCE",    value: distanceValue)
+                    Spacer()
+                    WorkoutStat(label: "TIME",        value: timeValue)
+                    Spacer()
+                    WorkoutStat(label: "TARGET PACE", value: paceValue)
+                }
             }
 
             // Row 3: notes / description
@@ -41,12 +44,12 @@ struct WorkoutCardView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity,minHeight:40, alignment: .leading)
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
         .background(AppColor.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
         .shadow(color: Color.black.opacity(0.14), radius: 15, x: 0, y: 12)
-        .contentShape(Rectangle())
     }
 
     // MARK: - Computed
@@ -55,19 +58,19 @@ struct WorkoutCardView: View {
         day.workout.type == .rest || day.workout.type == .recovery
     }
 
-    private var metricLine: String? {
-        if isRest { return nil }
-        let unit = settingsStore.unitSystem
-        var parts: [String] = []
-        if let d = day.workout.target_distance_m {
-            parts.append(FormatUtils.distance(d, unit: unit))
-        }
-        if let p = day.workout.target_pace_s_per_km {
-            parts.append(FormatUtils.pace(p, unit: unit))
-        } else if let dur = day.workout.target_duration_s {
-            parts.append(FormatUtils.duration(dur))
-        }
-        return parts.isEmpty ? nil : parts.joined(separator: "  ·  ")
+    private var distanceValue: String {
+        guard let d = day.workout.target_distance_m else { return "-" }
+        return FormatUtils.distance(d, unit: settingsStore.unitSystem)
+    }
+
+    private var timeValue: String {
+        guard let dur = day.workout.target_duration_s else { return "-" }
+        return FormatUtils.duration(dur)
+    }
+
+    private var paceValue: String {
+        guard let p = day.workout.target_pace_s_per_km else { return "-" }
+        return FormatUtils.pace(p, unit: settingsStore.unitSystem)
     }
 
     private var notesLine: String? {
@@ -77,6 +80,26 @@ struct WorkoutCardView: View {
     private var cardDate: String {
         guard let d = DateUtils.parse(day.date) else { return "" }
         return DateUtils.workoutCardDateFormatter.string(from: d)
+    }
+}
+
+// MARK: - WorkoutStat
+
+private struct WorkoutStat: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.activityStatLabel)
+                .foregroundStyle(AppColor.textSecondary)
+                .lineLimit(1)
+            Text(value)
+                .font(.activityStatValue)
+                .foregroundStyle(AppColor.textPrimary)
+                .lineLimit(1)
+        }
     }
 }
 
@@ -126,9 +149,9 @@ struct WorkoutCardView: View {
 
     return ScrollView {
         VStack(spacing: 12) {
-            WorkoutCardView(day: easy, isToday: true)
-            WorkoutCardView(day: rest)
-            WorkoutCardView(day: long)
+            WorkoutCard(day: easy, isToday: true)
+            WorkoutCard(day: rest)
+            WorkoutCard(day: long)
         }
         .padding()
     }

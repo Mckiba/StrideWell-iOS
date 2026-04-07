@@ -43,6 +43,10 @@ struct ChatScreen: View {
             VStack(spacing: 0) {
                 conversationView
 
+                if chatStore.isOffline {
+                    OfflineBannerView(lastFetchDate: nil)
+                        .padding(.horizontal, Spacing.md)
+                }
                 Divider()
                 inputBar
             }
@@ -228,6 +232,7 @@ struct ChatScreen: View {
 
     private var canSend: Bool {
         screenState != .waiting &&
+        !chatStore.isOffline &&
         !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 

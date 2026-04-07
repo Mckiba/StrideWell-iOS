@@ -29,10 +29,23 @@ final class ActivitiesStore {
     /// False once the server returns fewer rows than the page size.
     var hasMore = false
 
+    /// True when runs are being served from cache due to a network failure.
+    private(set) var isOffline: Bool = false
+
     // MARK: - Private
 
     private let pageSize = 20
     private var currentOffset = 0
+    private static let cachedRunsKey = "ActivitiesStore.cachedRuns"
+
+    // MARK: - Init
+
+    init() {
+        if let data = UserDefaults.standard.data(forKey: Self.cachedRunsKey),
+           let saved = try? JSONDecoder().decode([Run].self, from: data) {
+            runs = saved
+        }
+    }
 
     // MARK: - Refresh (reset to page 0)
 
@@ -47,14 +60,32 @@ final class ActivitiesStore {
         let result = await apiClient.activities(limit: pageSize, offset: 0, search: search, date: date)
         switch result {
         case .success(let response):
+            isOffline = false
             runs = response.runs
             hasMore = response.hasMore ?? false
             currentOffset = response.runs.count
+            // Persist unfiltered first page for offline serving
+            if search.isEmpty && date == nil,
+               let data = try? JSONEncoder().encode(response.runs) {
+                UserDefaults.standard.set(data, forKey: Self.cachedRunsKey)
+            }
             // Only show the empty state when there are genuinely no runs (no filters active).
             let noFilters = search.isEmpty && date == nil
             state = runs.isEmpty && noFilters ? .empty : .loaded
-        case .failure(_, let message):
-            state = .error(message)
+        case .failure(let status, let message):
+            // Serve cached unfiltered runs if offline with no active filters
+            if status == 0 && search.isEmpty && date == nil,
+               let data = UserDefaults.standard.data(forKey: Self.cachedRunsKey),
+               let cached = try? JSONDecoder().decode([Run].self, from: data),
+               !cached.isEmpty {
+                runs = cached
+                hasMore = false
+                isOffline = true
+                state = .loaded
+            } else {
+                isOffline = false
+                state = .error(message)
+            }
         }
     }
 
@@ -80,6 +111,8 @@ final class ActivitiesStore {
         runs = []
         state = .loading
         hasMore = false
+        isOffline = false
         currentOffset = 0
+        UserDefaults.standard.removeObject(forKey: Self.cachedRunsKey)
     }
 }

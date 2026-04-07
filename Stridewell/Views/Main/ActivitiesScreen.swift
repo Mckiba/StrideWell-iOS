@@ -31,7 +31,6 @@ struct ActivitiesScreen: View {
                 .allowsHitTesting(false)
             contentLayer
         }
-        .navigationTitle("Activities")
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchText, placement: .navigationBarDrawer, prompt: "Search activities")
         .toolbar {
@@ -94,6 +93,11 @@ struct ActivitiesScreen: View {
     private var activityList: some View {
         ScrollView {
             LazyVStack(spacing: Spacing.sm) {
+                if activitiesStore.isOffline {
+                    OfflineBannerView(lastFetchDate: nil)
+                        .padding(.horizontal, Spacing.md)
+                }
+
                 if activitiesStore.runs.isEmpty {
                     noResultsView
                 } else {
