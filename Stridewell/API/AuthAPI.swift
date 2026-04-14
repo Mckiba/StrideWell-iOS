@@ -38,6 +38,10 @@ struct ForgotPasswordResponse: Decodable {
     let message: String
 }
 
+struct ResetPasswordRequest: Encodable {
+    let password: String
+}
+
 struct AppleSignInRequest: Encodable {
     let id_token: String
     let nonce: String
@@ -91,5 +95,46 @@ extension APIClient {
             path: APIEndpoints.forgotPassword,
             body: ForgotPasswordRequest(email: email)
         )
+    }
+
+    /// Updates the user's password using their Supabase recovery token.
+    /// Uses the recovery token as the Bearer — NOT the keychain token — so this
+    /// bypasses the normal `request()` method and makes a direct URLRequest.
+    func resetPassword(newPassword: String, recoveryToken: String) async -> ApiResult<LoginResponse> {
+        guard let url = URL(string: APIEndpoints.resetPassword, relativeTo: Config.baseURL) else {
+            return .failure(status: 0, message: "Invalid URL")
+        }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(recoveryToken)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        do {
+            req.httpBody = try JSONEncoder().encode(ResetPasswordRequest(password: newPassword))
+        } catch {
+            return .failure(status: 0, message: "Encoding error: \(error.localizedDescription)")
+        }
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse else {
+                return .failure(status: 0, message: "Non-HTTP response")
+            }
+            guard (200..<300).contains(http.statusCode) else {
+                struct BE: Decodable { let error: String? }
+                let msg = (try? JSONDecoder().decode(BE.self, from: data))?.error
+                    ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
+                return .failure(status: http.statusCode, message: msg)
+            }
+            let decoded = try JSONDecoder().decode(LoginResponse.self, from: data)
+            return .success(decoded)
+        } catch let urlError as URLError {
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost, .timedOut:
+                return .failure(status: 0, message: "No internet connection. Please check your network.")
+            default:
+                return .failure(status: 0, message: "Network error: \(urlError.localizedDescription)")
+            }
+        } catch {
+            return .failure(status: 0, message: "Unexpected error: \(error.localizedDescription)")
+        }
     }
 }

@@ -8,6 +8,7 @@ import SwiftUI
 struct ForgotPasswordScreen: View {
 
     @Environment(\.apiClient) private var apiClient
+    @Environment(\.dismiss) private var dismiss
 
     @State private var email: String = ""
     @State private var isLoading = false
@@ -116,6 +117,10 @@ struct ForgotPasswordScreen: View {
         switch result {
         case .success:
             didSend = true
+            // Dismiss after a brief pause so the confirmation is visible,
+            // then the root view is unobstructed when the reset deep link fires.
+            try? await Task.sleep(for: .seconds(2))
+            dismiss()
         case .failure(_, let message):
             errorMessage = message
         }

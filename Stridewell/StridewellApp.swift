@@ -24,6 +24,16 @@ extension EnvironmentValues {
     @Entry var activityStore: ActivityStore = ActivityStore()
 }
 
+// MARK: - Password Reset State
+
+/// Carries the Supabase recovery token received via deep link.
+/// Passed to ResetPasswordScreen so it can authenticate the update call.
+struct PendingReset: Identifiable {
+    let id = UUID()
+    let accessToken: String
+    let userId: String
+}
+
 // MARK: - App
 
 @main
@@ -41,6 +51,7 @@ struct StridewellApp: App {
     @State private var weatherStore = WeatherStore()
     @State private var activitiesStore = ActivitiesStore()
     @State private var activityStore = ActivityStore()
+    @State private var pendingReset: PendingReset?
     private let apiClient: APIClient
     private let heatmapViewModel: HeatmapViewModel
 
@@ -58,7 +69,21 @@ struct StridewellApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(authStore: authStore, onboardingStore: onboardingStore)
-                .preferredColorScheme(settingsStore.appTheme.colorScheme)
+                .task {
+                    // Validate the stored JWT and refresh onboarding status on every cold
+                    // launch. A 401 triggers onUnauthorized → clears auth → RootView re-routes.
+                    guard authStore.isAuthenticated else { return }
+                    if case .success(let me) = await apiClient.me() {
+                        if me.onboarding_status == .complete || me.onboarding_status == .skipped {
+                            onboardingStore.markComplete()
+                        }
+                    }
+                }
+                .preferredColorScheme(
+                    weatherStore.activeCondition != .clear
+                        ? .dark
+                        : settingsStore.appTheme.colorScheme
+                )
                 .environment(\.authStore, authStore)
                 .environment(\.apiClient, apiClient)
                 .environment(\.onboardingStore, onboardingStore)
@@ -89,6 +114,54 @@ struct StridewellApp: App {
                         planStore.setCurrentPlanVersionId(pvId)
                     }
                 }
+                .onOpenURL { url in
+                    handleDeepLink(url)
+                }
+                .fullScreenCover(item: $pendingReset) { pending in
+                    ResetPasswordScreen(recovery: pending)
+                        .environment(\.authStore, authStore)
+                        .environment(\.apiClient, apiClient)
+                        .environment(\.onboardingStore, onboardingStore)
+                }
         }
+    }
+
+    // MARK: - Deep Link Handler
+
+    private func handleDeepLink(_ url: URL) {
+        // Only handle stridewell://auth/... links
+        guard url.scheme == Config.appScheme, url.host == "auth" else { return }
+
+        // The recovery tokens come in the URL fragment: #access_token=...&type=recovery
+        let fragment = url.fragment ?? ""
+        var params: [String: String] = [:]
+        for pair in fragment.split(separator: "&") {
+            let kv = pair.split(separator: "=", maxSplits: 1)
+            if kv.count == 2 {
+                let key   = String(kv[0])
+                let value = String(kv[1]).removingPercentEncoding ?? String(kv[1])
+                params[key] = value
+            }
+        }
+
+        guard params["type"] == "recovery", let accessToken = params["access_token"] else { return }
+
+        // Decode the user ID from the JWT payload (middle base64 segment, "sub" claim)
+        let userId = jwtSubject(from: accessToken) ?? ""
+        pendingReset = PendingReset(accessToken: accessToken, userId: userId)
+    }
+
+    /// Extracts the `sub` claim from a JWT without verifying the signature.
+    private func jwtSubject(from token: String) -> String? {
+        let segments = token.split(separator: ".")
+        guard segments.count >= 2 else { return nil }
+        var base64 = String(segments[1])
+        // Pad to a multiple of 4
+        let remainder = base64.count % 4
+        if remainder != 0 { base64 += String(repeating: "=", count: 4 - remainder) }
+        guard let data = Data(base64Encoded: base64),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let sub  = json["sub"] as? String else { return nil }
+        return sub
     }
 }
