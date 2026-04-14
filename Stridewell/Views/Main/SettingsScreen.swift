@@ -14,6 +14,7 @@ struct SettingsScreen: View {
     @Environment(\.chatStore) private var chatStore
     @Environment(\.settingsStore) private var settingsStore
     @Environment(\.activityStore) private var activityStore
+    @Environment(\.weatherStore) private var weatherStore
 
     @State private var showDisconnectAlert = false
     @State private var showDeleteStep1 = false
@@ -22,6 +23,9 @@ struct SettingsScreen: View {
     var body: some View {
         ZStack {
             HeatmapBackgroundView(userId: authStore.userId ?? "")
+            StormOverlayView(condition: weatherStore.activeCondition)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
 
             ScrollView {
                 VStack(spacing: Spacing.lg) {
@@ -33,7 +37,6 @@ struct SettingsScreen: View {
                 .padding(.vertical, Spacing.md)
             }
         }
-        .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
         .task { await settingsStore.loadStravaStatus(apiClient: apiClient) }
         .alert("Disconnect Strava?", isPresented: $showDisconnectAlert) {
@@ -100,6 +103,10 @@ struct SettingsScreen: View {
             appTheme: Binding(
                 get: { settingsStore.appTheme },
                 set: { settingsStore.appTheme = $0 }
+            ),
+            weatherPreview: Binding(
+                get: { weatherStore.debugCondition },
+                set: { weatherStore.debugCondition = $0 }
             )
         )
     }

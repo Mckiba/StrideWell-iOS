@@ -15,6 +15,7 @@ struct MainContainerView: View {
     @Environment(\.weatherStore) private var weatherStore
 
     @State private var selectedTab: MainTab = .home
+    private let stormTabs: Set<MainTab> = [.home, .activities, .settings]
 
     // MARK: - Tab
 
@@ -70,8 +71,17 @@ struct MainContainerView: View {
                 .onChange(of: notificationStore.pendingDeepLink) { _, deepLink in
                     guard let deepLink else { return }
                     switch deepLink {
-                    case .planChange, .planReveal: selectedTab = .plan
-                    case .home:                    selectedTab = .home
+                    case .planChange:
+                        selectedTab = .plan
+                        NotificationCenter.default.post(name: .openPlanChange, object: nil)
+                    case .planReveal:
+                        selectedTab = .plan
+                        NotificationCenter.default.post(name: .openPlanReveal, object: nil)
+                    case .home:
+                        selectedTab = .home
+                    case .reflection:
+                        selectedTab = .home
+                        NotificationCenter.default.post(name: .openReflection, object: nil)
                     }
                     notificationStore.clearDeepLink()
                 }
@@ -84,7 +94,7 @@ struct MainContainerView: View {
 
             // Residue strip: settles rain/snow particles over the tab bar area.
             // Only active when weather is rain or snow — zero overhead when clear.
-            if weatherStore.activeCondition != .clear {
+            if weatherStore.activeCondition != .clear && stormTabs.contains(selectedTab) {
                 ResidueView(
                     type: weatherStore.activeCondition == .rain ? .rain : .snow,
                     strength: weatherStore.activeCondition == .rain ? 250 : 150

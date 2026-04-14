@@ -90,7 +90,7 @@ struct PlanRevealContent: View {
 
                 Divider().padding(.leading, 16)
                 ForEach(days) { day in
-                    WorkoutCardView(day: day)
+                    WorkoutCard(day: day)
                     Divider().padding(.leading, 68)
                 }
 

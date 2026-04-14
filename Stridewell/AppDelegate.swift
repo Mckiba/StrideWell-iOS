@@ -86,9 +86,13 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 // MARK: - Notification Names
 
 extension Notification.Name {
-    static let apnsTokenReceived    = Notification.Name("com.stridewell.apnsTokenReceived")
-    static let deepLinkReceived     = Notification.Name("com.stridewell.deepLinkReceived")
+    static let apnsTokenReceived      = Notification.Name("com.stridewell.apnsTokenReceived")
+    static let deepLinkReceived       = Notification.Name("com.stridewell.deepLinkReceived")
     static let foregroundPushReceived = Notification.Name("com.stridewell.foregroundPushReceived")
-    static let switchToActivities   = Notification.Name("com.stridewell.switchToActivities")
-    static let switchToChat         = Notification.Name("com.stridewell.switchToChat")
+    static let switchToActivities     = Notification.Name("com.stridewell.switchToActivities")
+    static let switchToChat           = Notification.Name("com.stridewell.switchToChat")
+    // Screen-specific navigation triggered by deep links
+    static let openReflection         = Notification.Name("com.stridewell.openReflection")
+    static let openPlanChange         = Notification.Name("com.stridewell.openPlanChange")
+    static let openPlanReveal         = Notification.Name("com.stridewell.openPlanReveal")
 }

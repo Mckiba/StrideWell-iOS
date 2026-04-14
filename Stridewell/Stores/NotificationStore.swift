@@ -13,9 +13,10 @@ final class NotificationStore {
     // MARK: - Deep Link
 
     enum DeepLink: String {
-        case planChange = "plan_change"
-        case home       = "home"
-        case planReveal = "plan_reveal"
+        case planChange  = "plan_change"
+        case home        = "home"
+        case planReveal  = "plan_reveal"
+        case reflection  = "reflection_reminder"
     }
 
     var pendingDeepLink: DeepLink? = nil

@@ -50,7 +50,7 @@ struct LandingScreen: View {
                             .font(.system(size: 42, weight: .bold))
                             .foregroundStyle(.white)
 
-                        Text("Your AI running coach")
+                        Text("Your running coach")
                             .font(.title3)
                             .foregroundStyle(.white.opacity(0.7))
                     }
@@ -112,7 +112,7 @@ struct LandingScreen: View {
                     .disabled(isLoadingApple || isLoadingGoogle)
 
                     // Terms
-                    Text("By continuing, you agree to our [Terms](https://stridewell.app/terms) and [Privacy Policy](https://stridewell.app/privacy)")
+                    Text("By continuing, you agree to our [Terms](https://scalloped-trail-216.notion.site/STRIDEWELL-TERMS-OF-SERVICE-33d06c0a85208020a9a2daa17a06a23b) and [Privacy Policy](https://scalloped-trail-216.notion.site/STRIDEWELL-PRIVACY-POLICY-33d06c0a852080bb9b10c3c801483bf8)")
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.5))
                         .multilineTextAlignment(.center)

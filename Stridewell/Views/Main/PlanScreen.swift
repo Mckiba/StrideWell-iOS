@@ -59,6 +59,9 @@ struct PlanScreen: View {
             WorkoutDetailSheet(day: day)
         }
         .navigationDestination(isPresented: $showPlanChange) { PlanChangeScreen() }
+        .onReceive(NotificationCenter.default.publisher(for: .openPlanChange)) { _ in
+            showPlanChange = true
+        }
     }
 
     // MARK: - Plan Content
@@ -158,7 +161,7 @@ struct PlanScreen: View {
             } else {
                 VStack(spacing: Spacing.sm) {
                     ForEach(days) { day in
-                        WorkoutCardView(day: day, isToday: day.date == todayString)
+                        WorkoutCard(day: day, isToday: day.date == todayString)
                             .onTapGesture { selectedDay = day }
                     }
                 }

@@ -11,6 +11,9 @@ struct SettingsTrainingPreferencesSection: View {
     @Binding var reflectionReminders: Bool
     @Binding var planUpdateAlerts: Bool
     @Binding var appTheme: AppTheme
+    /// Overrides the live WeatherKit condition for preview purposes.
+    /// nil = use live weather; .rain/.snow = force that effect on the dashboard.
+    @Binding var weatherPreview: StormCondition?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
@@ -28,6 +31,8 @@ struct SettingsTrainingPreferencesSection: View {
                     reflectionToggle
                     Divider()
                     planAlertToggle
+                    Divider()
+                    weatherPreviewRow
                 }
             }
         }
@@ -118,6 +123,27 @@ struct SettingsTrainingPreferencesSection: View {
         }
         .padding(.vertical, Spacing.sm)
     }
+
+    private var weatherPreviewRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                Text("Weather Preview")
+                    .font(.cardTitle)
+                Text("Force rain or snow effect on the dashboard")
+                    .font(.cardCaption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Picker("Weather Preview", selection: $weatherPreview) {
+                Text("Off").tag(StormCondition?.none)
+                Text("Rain").tag(StormCondition?.some(.rain))
+                Text("Snow").tag(StormCondition?.some(.snow))
+            }
+            .pickerStyle(.segmented)
+            .fixedSize()
+        }
+        .padding(.vertical, Spacing.sm)
+    }
 }
 
 // MARK: - Preview
@@ -127,7 +153,8 @@ struct SettingsTrainingPreferencesSection: View {
         unitSystem: .constant(.metric),
         reflectionReminders: .constant(true),
         planUpdateAlerts: .constant(false),
-        appTheme: .constant(.device)
+        appTheme: .constant(.device),
+        weatherPreview: .constant(nil)
     )
     .padding()
 }

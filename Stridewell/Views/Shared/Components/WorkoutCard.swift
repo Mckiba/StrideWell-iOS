@@ -28,11 +28,11 @@ struct WorkoutCard: View {
             // Row 2: three stat columns (hidden for rest/recovery)
             if !isRest {
                 HStack(spacing: Spacing.lg) {
-                    WorkoutStat(label: "DISTANCE",    value: distanceValue)
+                    CardStat(label: "DISTANCE",    value: distanceValue)
                     Spacer()
-                    WorkoutStat(label: "TIME",        value: timeValue)
+                    CardStat(label: "TIME",        value: timeValue)
                     Spacer()
-                    WorkoutStat(label: "TARGET PACE", value: paceValue)
+                    CardStat(label: "TARGET PACE", value: paceValue)
                 }
             }
 
@@ -46,10 +46,10 @@ struct WorkoutCard: View {
         }
         .frame(maxWidth: .infinity,minHeight:40, alignment: .leading)
         .padding(.horizontal, Spacing.md)
-        .padding(.vertical, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
         .background(AppColor.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
-        .shadow(color: Color.black.opacity(0.14), radius: 15, x: 0, y: 12)
+        .shadow(color: .black.opacity(0.10), radius: 8, x: 0, y: 2)
     }
 
     // MARK: - Computed
@@ -80,26 +80,6 @@ struct WorkoutCard: View {
     private var cardDate: String {
         guard let d = DateUtils.parse(day.date) else { return "" }
         return DateUtils.workoutCardDateFormatter.string(from: d)
-    }
-}
-
-// MARK: - WorkoutStat
-
-private struct WorkoutStat: View {
-    let label: String
-    let value: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label)
-                .font(.activityStatLabel)
-                .foregroundStyle(AppColor.textSecondary)
-                .lineLimit(1)
-            Text(value)
-                .font(.activityStatValue)
-                .foregroundStyle(AppColor.textPrimary)
-                .lineLimit(1)
-        }
     }
 }
 

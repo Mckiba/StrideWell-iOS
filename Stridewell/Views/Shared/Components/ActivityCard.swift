@@ -19,7 +19,13 @@ struct ActivityCard: View {
     var body: some View {
         HStack(alignment: .center, spacing: Spacing.xl2) {
             routeThumbnail
-            infoColumn
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                timestampRow
+                Text(run.title ?? run.sport_type.replacingOccurrences(of: "_", with: " ").capitalized)
+                    .font(.activityName)
+                    .foregroundStyle(AppColor.textPrimary)
+                statsRow
+            }
         }
         .padding(.horizontal, Spacing.md)
         .padding(.vertical, Spacing.xs)
@@ -29,7 +35,7 @@ struct ActivityCard: View {
         .task {
             if let encoded = run.route?.summary_polyline, !encoded.isEmpty {
                 routeCoordinates = await Task.detached(priority: .utility) {
-                    PolylineDecoder.decode(encoded)
+                    await PolylineDecoder.decode(encoded)
                 }.value
             }
         }
@@ -51,17 +57,7 @@ struct ActivityCard: View {
         .frame(width: 32, height: 34)
     }
 
-    // MARK: - Info Column
 
-    private var infoColumn: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            timestampRow
-            Text(run.title ?? run.sport_type.replacingOccurrences(of: "_", with: " ").capitalized)
-                .font(.activityName)
-                .foregroundStyle(AppColor.textPrimary)
-            statsRow
-        }
-    }
 
     private var timestampRow: some View {
         HStack {
@@ -77,33 +73,13 @@ struct ActivityCard: View {
     private var statsRow: some View {
         let unit = settingsStore.unitSystem
         return HStack(spacing: Spacing.lg) {
-            ActivityStat(label: "DISTANCE", value: FormatUtils.distance(run.distance_m, unit: unit))
+            CardStat(label: "DISTANCE", value: FormatUtils.distance(run.distance_m, unit: unit))
             Spacer()
 
-            ActivityStat(label: "TIME",     value: FormatUtils.duration(run.duration_s))
+            CardStat(label: "TIME",     value: FormatUtils.duration(run.duration_s))
             Spacer()
 
-            ActivityStat(label: "AVG PACE", value: run.avg_pace_s_per_km.map { FormatUtils.pace($0, unit: unit) } ?? "—")
-        }
-    }
-}
-
-// MARK: - ActivityStat
-
-private struct ActivityStat: View {
-    let label: String
-    let value: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label)
-                .font(.activityStatLabel)
-                .foregroundStyle(AppColor.textSecondary)
-                .lineLimit(1)
-            Text(value)
-                .font(.activityStatValue)
-                .foregroundStyle(AppColor.textPrimary)
-                .lineLimit(1)
+            CardStat(label: "AVG PACE", value: run.avg_pace_s_per_km.map { FormatUtils.pace($0, unit: unit) } ?? "—")
         }
     }
 }
