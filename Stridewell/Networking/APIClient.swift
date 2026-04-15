@@ -47,6 +47,11 @@ final class APIClient {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
+        // Send the device's IANA timezone so backend code can resolve "today" in
+        // the user's local calendar (otherwise UTC wins and late-evening users
+        // in west-of-UTC zones lose a day of plan windowing).
+        req.setValue(TimeZone.current.identifier, forHTTPHeaderField: "X-Timezone")
+
         if let body {
             do {
                 req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -69,7 +74,7 @@ final class APIClient {
             }
 
             guard (200..<300).contains(http.statusCode) else {
-                let msg = (try? JSONDecoder().decode(BackendError.self, from: data))?.message
+                let msg = (try? JSONDecoder().decode(BackendError.self, from: data))?.resolvedMessage
                     ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
                 return .failure(status: http.statusCode, message: msg)
             }
@@ -112,5 +117,12 @@ final class APIClient {
 // MARK: - Backend Error Envelope
 
 private struct BackendError: Decodable {
-    let message: String
+    let message: String?
+    let error: String?
+
+    var resolvedMessage: String? {
+        if let message, !message.isEmpty { return message }
+        if let error, !error.isEmpty { return error }
+        return nil
+    }
 }
