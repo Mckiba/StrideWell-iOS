@@ -20,6 +20,7 @@ struct ChatScreen: View {
     @State private var screenState: ScreenState = .empty
     @State private var pendingMessage: String? = nil
     @State private var initialLoadDone = false
+    @FocusState private var isInputFocused: Bool
 
     enum ScreenState: Equatable {
         case empty          // no messages — show suggested prompts
@@ -182,6 +183,12 @@ struct ChatScreen: View {
                 }
                 .padding(.vertical, Spacing.md)
             }
+            .scrollDismissesKeyboard(.interactively)
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    isInputFocused = false
+                }
+            )
             // Auto-scroll to bottom only when a new message is appended (last ID changed),
             // not when older history is prepended — this preserves scroll position.
             .onChange(of: chatStore.messages.last?.id) { _, _ in
@@ -215,6 +222,7 @@ struct ChatScreen: View {
                 .background(AppColor.surfaceElevated)
                 .clipShape(RoundedRectangle(cornerRadius: CornerRadius.input))
                 .lineLimit(1...5)
+                .focused($isInputFocused)
 
             Button {
                 Task { await sendMessage(content: inputText) }
@@ -307,4 +315,3 @@ struct ChatScreen: View {
     }
 
 }
-
