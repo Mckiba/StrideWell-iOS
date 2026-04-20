@@ -79,11 +79,7 @@ struct StridewellApp: App {
                         }
                     }
                 }
-                .preferredColorScheme(
-                    weatherStore.activeCondition != .clear
-                        ? .dark
-                        : settingsStore.appTheme.colorScheme
-                )
+                .preferredColorScheme(settingsStore.appTheme.colorScheme)
                 .environment(\.authStore, authStore)
                 .environment(\.apiClient, apiClient)
                 .environment(\.onboardingStore, onboardingStore)

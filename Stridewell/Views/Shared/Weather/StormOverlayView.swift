@@ -15,15 +15,31 @@ import SwiftUI
 
 struct StormOverlayView: View {
     let condition: StormCondition
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         switch condition {
         case .clear:
             EmptyView()
         case .rain:
-            StormView(type: .rain, direction: .degrees(20), strength: 250)
+            ZStack {
+                dimmer
+                StormView(type: .rain, direction: .degrees(20), strength: 250)
+            }
         case .snow:
-            StormView(type: .snow, direction: .degrees(0), strength: 150)
+            ZStack {
+                dimmer
+                StormView(type: .snow, direction: .degrees(0), strength: 150)
+            }
         }
+    }
+
+    /// Thin darkening layer so the light-colored storm particles remain
+    /// legible when the app is in Light mode. Subtle in Dark mode.
+    private var dimmer: some View {
+        Color.black
+            .opacity(colorScheme == .light ? 0.22 : 0.08)
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
     }
 }
