@@ -31,6 +31,7 @@ struct SettingsScreen: View {
                 VStack(spacing: Spacing.lg) {
                     connectedAccountsSection
                     trainingPreferencesSection
+                    SettingsWeatherAttributionSection()
                     accountSection
                 }
                 .padding(.horizontal, Spacing.md)
