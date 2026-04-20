@@ -37,6 +37,9 @@ enum RouteRenderer {
         size: CGSize,
         userInterfaceStyle: UIUserInterfaceStyle = .light
     ) async throws -> MKMapSnapshotter.Snapshot {
+        guard size.width > 0, size.height > 0 else {
+            throw HeatmapError.renderFailed
+        }
 
         let options = MKMapSnapshotter.Options()
         options.region = region

@@ -35,6 +35,10 @@ struct HeatmapBackgroundView: View {
                 }
             }
             .task {
+                // geo.size is zero during the first layout pass — bail and let SwiftUI
+                // re-enter .task once the frame is resolved.
+                guard geo.size.width > 0, geo.size.height > 0 else { return }
+
                 let vm: HeatmapViewModel
                 if let shared = sharedViewModel {
                     // Shared ViewModel already exists — update size, skip if already loaded
