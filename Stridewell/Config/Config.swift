@@ -9,7 +9,7 @@ enum Config {
 
     static var baseURL: URL {
         #if DEBUG
-        URL(string: "http://10.0.0.112:3000")!
+        URL(string: "https://stridewell-api-production.up.railway.app")!
         #else
         URL(string: "https://stridewell-api-production.up.railway.app")!
         #endif

@@ -20,6 +20,7 @@ struct ActivitiesScreen: View {
     @State private var selectedDate: Date? = nil
     @State private var showDatePicker = false
     @State private var searchDebounce: Task<Void, Never>? = nil
+    @State private var selectedRun: Run? = nil
 
     // MARK: - Body
 
@@ -40,6 +41,9 @@ struct ActivitiesScreen: View {
         }
         .sheet(isPresented: $showDatePicker) {
             datePickerSheet
+        }
+        .sheet(item: $selectedRun) { run in
+            RunAnalysisScreen(run: run)
         }
         .task {
             if case .loading = activitiesStore.state {
@@ -104,6 +108,7 @@ struct ActivitiesScreen: View {
                     ForEach(activitiesStore.runs) { run in
                         ActivityCard(run: run)
                             .padding(.horizontal, Spacing.md)
+                            .onTapGesture { selectedRun = run }
                     }
 
                     // Scroll sentinel — becomes visible when the user reaches the bottom.

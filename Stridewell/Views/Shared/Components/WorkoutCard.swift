@@ -69,8 +69,13 @@ struct WorkoutCard: View {
     }
 
     private var paceValue: String {
+        let unit = settingsStore.unitSystem
+        // Prefer pace range when present (V2 Phase 2), fall back to single-pace (V1 / legacy plans).
+        if let range = day.workout.target_pace_range {
+            return FormatUtils.paceRange(min: range.min_s_per_km, max: range.max_s_per_km, unit: unit)
+        }
         guard let p = day.workout.target_pace_s_per_km else { return "-" }
-        return FormatUtils.pace(p, unit: settingsStore.unitSystem)
+        return FormatUtils.pace(p, unit: unit)
     }
 
     private var notesLine: String? {

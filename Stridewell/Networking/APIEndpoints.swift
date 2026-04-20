@@ -34,6 +34,11 @@ enum APIEndpoints {
     // MARK: Runs (M7, Heatmap)
     static let runsRecent        = "/runs/recent"
     static let runsHeatmap       = "/runs/heatmap"
+    static let runAnalysis       = "/runs"          // GET /runs/:runId/analysis
+
+    // MARK: Analysis / Profile (V2 Phase 2)
+    static let analysisWeekly    = "/analysis/weekly"
+    static let profileFitness    = "/profile/fitness"
 
     // MARK: Chat (M10, M14)
     static let chatMessage       = "/chat/message"

@@ -107,7 +107,10 @@ struct ActivityBannerView: View {
         if let d = workout.target_distance_m {
             parts.append(FormatUtils.distance(d, unit: unit))
         }
-        if let p = workout.target_pace_s_per_km {
+        // Prefer pace range (V2) over single pace (V1 legacy); fall back to duration when neither present.
+        if let range = workout.target_pace_range {
+            parts.append(FormatUtils.paceRange(min: range.min_s_per_km, max: range.max_s_per_km, unit: unit))
+        } else if let p = workout.target_pace_s_per_km {
             parts.append(FormatUtils.pace(p, unit: unit))
         } else if let dur = workout.target_duration_s {
             parts.append(FormatUtils.duration(dur))

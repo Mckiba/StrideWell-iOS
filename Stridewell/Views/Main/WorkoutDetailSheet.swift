@@ -85,6 +85,7 @@ struct WorkoutDetailSheet: View {
     private var hasTargets: Bool {
         day.workout.target_distance_m != nil ||
         day.workout.target_pace_s_per_km != nil ||
+        day.workout.target_pace_range != nil ||
         day.workout.target_duration_s != nil
     }
 
@@ -98,8 +99,20 @@ struct WorkoutDetailSheet: View {
                 if let d = day.workout.target_distance_m {
                     targetRow(label: "Distance", value: FormatUtils.distance(d, unit: unit))
                 }
-                if let p = day.workout.target_pace_s_per_km {
+                // Prefer pace range (V2) over single pace (V1 legacy).
+                if let range = day.workout.target_pace_range {
+                    targetRow(
+                        label: "Pace",
+                        value: FormatUtils.paceRange(min: range.min_s_per_km, max: range.max_s_per_km, unit: unit)
+                    )
+                } else if let p = day.workout.target_pace_s_per_km {
                     targetRow(label: "Pace", value: FormatUtils.pace(p, unit: unit))
+                }
+                if let effort = day.workout.effort_level {
+                    targetRow(
+                        label: "Effort",
+                        value: effort.replacingOccurrences(of: "_", with: " ").capitalized
+                    )
                 }
                 if let dur = day.workout.target_duration_s {
                     targetRow(label: "Duration", value: FormatUtils.duration(dur))

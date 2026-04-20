@@ -56,6 +56,32 @@ enum FormatUtils {
         }
     }
 
+    /// Formats a pace range (seconds/km) as `"m:ss–m:ss /unit"`.
+    /// Both endpoints are converted into the requested unit system, then
+    /// joined with an en-dash. If the min/max collapse to the same value
+    /// after rounding, returns the single pace string.
+    static func paceRange(min minSPerKm: Double, max maxSPerKm: Double, unit: UnitSystem = .metric) -> String {
+        // Endpoints in integer seconds for the target unit.
+        let (minDisplay, maxDisplay, suffix): (Int, Int, String) = {
+            switch unit {
+            case .metric:
+                return (Int(minSPerKm.rounded()), Int(maxSPerKm.rounded()), "/km")
+            case .imperial:
+                let minMi = minSPerKm * 1.60934
+                let maxMi = maxSPerKm * 1.60934
+                return (Int(minMi.rounded()), Int(maxMi.rounded()), "/mi")
+            }
+        }()
+
+        if minDisplay == maxDisplay {
+            return pace(minSPerKm, unit: unit)
+        }
+
+        let minStr = String(format: "%d:%02d", minDisplay / 60, minDisplay % 60)
+        let maxStr = String(format: "%d:%02d", maxDisplay / 60, maxDisplay % 60)
+        return "\(minStr)–\(maxStr) \(suffix)"
+    }
+
     // MARK: - Duration
 
     /// Converts total seconds to a duration string. Unit-system independent.
