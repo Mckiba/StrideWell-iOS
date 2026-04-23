@@ -152,11 +152,25 @@ struct ChatScreen: View {
                     }
 
                     ForEach(chatStore.messages) { msg in
-                        ChatBubbleView(
-                            content: msg.content,
-                            isUser: msg.role == .user,
-                            subtitle: msg.role == .user ? nil : msg.agent_used?.rawValue
-                        )
+                        VStack(alignment: .leading, spacing: Spacing.xs) {
+                            ChatBubbleView(
+                                content: msg.content,
+                                isUser: msg.role == .user,
+                                subtitle: msg.role == .user ? nil : msg.agent_used?.rawValue
+                            )
+
+                            if msg.role == .assistant {
+                                MessageFeedbackView(
+                                    feedback: msg.feedback,
+                                    onVote: { vote in
+                                        Task { await submitFeedback(messageId: msg.id, vote: vote, comment: nil) }
+                                    },
+                                    onCommentSubmit: { comment in
+                                        Task { await submitFeedback(messageId: msg.id, vote: .down, comment: comment) }
+                                    }
+                                )
+                            }
+                        }
                         .id(msg.id)
                     }
 
@@ -311,6 +325,27 @@ struct ChatScreen: View {
 
         case .failure(_, let errorMessage):
             screenState = .error(errorMessage)
+        }
+    }
+
+    // MARK: - Feedback
+
+    /// Optimistically updates the message's feedback in the store, PUTs to the
+    /// backend, then rolls back on network failure. Comment is nil for simple
+    /// thumb taps; the thumbs-down comment field sends comment via the same path.
+    private func submitFeedback(messageId: String, vote: FeedbackVote, comment: String?) async {
+        let prior = chatStore.messages.first(where: { $0.id == messageId })?.feedback
+        let optimistic = MessageFeedback(vote: vote, comment: comment)
+        chatStore.setFeedback(messageId: messageId, feedback: optimistic)
+
+        let result = await apiClient.sendMessageFeedback(
+            messageId: messageId,
+            vote: vote,
+            comment: comment
+        )
+
+        if case .failure = result {
+            chatStore.setFeedback(messageId: messageId, feedback: prior)
         }
     }
 

@@ -33,4 +33,27 @@ extension APIClient {
         }
         return await get(path: path)
     }
+
+    /// PUT /chat/messages/:messageId/feedback — upsert thumbs up/down (+ optional comment).
+    /// Server denormalises agent_used / prompt_version / context_flags at write time.
+    func sendMessageFeedback(
+        messageId: String,
+        vote: FeedbackVote,
+        comment: String?
+    ) async -> ApiResult<FeedbackResponse> {
+        let encoded = messageId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? messageId
+        let body = FeedbackRequest(vote: vote.rawValue, comment: comment)
+        return await request("PUT", path: "/chat/messages/\(encoded)/feedback", body: body)
+    }
+}
+
+// MARK: - Feedback DTOs
+
+private struct FeedbackRequest: Encodable {
+    let vote: String
+    let comment: String?
+}
+
+struct FeedbackResponse: Decodable {
+    let stored: Bool
 }

@@ -2,10 +2,6 @@
 //  ChatStore.swift
 //  Stridewell
 //
-//  M14: Adds persistent paginated history fetch from backend.
-//  init() still seeds from UserDefaults (offline seed).
-//  loadInitialHistory() replaces seed with authoritative backend data.
-//  loadMoreHistory() prepends older pages without persisting them.
 //
 
 import Foundation
@@ -105,6 +101,15 @@ final class ChatStore {
         if oldestCursor == nil {
             oldestCursor = message.created_at
         }
+        persistCache()
+    }
+
+    /// Replace the feedback on a stored message. Used for both optimistic
+    /// updates (pre-network) and rollbacks (on network failure). No-op if the
+    /// message id isn't in the list (e.g. already scrolled out of range).
+    func setFeedback(messageId: String, feedback: MessageFeedback?) {
+        guard let idx = messages.firstIndex(where: { $0.id == messageId }) else { return }
+        messages[idx].feedback = feedback
         persistCache()
     }
 
