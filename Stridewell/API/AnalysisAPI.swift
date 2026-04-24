@@ -23,4 +23,10 @@ extension APIClient {
     func fitnessProfile() async -> ApiResult<FitnessProfile> {
         await get(path: APIEndpoints.profileFitness)
     }
+
+    /// GET /analysis/weekly?start=YYYY-MM-DD — week summary (distance, compliance,
+    /// long run, quality sessions). Computed on demand by the backend.
+    func weeklySummary(weekStart: String) async -> ApiResult<WeeklySummary> {
+        await get(path: "\(APIEndpoints.analysisWeekly)?start=\(weekStart)")
+    }
 }

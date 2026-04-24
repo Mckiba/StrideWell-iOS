@@ -24,6 +24,8 @@ struct SettingsTrainingPreferencesSection: View {
                 VStack(spacing: 0) {
                     goalRow
                     Divider()
+                    fitnessProfileRow
+                    Divider()
                     unitsRow
                     Divider()
                     themeRow
@@ -55,6 +57,30 @@ struct SettingsTrainingPreferencesSection: View {
                 .foregroundStyle(.tertiary)
         }
         .padding(.vertical, Spacing.sm)
+    }
+
+    private var fitnessProfileRow: some View {
+        NavigationLink {
+            FitnessProfileScreen()
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text("Fitness Profile")
+                        .font(.cardTitle)
+                        .foregroundStyle(.primary)
+                    Text("Threshold pace, zones, history")
+                        .font(.cardCaption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.cardCaption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.vertical, Spacing.sm)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var unitsRow: some View {

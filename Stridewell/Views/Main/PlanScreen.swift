@@ -84,6 +84,7 @@ struct PlanScreen: View {
                 )
                 weekDaysList
                 metadataSection
+                weeklySummaryLink
             }
             .padding(.horizontal, Spacing.md)
             .padding(.vertical, Spacing.md)
@@ -194,6 +195,31 @@ struct PlanScreen: View {
                 }
             }
         }
+    }
+
+    // MARK: - Weekly Summary Link
+
+    private var weeklySummaryLink: some View {
+        NavigationLink {
+            WeeklySummaryScreen(monday: selectedMonday)
+        } label: {
+            CardView {
+                HStack {
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        Text("Weekly Summary")
+                            .font(.cardTitle)
+                            .foregroundStyle(.primary)
+                        Text("Volume, compliance, long run, quality sessions")
+                            .font(.cardCaption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Week Navigation
