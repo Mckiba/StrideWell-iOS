@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MapboxMaps
 
 // MARK: - Environment Keys
 
@@ -56,6 +57,8 @@ struct StridewellApp: App {
     private let heatmapViewModel: HeatmapViewModel
 
     init() {
+        MapboxOptions.accessToken = Config.mapboxPublicToken
+
         let store = AuthStore()
         let client = APIClient(
             tokenProvider: { store.token },

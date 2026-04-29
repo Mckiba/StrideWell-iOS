@@ -1,139 +1,20 @@
 //
-//  RunAnalysisScreen.swift
+//  RunAnalysisSections.swift
 //  Stridewell
 //
-//  V2 Phase 2 (M2.14) — detail screen for a completed run. Loads stored
-//  analysis from GET /runs/:runId/analysis and renders planned-vs-actual,
-//  execution, HR, and trend sections. When the analysis has not been
-//  computed yet (404), we show a friendly "still processing" empty state.
-//  A specific "run not found" 404 is shown as an error state.
+//  Reusable analysis section views shared by RunAnalysisScreen and RunDetailScreen.
 //
 
 import SwiftUI
 
-struct RunAnalysisScreen: View {
+struct RunAnalysisSections: View {
 
-    let run: Run
-
-    @Environment(\.apiClient) private var apiClient
-    @Environment(\.settingsStore) private var settingsStore
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var screenState: LoadableState<RunAnalysisData> = .loading
-    @State private var analysisStatus: String? = nil
-
-    // MARK: - Body
+    let data: RunAnalysisData
+    let status: String?
+    let unit: UnitSystem
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Spacing.md) {
-                    runHeaderCard
-
-                    switch screenState {
-                    case .loading:
-                        LoadingStateView(message: "Loading analysis...")
-                            .frame(minHeight: 200)
-
-                    case .empty:
-                        EmptyStateView(
-                            title: "Analysis not ready",
-                            subtitle: "We're still processing this run. Check back in a minute."
-                        )
-                        .frame(minHeight: 200)
-
-                    case .error(let message):
-                        ErrorStateView(message: message) {
-                            Task { await load() }
-                        }
-                        .frame(minHeight: 200)
-
-                    case .loaded(let data):
-                        loadedSections(data)
-                    }
-                }
-                .padding(Spacing.md)
-            }
-            .navigationTitle("Run Analysis")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
-            .task { await load() }
-        }
-    }
-
-    // MARK: - Loading
-
-    private func load() async {
-        screenState = .loading
-        analysisStatus = nil
-        switch await apiClient.runAnalysis(runId: run.id) {
-        case .success(let response):
-            analysisStatus = response.status
-            screenState = .loaded(response.analysisData)
-        case .failure(let status, let message):
-            if status == 404 {
-                switch classify404(message: message) {
-                case .runNotFound:
-                    screenState = .error("This run could not be found.")
-                case .analysisNotReady:
-                    screenState = .empty
-                }
-            } else {
-                screenState = .error(message)
-            }
-        }
-    }
-
-    private enum Analysis404Type {
-        case runNotFound
-        case analysisNotReady
-    }
-
-    private func classify404(message: String) -> Analysis404Type {
-        let normalized = message.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if normalized.contains("run not found") {
-            return .runNotFound
-        }
-        return .analysisNotReady
-    }
-
-    // MARK: - Header
-
-    private var runHeaderCard: some View {
-        let unit = settingsStore.unitSystem
-        return CardView {
-            VStack(alignment: .leading, spacing: Spacing.sm) {
-                Text(run.title ?? run.sport_type.replacingOccurrences(of: "_", with: " ").capitalized)
-                    .font(.cardTitle)
-                Text(DateUtils.activityDate(run.start_time) + " · " + DateUtils.activityTime(run.start_time))
-                    .font(.cardCaption)
-                    .foregroundStyle(.secondary)
-
-                HStack(spacing: Spacing.lg) {
-                    CardStat(label: "DISTANCE", value: FormatUtils.distance(run.distance_m, unit: unit))
-                    Spacer()
-                    CardStat(label: "TIME", value: FormatUtils.duration(run.duration_s))
-                    Spacer()
-                    CardStat(
-                        label: "AVG PACE",
-                        value: run.avg_pace_s_per_km.map { FormatUtils.pace($0, unit: unit) } ?? "—"
-                    )
-                }
-                .padding(.top, Spacing.xs)
-            }
-        }
-    }
-
-    // MARK: - Loaded Sections
-
-    @ViewBuilder
-    private func loadedSections(_ data: RunAnalysisData) -> some View {
-        if analysisStatus?.lowercased() == "partial" {
-            CardView {
+        if status?.lowercased() == "partial" {
                 HStack(alignment: .center, spacing: Spacing.sm) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(Color.orange)
@@ -142,7 +23,7 @@ struct RunAnalysisScreen: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-            }
+            
         }
         if let pva = data.planned_vs_actual {
             plannedVsActualSection(pva)
@@ -153,10 +34,9 @@ struct RunAnalysisScreen: View {
         if let hr = data.hr_analysis {
             hrSection(hr)
         }
-        if let trend = data.trend_context {
-            trendSection(trend)
-        }
-        // If every section is nil, surface that explicitly rather than showing a blank page.
+//        if let trend = data.trend_context {
+//            trendSection(trend)
+//        }
         if data.planned_vs_actual == nil,
            data.execution_analysis == nil,
            data.hr_analysis == nil,
@@ -172,7 +52,6 @@ struct RunAnalysisScreen: View {
     // MARK: - Planned vs Actual
 
     private func plannedVsActualSection(_ pva: PlannedVsActual) -> some View {
-        CardView {
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 HStack {
                     Text("Planned vs Actual")
@@ -199,14 +78,12 @@ struct RunAnalysisScreen: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-        }
+        
     }
 
     // MARK: - Execution
 
     private func executionSection(_ exec: ExecutionAnalysis) -> some View {
-        let unit = settingsStore.unitSystem
-        return CardView {
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Execution")
                     .font(.cardTitle)
@@ -241,13 +118,11 @@ struct RunAnalysisScreen: View {
                     keyValueRow("Stopped time", percent(stopRatio))
                 }
             }
-        }
     }
 
     // MARK: - HR
 
     private func hrSection(_ hr: HRAnalysis) -> some View {
-        CardView {
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Heart Rate")
                     .font(.cardTitle)
@@ -283,7 +158,7 @@ struct RunAnalysisScreen: View {
                     keyValueRow("Efficiency trend", eff.trend.replacingOccurrences(of: "_", with: " ").capitalized)
                 }
             }
-        }
+        
     }
 
     private func zoneBar(_ z: HRZoneDistribution) -> some View {
@@ -323,7 +198,6 @@ struct RunAnalysisScreen: View {
     // MARK: - Trend
 
     private func trendSection(_ trend: TrendContext) -> some View {
-        CardView {
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Trends")
                     .font(.cardTitle)
@@ -360,7 +234,6 @@ struct RunAnalysisScreen: View {
                     keyValueRow("Streak", "\(trend.streak_days) days")
                 }
             }
-        }
     }
 
     // MARK: - Helpers

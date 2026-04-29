@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1B5A25BB2FA047EE00B05BC4 /* MapboxMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 1BFF00022F8A0000ABCD1234 /* MapboxMaps */; };
 		1B76CF692F63EBB600E22955 /* WeatherKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B76CF682F63EBB600E22955 /* WeatherKit.framework */; };
 		1B99F9F12F596AB2006E1FA4 /* SVGKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1B99F9F02F596AB2006E1FA4 /* SVGKit */; };
 		1B99F9F32F596AB2006E1FA4 /* SVGKitSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1B99F9F22F596AB2006E1FA4 /* SVGKitSwift */; };
@@ -46,6 +47,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1B5A25BB2FA047EE00B05BC4 /* MapboxMaps in Frameworks */,
 				1BB03DA22F7A08E2000AD43C /* GoogleSignInSwift in Frameworks */,
 				1B99F9F32F596AB2006E1FA4 /* SVGKitSwift in Frameworks */,
 				1BB03DA02F7A08E2000AD43C /* GoogleSignIn in Frameworks */,
@@ -112,6 +114,7 @@
 				1B99F9F22F596AB2006E1FA4 /* SVGKitSwift */,
 				1BB03D9F2F7A08E2000AD43C /* GoogleSignIn */,
 				1BB03DA12F7A08E2000AD43C /* GoogleSignInSwift */,
+				1BFF00022F8A0000ABCD1234 /* MapboxMaps */,
 			);
 			productName = Stridewell;
 			productReference = 1B15C5912F49457F00C29007 /* Stridewell.app */;
@@ -144,6 +147,7 @@
 			packageReferences = (
 				1B99F9EF2F596AB2006E1FA4 /* XCRemoteSwiftPackageReference "SVGKit" */,
 				1BB03D9E2F7A08E2000AD43C /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				1BFF00012F8A0000ABCD1234 /* XCRemoteSwiftPackageReference "mapbox-maps-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1B15C5922F49457F00C29007 /* Products */;
@@ -423,6 +427,14 @@
 				minimumVersion = 9.1.0;
 			};
 		};
+		1BFF00012F8A0000ABCD1234 /* XCRemoteSwiftPackageReference "mapbox-maps-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mapbox/mapbox-maps-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -445,6 +457,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1BB03D9E2F7A08E2000AD43C /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
+		};
+		1BFF00022F8A0000ABCD1234 /* MapboxMaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1BFF00012F8A0000ABCD1234 /* XCRemoteSwiftPackageReference "mapbox-maps-ios" */;
+			productName = MapboxMaps;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -29,7 +29,7 @@ struct PlanScreen: View {
 
             switch screenState {
             case .loading:
-                LoadingStateView(message: "Loading your plan...")
+                PlanScreenSkeleton()
 
             case .empty:
                 VStack(spacing: Spacing.md) {

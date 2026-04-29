@@ -24,3 +24,22 @@ struct CardStat: View {
         }
     }
 }
+
+
+struct ActivityStat: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value)
+                .font(.largeStatValue)
+                .foregroundStyle(AppColor.textPrimary)
+                .lineLimit(1)
+            Text(label)
+                .font(.activityTimestamp)
+                .foregroundStyle(AppColor.textSecondary)
+                .lineLimit(1)
+        }
+    }
+}

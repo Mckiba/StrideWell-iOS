@@ -20,6 +20,11 @@ extension APIClient {
         return await get(path: "\(APIEndpoints.runsRecent)?limit=14&date_from=\(from)&date_to=\(to)")
     }
 
+    /// Fetch full run detail: metadata, splits (lap or computed), and stream arrays.
+    func runDetail(runId: String) async -> ApiResult<RunDetailResponse> {
+        await get(path: "\(APIEndpoints.runDetail)/\(runId)")
+    }
+
     /// Paginated run list with optional server-side search and date filter.
     /// Used by ActivitiesScreen.
     func activities(limit: Int, offset: Int, search: String, date: Date?) async -> ApiResult<RecentRunsResponse> {

@@ -9,11 +9,15 @@ enum Config {
 
     static var baseURL: URL {
         #if DEBUG
-        URL(string: "https://stridewell-api-production.up.railway.app")!
+        URL(string: "https://60cc-2601-602-8680-11a0-f141-78e0-4384-2865.ngrok-free.app")!
         #else
         URL(string: "https://stridewell-api-production.up.railway.app")!
         #endif
     }
+
+    // Replace with your Mapbox public token (pk.xxx) before building.
+    // Set once at app startup via MapboxOptions.accessToken = Config.mapboxPublicToken.
+    static let mapboxPublicToken = "pk.eyJ1IjoibWNraWJhIiwiYSI6ImNtb2h2cXMyOTAwM3oycm9haDgwODEzcngifQ.dZUOWGebonQxa6xP2VDUmA"
 
     static let appScheme = "stridewell"
     static let stravaRedirectURI = "stridewell://localhost"

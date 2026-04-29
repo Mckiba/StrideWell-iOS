@@ -32,7 +32,7 @@ struct HomeScreen: View {
 
             switch screenState {
             case .loading:
-                LoadingStateView(message: "Loading your plan...")
+                HomeScreenSkeleton()
 
             case .empty:
                 EmptyStateView(

@@ -42,8 +42,8 @@ struct ActivitiesScreen: View {
         .sheet(isPresented: $showDatePicker) {
             datePickerSheet
         }
-        .sheet(item: $selectedRun) { run in
-            RunAnalysisScreen(run: run)
+        .fullScreenCover(item: $selectedRun) { run in
+            RunDetailScreen(run: run)
         }
         .task {
             if case .loading = activitiesStore.state {
@@ -73,7 +73,7 @@ struct ActivitiesScreen: View {
         Group {
             switch activitiesStore.state {
             case .loading:
-                LoadingStateView(message: "Loading activities...")
+                ActivitiesScreenSkeleton()
 
             case .empty:
                 EmptyStateView(

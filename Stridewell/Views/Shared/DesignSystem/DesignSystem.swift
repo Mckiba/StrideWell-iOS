@@ -111,6 +111,7 @@ extension Font {
     static let activityName:      Font = .inter(size: 12, weight: .bold)   // run name
     static let activityStatLabel: Font = .inter(size: 10)                  // "DISTANCE" / "TIME" / "AVG PACE"
     static let activityStatValue: Font = .inter(size: 11, weight: .bold)   // "4.8 km" / "26:08" / "5:30 /km"
+    static let largeStatValue:  Font = .sofiaSans(size: 20, weight: .bold)
 }
 
 // MARK: - Color Hex Initialiser
