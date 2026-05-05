@@ -22,6 +22,7 @@ struct HomeScreen: View {
     @State private var recentRuns: [Run] = []
     @State private var showReflection = false
     @State private var showPlanChange = false
+    @State private var selectedRun: Run? = nil
 
     var body: some View {
         ZStack(alignment: .center) {
@@ -54,6 +55,9 @@ struct HomeScreen: View {
             await loadData()
         }
         .sheet(isPresented: $showReflection) { ReflectionScreen() }
+        .fullScreenCover(item: $selectedRun) { run in
+            RunDetailScreen(run: run)
+        }
         .navigationDestination(isPresented: $showPlanChange) { PlanChangeScreen() }
         .onReceive(NotificationCenter.default.publisher(for: .openReflection)) { _ in
             showReflection = true
@@ -224,6 +228,7 @@ struct HomeScreen: View {
                 VStack(spacing: Spacing.sm) {
                     ForEach(recentRuns) { run in
                         ActivityCard(run: run)
+                            .onTapGesture { selectedRun = run }
                     }
                 }
             }
