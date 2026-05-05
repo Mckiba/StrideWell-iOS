@@ -79,6 +79,8 @@ struct MainContainerView: View {
                         NotificationCenter.default.post(name: .openPlanReveal, object: nil)
                     case .home:
                         selectedTab = .home
+                    case .chat:
+                        selectedTab = .chat
                     case .reflection:
                         selectedTab = .home
                         NotificationCenter.default.post(name: .openReflection, object: nil)

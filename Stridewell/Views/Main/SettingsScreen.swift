@@ -31,6 +31,7 @@ struct SettingsScreen: View {
                 VStack(spacing: Spacing.lg) {
                     connectedAccountsSection
                     trainingPreferencesSection
+                    coachingNotificationsSection
                     SettingsWeatherAttributionSection()
                     accountSection
                 }
@@ -126,6 +127,67 @@ struct SettingsScreen: View {
                 )
             },
             onDeleteAccount: { showDeleteStep1 = true }
+        )
+    }
+
+    private var coachingNotificationsSection: some View {
+        SettingsCoachingNotificationsSection(
+            proactiveEnabled: Binding(
+                get: { settingsStore.proactiveEnabled },
+                set: { enabled in
+                    Task { await settingsStore.setProactiveEnabled(enabled, apiClient: apiClient) }
+                }
+            ),
+            trainingMilestoneEnabled: Binding(
+                get: { settingsStore.proactiveTrainingMilestone },
+                set: { enabled in
+                    Task { await settingsStore.setProactiveTrainingMilestone(enabled, apiClient: apiClient) }
+                }
+            ),
+            trainingConcernEnabled: Binding(
+                get: { settingsStore.proactiveTrainingConcern },
+                set: { enabled in
+                    Task { await settingsStore.setProactiveTrainingConcern(enabled, apiClient: apiClient) }
+                }
+            ),
+            upcomingEventEnabled: Binding(
+                get: { settingsStore.proactiveUpcomingEvent },
+                set: { enabled in
+                    Task { await settingsStore.setProactiveUpcomingEvent(enabled, apiClient: apiClient) }
+                }
+            ),
+            reengagementEnabled: Binding(
+                get: { settingsStore.proactiveReengagement },
+                set: { enabled in
+                    Task { await settingsStore.setProactiveReengagement(enabled, apiClient: apiClient) }
+                }
+            ),
+            planFollowupEnabled: Binding(
+                get: { settingsStore.proactivePlanFollowup },
+                set: { enabled in
+                    Task { await settingsStore.setProactivePlanFollowup(enabled, apiClient: apiClient) }
+                }
+            ),
+            quietHoursEnabled: Binding(
+                get: { settingsStore.proactiveQuietHoursEnabled },
+                set: { enabled in
+                    Task { await settingsStore.setProactiveQuietHoursEnabled(enabled, apiClient: apiClient) }
+                }
+            ),
+            quietHoursStart: Binding(
+                get: { settingsStore.proactiveQuietHoursStart },
+                set: { start in
+                    Task { await settingsStore.setProactiveQuietHoursStart(start, apiClient: apiClient) }
+                }
+            ),
+            quietHoursEnd: Binding(
+                get: { settingsStore.proactiveQuietHoursEnd },
+                set: { end in
+                    Task { await settingsStore.setProactiveQuietHoursEnd(end, apiClient: apiClient) }
+                }
+            ),
+            timezone: settingsStore.proactiveTimezone,
+            syncError: settingsStore.proactiveSyncError
         )
     }
 

@@ -23,4 +23,9 @@ extension APIClient {
     func deleteAccount() async -> ApiResult<EmptyResponse> {
         await request("DELETE", path: APIEndpoints.deleteAccount)
     }
+
+    /// PUT /profile/proactive-preferences
+    func putProactivePreferences(_ body: ProactivePreferencesRequest) async -> ApiResult<ProactivePreferencesStoredResponse> {
+        await request("PUT", path: APIEndpoints.proactivePreferences, body: body)
+    }
 }
