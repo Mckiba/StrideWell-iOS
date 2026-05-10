@@ -16,6 +16,7 @@ struct HomeScreen: View {
     @Environment(\.weatherStore) private var weatherStore
     @Environment(\.activityStore) private var activityStore
     @Environment(\.chatStore) private var chatStore
+    @Environment(\.connectivityStore) private var connectivityStore
 
     @State private var screenState: LoadableState<Void> = .loading
     @State private var retryTrigger = false
@@ -46,8 +47,23 @@ struct HomeScreen: View {
                     retryTrigger.toggle()
                 }
 
+            // MARK: - Home Content
             case .loaded:
-                homeContent
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Spacing.xl) {
+                        if connectivityStore.isOffline {
+                            OfflineBannerView(lastFetchDate: planStore.lastFetched(for: "today"))
+                        }
+                        goalSection
+                        bannerCarousel
+                        todayWorkoutSection
+                        recentActivitiesSection
+                    }
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.md)
+                }
+                .refreshable { await loadData() }
+                .scrollContentBackground(.hidden)
             }
         }
         .task(id: retryTrigger) {
@@ -62,26 +78,6 @@ struct HomeScreen: View {
         .onReceive(NotificationCenter.default.publisher(for: .openReflection)) { _ in
             showReflection = true
         }
-    }
-
-    // MARK: - Home Content
-
-    private var homeContent: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.md) {
-                if planStore.isOffline {
-                    OfflineBannerView(lastFetchDate: planStore.lastFetched(for: "today"))
-                }
-                goalSection
-                bannerCarousel
-                todayWorkoutSection
-                recentActivitiesSection
-            }
-            .padding(.horizontal, Spacing.md)
-            .padding(.vertical, Spacing.md)
-        }
-        .refreshable { await loadData() }
-        .scrollContentBackground(.hidden)
     }
 
     // MARK: - Section 1: Today / Next Workout
@@ -202,7 +198,7 @@ struct HomeScreen: View {
     private var recentActivitiesSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
-                Text("Recent activities")
+                Text("Recent Activity")
                     .font(.sectionTitle)
                 Spacer()
                 Button("View all") {

@@ -41,10 +41,6 @@ final class PlanStore {
 
     // MARK: - Offline State
 
-    /// True when plan data is being served from cache due to a network failure.
-    /// Ephemeral — not persisted across restarts.
-    private(set) var isOffline: Bool = false
-
     /// Last successfully fetched PlanDay, persisted to UserDefaults.
     /// Served to callers via serveCachedTodayOffline() when network is unavailable.
     private(set) var cachedToday: PlanDay? = nil
@@ -130,7 +126,6 @@ final class PlanStore {
 
     func setTodayPlanDay(_ day: PlanDay) {
         todayPlanDay = day
-        isOffline = false
         // Persist to disk for offline serving
         cachedToday = day
         lastFetchTime["today"] = Date()
@@ -162,7 +157,6 @@ final class PlanStore {
     func cacheWeek(_ week: PlanWeekResponse) {
         weekCache[week.start_date] = week
         currentPlanVersionId = week.plan_version_id
-        isOffline = false
         lastFetchTime[week.start_date] = Date()
 
         // Keep only the 8 most recently fetched weeks (by fetch time, not calendar order)
@@ -188,21 +182,18 @@ final class PlanStore {
     // MARK: - Offline Fallback
 
     /// Serves the last cached today-plan when the network is unavailable.
-    /// Sets `isOffline = true` and populates `todayPlanDay` from cache.
+    /// Populates `todayPlanDay` from cache.
     /// Returns nil if no persistent cache exists (first launch / after sign-out).
     func serveCachedTodayOffline() -> PlanDay? {
         guard let cached = cachedToday else { return nil }
         todayPlanDay = cached
-        isOffline = true
         return cached
     }
 
     /// Serves a persisted week when the network is unavailable.
-    /// Sets `isOffline = true`. Returns nil if no cache exists for this startDate.
+    /// Returns nil if no cache exists for this startDate.
     func serveCachedWeekOffline(for startDate: String) -> PlanWeekResponse? {
-        guard let cached = weekCache[startDate] else { return nil }
-        isOffline = true
-        return cached
+        weekCache[startDate]
     }
 
     /// Last successful fetch timestamp for a given cache key.
@@ -234,7 +225,6 @@ final class PlanStore {
         goalSummary = nil
         currentWeek = nil
         weekCache = [:]
-        isOffline = false
         cachedToday = nil
         cachedRecentRuns = []
         lastFetchTime = [:]

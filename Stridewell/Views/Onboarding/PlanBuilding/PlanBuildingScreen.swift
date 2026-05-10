@@ -8,6 +8,7 @@ import SwiftUI
 struct PlanBuildingScreen: View {
 
     @Environment(\.onboardingStore) private var onboardingStore
+    @Environment(\.authStore) private var authStore
     @Environment(\.apiClient) private var apiClient
 
     @State private var errorMessage: String? = nil
@@ -22,6 +23,16 @@ struct PlanBuildingScreen: View {
         .navigationTitle("Building your plan")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Sign out") {
+                    onboardingStore.reset()
+                    authStore.signOut()
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
+        }
         .navigationDestination(isPresented: $navigateToPlanReveal) {
             PlanRevealScreen()
         }

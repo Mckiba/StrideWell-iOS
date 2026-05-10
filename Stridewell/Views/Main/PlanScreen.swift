@@ -14,6 +14,7 @@ struct PlanScreen: View {
     @Environment(\.planStore) private var planStore
     @Environment(\.authStore) private var authStore
     @Environment(\.settingsStore) private var settingsStore
+    @Environment(\.connectivityStore) private var connectivityStore
 
     @State private var screenState: LoadableState<Void> = .loading
     @State private var retryTrigger = false
@@ -69,7 +70,7 @@ struct PlanScreen: View {
     private var planContent: some View {
         ScrollView {
             VStack(spacing: Spacing.md) {
-                if planStore.isOffline {
+                if connectivityStore.isOffline {
                     OfflineBannerView(
                         lastFetchDate: planStore.lastFetched(for: DateUtils.format(selectedMonday))
                     )
