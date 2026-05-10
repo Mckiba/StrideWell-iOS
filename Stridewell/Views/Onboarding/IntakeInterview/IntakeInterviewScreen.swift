@@ -8,6 +8,7 @@ import SwiftUI
 struct IntakeInterviewScreen: View {
 
     @Environment(\.onboardingStore) private var onboardingStore
+    @Environment(\.authStore) private var authStore
     @Environment(\.apiClient) private var apiClient
 
     @State private var messages: [InterviewMessage] = []
@@ -28,6 +29,16 @@ struct IntakeInterviewScreen: View {
         .navigationTitle("Intake Interview")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Sign out") {
+                    onboardingStore.reset()
+                    authStore.signOut()
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
+        }
         .navigationDestination(isPresented: $navigateToPlanBuilding) {
             PlanBuildingScreen()
         }

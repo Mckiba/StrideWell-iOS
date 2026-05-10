@@ -12,6 +12,7 @@ struct StravaConnectContent: View {
     var onSkip: () -> Void = {}
     var onContinue: () -> Void = {}
     var onRetrySession: () -> Void = {}
+    var onSignOut: () -> Void = {}
     var onClose: (() -> Void)?
     
     @State private var showingSheet = true
@@ -104,6 +105,11 @@ struct StravaConnectContent: View {
                         .foregroundStyle(.white)
                     
                     PrimaryButton("Skip", size: .large, action: onSkip)
+
+                    Button("Sign out", action: onSignOut)
+                        .font(.footnote)
+                        .foregroundStyle(.white.opacity(0.6))
+                        .padding(.top, 4)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading) // expand
                 .padding(20)

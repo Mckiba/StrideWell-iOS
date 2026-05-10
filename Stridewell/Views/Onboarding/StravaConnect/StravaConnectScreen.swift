@@ -8,6 +8,7 @@ import SwiftUI
 struct StravaConnectScreen: View {
 
     @Environment(\.onboardingStore) private var onboardingStore
+    @Environment(\.authStore) private var authStore
     @Environment(\.apiClient) private var apiClient
 
     @State private var screenState: StravaConnectContent.ScreenState = .starting
@@ -24,7 +25,8 @@ struct StravaConnectScreen: View {
                     screenState = .starting
                     await startOnboardingSession()
                 }
-            }
+            },
+            onSignOut: { signOut() }
         )
         .navigationTitle("Set up your plan")
         .navigationBarTitleDisplayMode(.inline)
@@ -99,7 +101,13 @@ struct StravaConnectScreen: View {
     }
 
     private func pollUntilInterview() async {
+        var attempts = 0
         await Polling.exponentialBackoff {
+            attempts += 1
+            if attempts > 10 {
+                self.screenState = .sessionError("Analysis is taking longer than expected. Tap 'Try again' to retry.")
+                return true
+            }
             let result: ApiResult<OnboardingState> = await self.apiClient.onboardingStatus()
             if case .success(let state) = result {
                 self.onboardingStore.update(from: state)
@@ -110,6 +118,11 @@ struct StravaConnectScreen: View {
             }
             return false
         }
+    }
+
+    private func signOut() {
+        onboardingStore.reset()
+        authStore.signOut()
     }
 }
 
