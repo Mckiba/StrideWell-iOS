@@ -29,9 +29,6 @@ final class ActivitiesStore {
     /// False once the server returns fewer rows than the page size.
     var hasMore = false
 
-    /// True when runs are being served from cache due to a network failure.
-    private(set) var isOffline: Bool = false
-
     // MARK: - Private
 
     private let pageSize = 20
@@ -60,7 +57,6 @@ final class ActivitiesStore {
         let result = await apiClient.activities(limit: pageSize, offset: 0, search: search, date: date)
         switch result {
         case .success(let response):
-            isOffline = false
             runs = response.runs
             hasMore = response.hasMore ?? false
             currentOffset = response.runs.count
@@ -80,10 +76,8 @@ final class ActivitiesStore {
                !cached.isEmpty {
                 runs = cached
                 hasMore = false
-                isOffline = true
                 state = .loaded
             } else {
-                isOffline = false
                 state = .error(message)
             }
         }
@@ -111,7 +105,6 @@ final class ActivitiesStore {
         runs = []
         state = .loading
         hasMore = false
-        isOffline = false
         currentOffset = 0
         UserDefaults.standard.removeObject(forKey: Self.cachedRunsKey)
     }

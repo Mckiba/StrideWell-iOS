@@ -15,6 +15,7 @@ struct ChatScreen: View {
     @Environment(\.chatStore) private var chatStore
     @Environment(\.planStore) private var planStore
     @Environment(\.authStore) private var authStore
+    @Environment(\.connectivityStore) private var connectivityStore
 
     @State private var inputText = ""
     @State private var screenState: ScreenState = .empty
@@ -44,7 +45,7 @@ struct ChatScreen: View {
             VStack(spacing: 0) {
                 conversationView
 
-                if chatStore.isOffline {
+                if connectivityStore.isOffline {
                     OfflineBannerView(lastFetchDate: nil)
                         .padding(.horizontal, Spacing.md)
                 }
@@ -254,7 +255,7 @@ struct ChatScreen: View {
 
     private var canSend: Bool {
         screenState != .waiting &&
-        !chatStore.isOffline &&
+        !connectivityStore.isOffline &&
         !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 

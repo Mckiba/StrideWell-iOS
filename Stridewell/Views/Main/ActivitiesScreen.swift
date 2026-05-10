@@ -15,6 +15,7 @@ struct ActivitiesScreen: View {
     @Environment(\.activitiesStore) private var activitiesStore
     @Environment(\.authStore) private var authStore
     @Environment(\.weatherStore) private var weatherStore
+    @Environment(\.connectivityStore) private var connectivityStore
 
     @State private var searchText = ""
     @State private var selectedDate: Date? = nil
@@ -97,7 +98,7 @@ struct ActivitiesScreen: View {
     private var activityList: some View {
         ScrollView {
             LazyVStack(spacing: Spacing.sm) {
-                if activitiesStore.isOffline {
+                if connectivityStore.isOffline {
                     OfflineBannerView(lastFetchDate: nil)
                         .padding(.horizontal, Spacing.md)
                 }
