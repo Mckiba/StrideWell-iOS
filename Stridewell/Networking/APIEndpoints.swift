@@ -15,6 +15,7 @@ enum APIEndpoints {
     static let me                = "/auth/me"
     static let appleSignIn       = "/auth/apple"
     static let googleSignIn      = "/auth/google"
+    static let refreshSession    = "/auth/refresh"
     static let forgotPassword    = "/auth/forgot-password"
     static let resetPassword     = "/auth/reset-password"
 

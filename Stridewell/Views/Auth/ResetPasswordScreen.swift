@@ -119,7 +119,7 @@ struct ResetPasswordScreen: View {
         switch result {
         case .success(let response):
             // Sign the user in immediately — no need to return to the login screen.
-            authStore.signIn(token: response.token, userId: response.user_id)
+            authStore.signIn(session: response)
             if case .success(let me) = await apiClient.me() {
                 if me.onboarding_status == .complete || me.onboarding_status == .skipped {
                     onboardingStore.markComplete()

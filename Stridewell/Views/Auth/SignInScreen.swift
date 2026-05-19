@@ -105,7 +105,7 @@ struct SignInScreen: View {
         isLoading = true
         errorMessage = nil
 
-        let result: ApiResult<LoginResponse> = await apiClient.login(
+        let result: ApiResult<AuthSessionResponse> = await apiClient.login(
             email: email.trimmingCharacters(in: .whitespaces),
             password: password
         )
@@ -116,7 +116,7 @@ struct SignInScreen: View {
             isLoading = false
             return
         case .success(let response):
-            authStore.signIn(token: response.token, userId: response.user_id)
+            authStore.signIn(session: response)
         }
 
         // Check onboarding status — non-blocking

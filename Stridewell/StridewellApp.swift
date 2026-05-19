@@ -64,6 +64,15 @@ struct StridewellApp: App {
         let store = AuthStore()
         let client = APIClient(
             tokenProvider: { store.token },
+            refreshTokenProvider: { store.refreshToken },
+            accessTokenExpiryProvider: { store.accessTokenExpiresAt },
+            onSessionRefreshed: { session in
+                store.updateSession(
+                    accessToken: session.access_token,
+                    refreshToken: session.refresh_token,
+                    expiresAt: session.expires_at
+                )
+            },
             onUnauthorized: { store.handle401() }
         )
         _authStore = State(wrappedValue: store)
