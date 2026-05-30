@@ -3,23 +3,31 @@
 //  Stridewell
 //
 //  Response model for GET /plan/goal-summary and computed helpers
-//  used by GoalCardView.
+//  used by GoalCardView. 
 //
 
 import Foundation
 
 struct GoalSummary: Codable {
-    let goal_race_date: String?        // "YYYY-MM-DD" — nil for fitness/base-building goals
-    let goal_race_distance_m: Double?  // metres — nil when no race goal
-    let plan_start_date: String        // "YYYY-MM-DD"
+    let goal_type: String                    // "race" | "fitness"
+    let goal_race_date: String?              // "YYYY-MM-DD" — nil for fitness goals
+    let goal_race_distance_m: Double?        // metres — nil for fitness goals
+    let goal_race_distance_label: String?    // server-formatted label, e.g. "Half marathon"
+    let plan_start_date: String              // "YYYY-MM-DD"
     let horizon_days: Int
-    let total_distance_m: Double       // sum of all runs since plan_start_date
+    let weeks_elapsed: Int
+    let weeks_remaining: Int
+    let runs_completed: Int
+    let runs_planned_to_date: Int
+    let distance_completed_m: Double         // plan-attributable distance only
 
     // MARK: - Computed
 
-    /// Human-readable goal/race name derived from distance.
+    /// Human-readable goal label. Prefers the server-rendered label; falls back
+    /// to a local lookup when the server didn't provide one.
     var goalName: String {
-        guard let dist = goal_race_distance_m else { return "Training Goal" }
+        if let label = goal_race_distance_label, !label.isEmpty { return label }
+        guard goal_type == "race", let dist = goal_race_distance_m else { return "Training Goal" }
         switch dist {
         case ..<5500:          return "5K"
         case 5500..<9000:      return "8K"
@@ -32,21 +40,25 @@ struct GoalSummary: Codable {
         }
     }
 
-    /// Total weeks in the plan.
+    /// Total weeks in the plan (derived from horizon_days).
     var totalWeeks: Int {
         Int(ceil(Double(horizon_days) / 7.0))
     }
 
-    /// Weeks elapsed since plan start, clamped to totalWeeks.
-    var weeksCompleted: Int {
-        guard let start = DateUtils.parse(plan_start_date) else { return 0 }
-        let days = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
-        return min(max(days / 7, 0), totalWeeks)
-    }
+    /// Weeks elapsed (server-computed, clamped). Kept as a property name iOS
+    /// callers already use.
+    var weeksCompleted: Int { weeks_elapsed }
 
     /// 0.0–1.0 fill value for the progress bar.
     var weekProgress: Double {
-        totalWeeks > 0 ? Double(weeksCompleted) / Double(totalWeeks) : 0
+        totalWeeks > 0 ? Double(weeks_elapsed) / Double(totalWeeks) : 0
+    }
+
+    /// Plan-attributable run completion as a 0.0–1.0 ratio.
+    var runProgress: Double {
+        runs_planned_to_date > 0
+            ? min(1.0, Double(runs_completed) / Double(runs_planned_to_date))
+            : 0
     }
 
     /// Race date formatted as "March 7th" for display.

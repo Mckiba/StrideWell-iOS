@@ -22,6 +22,7 @@ struct PlanScreen: View {
     @State private var displayedWeek: PlanWeekResponse? = nil
     @State private var weekRuns: [Run] = []
     @State private var selectedDay: PlanDay? = nil
+    @State private var selectedRun: Run? = nil
     @State private var showPlanChange = false
 
     var body: some View {
@@ -58,6 +59,9 @@ struct PlanScreen: View {
         .task(id: retryTrigger) { await loadWeek(for: selectedMonday) }
         .sheet(item: $selectedDay) { day in
             WorkoutDetailSheet(day: day)
+        }
+        .fullScreenCover(item: $selectedRun) { run in
+            RunDetailScreen(run: run)
         }
         .navigationDestination(isPresented: $showPlanChange) { PlanChangeScreen() }
         .onReceive(NotificationCenter.default.publisher(for: .openPlanChange)) { _ in
@@ -164,7 +168,14 @@ struct PlanScreen: View {
                 VStack(spacing: Spacing.sm) {
                     ForEach(days) { day in
                         WorkoutCard(day: day, isToday: day.date == todayString)
-                            .onTapGesture { selectedDay = day }
+                            .onTapGesture {
+                                if (day.status == .completed || day.status == .modified),
+                                   let run = day.linkedRun {
+                                    selectedRun = run
+                                } else {
+                                    selectedDay = day
+                                }
+                            }
                     }
                 }
             }
