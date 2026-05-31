@@ -216,5 +216,20 @@ extension View {
                     .fill(color)
             )
     }
+
+    /// Optional variant — applies the stroke only when `color` is non-nil so
+    /// planned/rest cards render with no stroke at all.
+    @ViewBuilder
+    func cardBottomStroke(
+        _ color: Color?,
+        height: CGFloat = 3,
+        cornerRadius: CGFloat = CornerRadius.md
+    ) -> some View {
+        if let color {
+            cardBottomStroke(color, height: height, cornerRadius: cornerRadius)
+        } else {
+            self
+        }
+    }
 }
 

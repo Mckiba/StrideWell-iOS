@@ -144,11 +144,12 @@ struct WorkoutCard: View {
         return day.status ?? .planned
     }
 
-    private var strokeColor: Color {
+    // Only states that carry meaning get a stroke; planned/rest stay plain.
+    private var strokeColor: Color? {
         switch effectiveStatus {
         case .completed, .modified: return AppColor.cardBorderCompleted
         case .missed:               return AppColor.cardBorderMissed
-        case .planned, .rest:       return AppColor.surface
+        case .planned, .rest:       return nil
         }
     }
 
