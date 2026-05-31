@@ -88,6 +88,14 @@ struct HomeScreen: View {
                 Text(title)
                     .font(.sectionTitle)
                 WorkoutCard(day: day, isToday: title == "Today")
+                    .onTapGesture {
+                        // deep-link to RunDetailScreen when the
+                        // card represents a completed/modified day.
+                        if (day.status == .completed || day.status == .modified),
+                           let run = day.linkedRun {
+                            selectedRun = run
+                        }
+                    }
             }
         }
     }
@@ -149,7 +157,7 @@ struct HomeScreen: View {
                 id:       "plan-change",
                 title1:   "Let's Review the Plan",
                 subtitle: "Your plan has been updated based on your recent runs and reflections",
-                image:    Image("bg1"),
+                image:    Image("bg2"),
                 onTap:    { showPlanChange = true },
                 onDismiss: { planStore.markPlanChangeSeen() }
             ))

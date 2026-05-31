@@ -7,18 +7,16 @@
 //
 
 import SwiftUI
-import CoreLocation
 
 struct ActivityCard: View {
 
     let run: Run
 
     @Environment(\.settingsStore) private var settingsStore
-    @State private var routeCoordinates: [CLLocationCoordinate2D] = []
 
     var body: some View {
         HStack(alignment: .center, spacing: Spacing.xl2) {
-            routeThumbnail
+            RouteThumbnailView(run: run)
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 timestampRow
                 Text(run.title ?? run.sport_type.replacingOccurrences(of: "_", with: " ").capitalized)
@@ -31,33 +29,11 @@ struct ActivityCard: View {
         .padding(.vertical, Spacing.xs)
         .background(AppColor.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+        // Only plan-linked runs get the accent stroke. Historical runs,
+        // cross-training, and anything outside the active plan render plain.
+//        .modifier(PlanLinkedStrokeModifier(isPlanLinked: run.plan_day_date != nil))
         .shadow(color: .black.opacity(0.10), radius: 8, x: 0, y: 2)
-        .task {
-            if let encoded = run.route?.summary_polyline, !encoded.isEmpty {
-                routeCoordinates = await Task.detached(priority: .utility) {
-                    await PolylineDecoder.decode(encoded)
-                }.value
-            }
-        }
     }
-
-    // MARK: - Route Thumbnail
-
-    private var routeThumbnail: some View {
-        Group {
-            if routeCoordinates.count > 1 {
-                RoutePathShape(coordinates: routeCoordinates)
-                    .stroke(AppColor.accent, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
-            } else {
-                // Placeholder shown while decoding or when no polyline is available.
-                RoundedRectangle(cornerRadius: CornerRadius.sm)
-                    .stroke(AppColor.textTertiary, lineWidth: 1)
-            }
-        }
-        .frame(width: 32, height: 34)
-    }
-
-
 
     private var timestampRow: some View {
         HStack {
@@ -87,18 +63,35 @@ struct ActivityCard: View {
 // MARK: - Preview
 
 #Preview {
-    let sample = Run(
+    let unlinked = Run(
         id: "1",
         provider: "strava",
         sport_type: "Run",
-        title: "Seattle Running" as String?,
+        title: "Seattle Running",
         start_time: "2025-02-18T18:16:00Z",
         distance_m: 4_850,
         duration_s: 1_568,
         avg_pace_s_per_km: 323,
         elevation_gain_m: 42,
-        route: RunRoute(summary_polyline: "o}mlHlariVoBiC{A{B_BaCuBeDyF_Jw@yAeAuBmAaCkBuDeBkDoAsB}@cBqAeCqBiEiBkD{BkEaC_FuAgC")
+        route: RunRoute(summary_polyline: "o}mlHlariVoBiC{A{B_BaCuBeDyF_Jw@yAeAuBmAaCkBuDeBkDoAsB}@cBqAeCqBiEiBkD{BkEaC_FuAgC"),
+        plan_day_date: nil
     )
-    ActivityCard(run: sample)
-        .padding()
+    let linked = Run(
+        id: "2",
+        provider: "strava",
+        sport_type: "Run",
+        title: "Long Run",
+        start_time: "2025-02-19T08:00:00Z",
+        distance_m: 20_100,
+        duration_s: 7_200,
+        avg_pace_s_per_km: 358,
+        elevation_gain_m: 180,
+        route: RunRoute(summary_polyline: "o}mlHlariVoBiC{A{B_BaCuBeDyF_Jw@yAeAuBmAaCkBuDeBkDoAsB}@cBqAeCqBiEiBkD{BkEaC_FuAgC"),
+        plan_day_date: "2025-02-19"
+    )
+    VStack(spacing: 12) {
+        ActivityCard(run: unlinked)  // no stroke — historical run
+        ActivityCard(run: linked)    // accent stroke — completed plan day
+    }
+    .padding()
 }
