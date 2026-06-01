@@ -24,6 +24,7 @@ extension EnvironmentValues {
     @Entry var activitiesStore: ActivitiesStore = ActivitiesStore()
     @Entry var activityStore: ActivityStore = ActivityStore()
     @Entry var connectivityStore: ConnectivityStore = ConnectivityStore()
+    @Entry var homeCardsStore: HomeCardsStore = HomeCardsStore()
 }
 
 // MARK: - Password Reset State
@@ -54,6 +55,7 @@ struct StridewellApp: App {
     @State private var activitiesStore = ActivitiesStore()
     @State private var activityStore = ActivityStore()
     @State private var connectivityStore = ConnectivityStore()
+    @State private var homeCardsStore = HomeCardsStore()
     @State private var pendingReset: PendingReset?
     private let apiClient: APIClient
     private let heatmapViewModel: HeatmapViewModel
@@ -107,6 +109,7 @@ struct StridewellApp: App {
                 .environment(\.activitiesStore, activitiesStore)
                 .environment(\.activityStore, activityStore)
                 .environment(\.connectivityStore, connectivityStore)
+                .environment(\.homeCardsStore, homeCardsStore)
                 .onReceive(NotificationCenter.default.publisher(for: .apnsTokenReceived)) { notification in
                     guard let token = notification.object as? String,
                           authStore.isAuthenticated else { return }
