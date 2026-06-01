@@ -83,6 +83,12 @@ struct SnapCarousel<Item: Identifiable, Content: View>: View {
 
 // MARK: - BannerItem
 
+/// Distinguishes which card view a BannerItem renders as in the carousel.
+enum BannerKind {
+    case standard   // ActivityBannerView (plan change / activity / reflection)
+    case weather    // WeatherBannerView (home/weather cards)
+}
+
 /// Convenience data model for banner-style carousel cards.
 /// Not required by SnapCarousel — any Identifiable type works.
 struct BannerItem: Identifiable {
@@ -92,6 +98,9 @@ struct BannerItem: Identifiable {
     let image: Image
     let onTap: () -> Void
     var onDismiss: (() -> Void)? = nil
+    /// Renders as WeatherBannerView when `.weather`; uses `title2` as the advice line.
+    var kind: BannerKind = .standard
+    var title2: String? = nil
 }
 
 // MARK: - Preview

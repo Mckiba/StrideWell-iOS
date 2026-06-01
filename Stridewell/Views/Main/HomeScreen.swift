@@ -2,11 +2,12 @@
 //  HomeScreen.swift
 //  Stridewell
 //
-//  M7: Daily dashboard — today's workout, plan change detection,
+//  Dashboard — today's workout, plan change detection,
 //  reflection prompt, and recent activities.
 //
 
 import SwiftUI
+import UIKit
 
 struct HomeScreen: View {
 
@@ -17,6 +18,9 @@ struct HomeScreen: View {
     @Environment(\.activityStore) private var activityStore
     @Environment(\.chatStore) private var chatStore
     @Environment(\.connectivityStore) private var connectivityStore
+    @Environment(\.settingsStore) private var settingsStore
+    @Environment(\.locationStore) private var locationStore
+    @Environment(\.homeCardsStore) private var homeCardsStore
 
     @State private var screenState: LoadableState<Void> = .loading
     @State private var retryTrigger = false
@@ -62,13 +66,27 @@ struct HomeScreen: View {
                     .padding(.horizontal, Spacing.md)
                     .padding(.vertical, Spacing.md)
                 }
-                .refreshable { await loadData() }
+                .refreshable {
+                    await loadData()
+                    await homeCardsStore.fetch(
+                        apiClient: apiClient,
+                        coordinate: locationStore.coordinate,
+                        units: settingsStore.unitSystem,
+                        force: true
+                    )
+                }
                 .scrollContentBackground(.hidden)
             }
         }
         .task(id: retryTrigger) {
             weatherStore.fetchIfNeeded()
+            locationStore.requestLocation()
             await loadData()
+            await homeCardsStore.fetch(
+                apiClient: apiClient,
+                coordinate: locationStore.coordinate,
+                units: settingsStore.unitSystem
+            )
         }
         .sheet(isPresented: $showReflection) { ReflectionScreen() }
         .fullScreenCover(item: $selectedRun) { run in
@@ -152,6 +170,19 @@ struct HomeScreen: View {
     private var bannerItems: [BannerItem] {
         var items: [BannerItem] = []
 
+        // Weather cards first (backend already sorts them by priority).
+        for card in homeCardsStore.cards {
+            items.append(BannerItem(
+                id:       "weather-\(card.id)",
+                title1:   card.title,
+                subtitle: "",
+                image:    WeatherCardImage.image(for: card.icon),
+                onTap:    { openWeatherCard(card) },
+                kind:     .weather,
+                title2:   card.subtitle ?? ""
+            ))
+        }
+
         if planStore.hasPlanChanged {
             items.append(BannerItem(
                 id:       "plan-change",
@@ -191,14 +222,33 @@ struct HomeScreen: View {
 
     private var bannerCarousel: some View {
         SnapCarousel(items: bannerItems) { item in
-            ActivityBannerView(
-                title1:    item.title1,
-                subtitle:  item.subtitle,
-                image:     item.image,
-                onTap:     item.onTap,
-                onDismiss: item.onDismiss
-            )
+            switch item.kind {
+            case .weather:
+                WeatherBannerView(
+                    title1: item.title1,
+                    title2: item.title2 ?? "",
+                    image:  item.image,
+                    onTap:  item.onTap
+                )
+            case .standard:
+                ActivityBannerView(
+                    title1:    item.title1,
+                    subtitle:  item.subtitle,
+                    image:     item.image,
+                    onTap:     item.onTap,
+                    onDismiss: item.onDismiss
+                )
+            }
         }
+    }
+
+    /// Alert cards open their provider detail page in the system browser; all
+    /// other weather cards are non-interactive (no-op).
+    private func openWeatherCard(_ card: HomeCard) {
+        guard card.type == "weather_alert",
+              let urlString = card.details_url,
+              let url = URL(string: urlString) else { return }
+        UIApplication.shared.open(url)
     }
 
     // MARK: - Section 4: Recent Activities

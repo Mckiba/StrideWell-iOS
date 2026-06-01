@@ -60,4 +60,7 @@ enum APIEndpoints {
 
     // MARK: Notifications (M15)
     static let notificationsRegister = "/notifications/register"
+
+    // MARK: Home Cards (Weather)
+    static let homeCards         = "/home/cards"
 }
