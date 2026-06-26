@@ -23,6 +23,7 @@ enum APIEndpoints {
     static let onboardingStatus  = "/onboarding/status"
     static let onboardingMessage = "/onboarding/message"
     static let onboardingConfirm = "/onboarding/confirm-plan"
+    static let onboardingSkip    = "/onboarding/skip"
 
     // MARK: Plan (M6–M11)
     static let planToday         = "/plan/today"

@@ -15,6 +15,11 @@ final class OnboardingStore {
     private(set) var firstPlanVersionId: String? = nil
     private(set) var conversationId: String? = nil
 
+    // V2 guided flow — advancement + resume state.
+    private(set) var confirmedFields: [String] = []
+    private(set) var partialIntake: PartialIntake? = nil
+    private(set) var historySummary: StravaHistorySummary? = nil
+
     var isComplete: Bool { status == .complete || status == .skipped }
 
     // MARK: - Persistence
@@ -49,7 +54,16 @@ final class OnboardingStore {
         intakeComplete     = state.intake_complete
         firstPlanVersionId = state.first_plan_version_id
         if let cid = state.conversation_id { conversationId = cid }
+        // V2 hydration (nil on a V1 backend → leave existing state untouched).
+        if let confirmed = state.confirmed_fields { confirmedFields = confirmed }
+        if let partial = state.partial_intake { partialIntake = partial }
+        if let summary = state.history_summary { historySummary = summary }
         if isComplete { persistCompletion() }
+    }
+
+    /// Merge the latest `confirmed_fields` from a POST /onboarding/message reply.
+    func applyConfirmedFields(_ fields: [String]?) {
+        if let fields { confirmedFields = fields }
     }
 
     /// Called after POST /onboarding/confirm-plan succeeds.
@@ -59,12 +73,23 @@ final class OnboardingStore {
         persistCompletion()
     }
 
+    /// Called after POST /onboarding/skip succeeds. `skipped` is terminal in the
+    /// current data model (RootView + launch routing treat it as complete), so this
+    /// flips isComplete and the app proceeds to the main tab bar with a default plan.
+    func markSkipped() {
+        status = .skipped
+        persistCompletion()
+    }
+
     func reset() {
         status             = .pending
         stravaConnected    = false
         intakeComplete     = false
         firstPlanVersionId = nil
         conversationId     = nil
+        confirmedFields    = []
+        partialIntake      = nil
+        historySummary     = nil
         UserDefaults.standard.removeObject(forKey: Self.isCompleteKey)
     }
 

@@ -9,23 +9,34 @@ struct StravaConnectContent: View {
     
     let screenState: ScreenState
     var onConnect: () -> Void = {}
-    var onSkip: () -> Void = {}
-    var onContinue: () -> Void = {}
+    var onContinueWithoutStrava: () -> Void = {}   // secondary: no Strava → manual baseline branch
+    var onSkipOnboarding: () -> Void = {}          // tertiary: POST /onboarding/skip → default plan
+    var onContinue: () -> Void = {}                // post-connect: proceed with Strava branch
     var onRetrySession: () -> Void = {}
     var onSignOut: () -> Void = {}
     var onClose: (() -> Void)?
-    
+
     @State private var showingSheet = true
-    
-    
+
+
     enum ScreenState: Equatable {
         case starting
         case idle
         case connecting
         case connected
         case analyzing
+        case slowBackfill        // backfill is slow (>~60s) — offer to continue without waiting
         case sessionError(String)
         case error(String)
+    }
+
+    /// The "Continue without Strava" affordance only makes sense before a connection
+    /// is in flight or established.
+    private var showContinueWithoutStrava: Bool {
+        switch screenState {
+        case .idle, .error, .starting: return true
+        case .connecting, .connected, .analyzing, .slowBackfill, .sessionError: return false
+        }
     }
     
     var body: some View {
@@ -56,13 +67,18 @@ struct StravaConnectContent: View {
                         
                         
                         switch screenState {
-                            
+
                         case .starting, .connecting, .analyzing:
                             EmptyView()
                         case .connected:
                             PrimaryButton("Continue", size: .medium){
                                 onContinue()
                             }.padding(.horizontal, 48)
+                                .padding(.vertical, 8)
+                        case .slowBackfill:
+                            PrimaryButton("Continue without waiting", size: .small){
+                                onContinueWithoutStrava()
+                            }.padding(.horizontal, 32)
                                 .padding(.vertical, 8)
                         case .sessionError:
                             PrimaryButton("Try again", size: .small){
@@ -97,14 +113,27 @@ struct StravaConnectContent: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Let's make this plan about You. Together.")
                         .foregroundStyle(.white)
-                    
+
                     Text("Connect your Strava to help us build a plan tailored to your history and goals")
                         .foregroundStyle(.white)
-                    
-                    Text("Skipping the onboarding will result in a default plan. For a more personal experience the early onboarding and Strava integration is recommended")
-                        .foregroundStyle(.white)
-                    
-                    PrimaryButton("Skip", size: .large, action: onSkip)
+
+                    // Secondary: continue the interview without connecting Strava.
+                    if showContinueWithoutStrava {
+                        PrimaryButton("Continue without Strava", size: .large, action: onContinueWithoutStrava)
+                        Text("You can still build a personal plan — we'll just ask a few more questions.")
+                            .font(.footnote)
+                            .foregroundStyle(.white.opacity(0.75))
+                    }
+
+                    // Tertiary: skip onboarding entirely → generic starter plan.
+                    Text("Skipping the onboarding will result in a default plan. For a more personal experience the early onboarding and Strava integration is recommended.")
+                        .font(.footnote)
+                        .foregroundStyle(.white.opacity(0.75))
+                        .padding(.top, 4)
+
+                    Button("Skip onboarding", action: onSkipOnboarding)
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(.white.opacity(0.85))
 
                     Button("Sign out", action: onSignOut)
                         .font(.footnote)
@@ -150,6 +179,10 @@ struct StravaConnectContent: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
+        case .slowBackfill:
+            Text("This is taking a moment…")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         case .connected:
             Label("Strava connected", systemImage: "checkmark.circle.fill")
                 .font(.subheadline.weight(.medium))
