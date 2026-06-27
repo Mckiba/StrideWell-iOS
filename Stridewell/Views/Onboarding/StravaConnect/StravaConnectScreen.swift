@@ -45,7 +45,7 @@ struct StravaConnectScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .navigationDestination(isPresented: $navigateToInterview) {
-            IntakeInterviewScreen()
+            baselineScreen
         }
         .confirmationDialog(
             "Skip onboarding?",
@@ -65,10 +65,23 @@ struct StravaConnectScreen: View {
     // MARK: - Navigation
 
     /// Advance into the intake interview. The baseline branch (S2a vs S2b) is
-    /// recomputed by the guided screens from `strava_connected` + `history_summary`
-    /// — not stored here.
+    /// recomputed from `strava_connected` + `history_summary` — not stored here.
     private func advanceToInterview() {
         navigateToInterview = true
+    }
+
+    /// S2a (Strava history confirm) or S2b (manual baseline), per the resolved branch.
+    @ViewBuilder
+    private var baselineScreen: some View {
+        switch OnboardingFlow.baselineBranch(
+            stravaConnected: onboardingStore.stravaConnected,
+            historySummary: onboardingStore.historySummary
+        ) {
+        case .historyConfirm:
+            HistoryConfirmScreen()
+        default:
+            ManualBaselineScreen()
+        }
     }
 
     // MARK: - Session lifecycle

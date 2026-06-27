@@ -9,8 +9,8 @@ struct StravaConnectContent: View {
     
     let screenState: ScreenState
     var onConnect: () -> Void = {}
-    var onContinueWithoutStrava: () -> Void = {}   // secondary: no Strava → manual baseline branch
-    var onSkipOnboarding: () -> Void = {}          // tertiary: POST /onboarding/skip → default plan
+    var onContinueWithoutStrava: () -> Void = {}   // secondary:    no Strava -> manual baseline branch
+    var onSkipOnboarding: () -> Void = {}          // tertiary:     POST /onboarding/skip -> default plan
     var onContinue: () -> Void = {}                // post-connect: proceed with Strava branch
     var onRetrySession: () -> Void = {}
     var onSignOut: () -> Void = {}
@@ -45,7 +45,7 @@ struct StravaConnectContent: View {
             
             VStack() {
                 
-                //                Text("You, in Context").font(.largeTitle).padding(.vertical, 40)
+                // Text("You, in Context").font(.largeTitle).padding(.vertical, 40)
                 Spacer()
                 
                 // Modal
@@ -59,7 +59,6 @@ struct StravaConnectContent: View {
                             .scaledToFit()
                             .frame(width: 160, height: 65)
                             .padding(.top, 10)
-                        
                         
                         statusRow
                             .frame(height: 44)
