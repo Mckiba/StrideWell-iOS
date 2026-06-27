@@ -8,12 +8,12 @@ import SwiftUI
 struct PlanBuildingScreen: View {
 
     @Environment(\.onboardingStore) private var onboardingStore
+    @Environment(\.onboardingCoordinator) private var coordinator
     @Environment(\.authStore) private var authStore
     @Environment(\.apiClient) private var apiClient
 
     @State private var errorMessage: String? = nil
     @State private var retryTrigger = false
-    @State private var navigateToPlanReveal = false
 
     var body: some View {
         PlanBuildingContent(
@@ -33,9 +33,6 @@ struct PlanBuildingScreen: View {
                 .foregroundStyle(.secondary)
             }
         }
-        .navigationDestination(isPresented: $navigateToPlanReveal) {
-            PlanRevealScreen()
-        }
         .task(id: retryTrigger) { await poll() }
     }
 
@@ -54,7 +51,7 @@ struct PlanBuildingScreen: View {
                 consecutiveFailures = 0
                 onboardingStore.update(from: state)
                 if state.first_plan_version_id != nil {
-                    navigateToPlanReveal = true
+                    coordinator.goToPlanReveal()
                     return
                 }
             case .failure(_, let message):

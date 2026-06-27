@@ -14,11 +14,11 @@ import SwiftUI
 struct StravaConnectScreen: View {
 
     @Environment(\.onboardingStore) private var onboardingStore
+    @Environment(\.onboardingCoordinator) private var coordinator
     @Environment(\.authStore) private var authStore
     @Environment(\.apiClient) private var apiClient
 
     @State private var screenState: StravaConnectContent.ScreenState = .starting
-    @State private var navigateToInterview = false
     @State private var showSkipConfirm = false
     @State private var isSkipping = false
 
@@ -44,9 +44,6 @@ struct StravaConnectScreen: View {
         .navigationTitle("Set up your plan")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .navigationDestination(isPresented: $navigateToInterview) {
-            baselineScreen
-        }
         .confirmationDialog(
             "Skip onboarding?",
             isPresented: $showSkipConfirm,
@@ -64,24 +61,10 @@ struct StravaConnectScreen: View {
 
     // MARK: - Navigation
 
-    /// Advance into the intake interview. The baseline branch (S2a vs S2b) is
-    /// recomputed from `strava_connected` + `history_summary` — not stored here.
+    /// Advance into the intake interview. The coordinator pushes the resolved baseline
+    /// branch (S2a vs S2b), skipping ahead past any already-confirmed screens.
     private func advanceToInterview() {
-        navigateToInterview = true
-    }
-
-    /// S2a (Strava history confirm) or S2b (manual baseline), per the resolved branch.
-    @ViewBuilder
-    private var baselineScreen: some View {
-        switch OnboardingFlow.baselineBranch(
-            stravaConnected: onboardingStore.stravaConnected,
-            historySummary: onboardingStore.historySummary
-        ) {
-        case .historyConfirm:
-            HistoryConfirmScreen()
-        default:
-            ManualBaselineScreen()
-        }
+        coordinator.advance(using: onboardingStore, planBuilding: false)
     }
 
     // MARK: - Session lifecycle
@@ -110,7 +93,7 @@ struct StravaConnectScreen: View {
             onboardingStore.update(from: state)
             switch state.status {
             case .interview:
-                navigateToInterview = true
+                advanceToInterview()
             case .analyzing:
                 screenState = .analyzing
                 await pollUntilInterview()
@@ -160,7 +143,7 @@ struct StravaConnectScreen: View {
             if case .success(let state) = result {
                 self.onboardingStore.update(from: state)
                 if state.status == .interview {
-                    self.navigateToInterview = true
+                    self.advanceToInterview()
                     return true
                 }
             }

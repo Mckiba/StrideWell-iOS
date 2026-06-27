@@ -1,15 +1,14 @@
 //
-//  HistoryConfirmScreen.swift
+//  LessonsScreen.swift
 //  Stridewell
 //
-//  S2a — "You in Focus" (Strava branch). Shows the computed history summary and
-//  confirms current_weekly_volume_km, training_phase, active_injury through chat.
-//  No structured controls here — corrections flow through the conversation.
+//  S6 — "The Lessons". Captures what_hasnt_worked (free text — no chips would flatten
+//  it). When intake completes the backend returns plan_building → advance to S7.
 //
 
 import SwiftUI
 
-struct HistoryConfirmScreen: View {
+struct LessonsScreen: View {
 
     @Environment(\.apiClient) private var apiClient
     @Environment(\.onboardingStore) private var onboardingStore
@@ -21,17 +20,22 @@ struct HistoryConfirmScreen: View {
         Group {
             if let model {
                 GuidedScreenScaffold(
-                    title: "You in Focus",
-                    subtitle: "Here's what your recent training looks like.",
+                    title: "The Lessons",
+                    subtitle: "What hasn't worked for you before?",
                     model: model
                 ) {
-                    if let summary = onboardingStore.historySummary {
-                        HistorySummaryCard(summary: summary)
+                    Button {
+                        Task { await model.send("Nothing really comes to mind.") }
+                    } label: {
+                        Text("Nothing comes to mind")
+                            .font(.cardCaption)
+                            .foregroundStyle(.secondary)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .onChange(of: model.confirmedFields) { _, fields in
                     onboardingStore.applyConfirmedFields(fields)
-                    if OnboardingFlow.isSatisfied(.historyConfirm, confirmed: fields) {
+                    if OnboardingFlow.isSatisfied(.lessons, confirmed: fields) {
                         coordinator.advance(using: onboardingStore, planBuilding: model.planBuilding)
                     }
                 }
@@ -49,7 +53,7 @@ struct HistoryConfirmScreen: View {
         model = IntakeChatModel(
             api: apiClient,
             conversationId: conversationId,
-            screenContext: OnboardingFlow.screenContext(for: .historyConfirm)
+            screenContext: OnboardingFlow.screenContext(for: .lessons)
         )
     }
 }

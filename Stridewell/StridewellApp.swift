@@ -14,6 +14,7 @@ extension EnvironmentValues {
     @Entry var authStore: AuthStore = AuthStore()
     @Entry var apiClient: APIClient = APIClient(tokenProvider: { nil }, onUnauthorized: {})
     @Entry var onboardingStore: OnboardingStore = OnboardingStore()
+    @Entry var onboardingCoordinator: OnboardingCoordinator = OnboardingCoordinator()
     @Entry var planStore: PlanStore = PlanStore()
     @Entry var chatStore: ChatStore = ChatStore()
     @Entry var settingsStore: SettingsStore = SettingsStore()

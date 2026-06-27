@@ -13,12 +13,11 @@ struct ManualBaselineScreen: View {
 
     @Environment(\.apiClient) private var apiClient
     @Environment(\.onboardingStore) private var onboardingStore
+    @Environment(\.onboardingCoordinator) private var coordinator
 
     @State private var model: IntakeChatModel?
     @State private var volumeDisplay: Double = 30
     @State private var selectedPhase: String?
-    @State private var navigateToBridge = false
-    @State private var navigateToPlanBuilding = false
 
     var body: some View {
         Group {
@@ -41,20 +40,16 @@ struct ManualBaselineScreen: View {
                 .onChange(of: model.confirmedFields) { _, fields in
                     onboardingStore.applyConfirmedFields(fields)
                     if OnboardingFlow.isSatisfied(.manualBaseline, confirmed: fields) {
-                        navigateToBridge = true
+                        coordinator.advance(using: onboardingStore, planBuilding: model.planBuilding)
                     }
                 }
                 .onChange(of: model.planBuilding) { _, building in
-                    if building { navigateToPlanBuilding = true }
+                    if building { coordinator.advance(using: onboardingStore, planBuilding: true) }
                 }
             } else {
                 ProgressView().task { setupModel() }
             }
         }
-        // V2-6: the remaining topics (goal → lessons) are still collected by the V1
-        // free-form interview bridge; V2-7 replaces it with S3-S6.
-        .navigationDestination(isPresented: $navigateToBridge) { IntakeInterviewScreen() }
-        .navigationDestination(isPresented: $navigateToPlanBuilding) { PlanBuildingScreen() }
     }
 
     private func setupModel() {
