@@ -2,10 +2,9 @@
 //  HistorySummaryCard.swift
 //  Stridewell
 //
-//  Read-only summary of the computed Strava history shown on S2a (HistoryConfirm).
-//  The athlete confirms or corrects these values through the chat — there are no
-//  controls here (a toggle would invite contradicting Strava without explanation).
-//  All distances render in the athlete's unit preference.
+//  Read-only summary of the computed Strava history. The athlete confirms or corrects
+//  these values through the chat rather than with controls. Distances render in the
+//  athlete's unit.
 //
 
 import SwiftUI

@@ -19,12 +19,12 @@ struct OnboardingState: Codable {
     let strava_connected: Bool
     let intake_complete: Bool
     let first_plan_version_id: String?
-    let conversation_id: String?      // present on resume; used by the interview screens
+    let conversation_id: String?      // present once the interview has started
 
-    // V2 (all optional → backward-compatible decode against a V1 backend)
-    let history_summary: StravaHistorySummary?   // present on the Strava branch
-    let confirmed_fields: [String]?              // intake keys confirmed so far (advancement signal)
-    let partial_intake: PartialIntake?           // working state; pre-fills structured inputs on resume
+    // Optional so responses from a backend that omits them still decode.
+    let history_summary: StravaHistorySummary?   // present when Strava is connected
+    let confirmed_fields: [String]?              // intake keys confirmed so far; drives which screen shows next
+    let partial_intake: PartialIntake?           // confirmed values so far; pre-fills the structured controls
 }
 
 // Returned by POST /onboarding/start
@@ -43,7 +43,7 @@ struct StravaConnectResponse: Codable {
     let connected: Bool
 }
 
-// MARK: - Interview message types (M4)
+// MARK: - Interview message types
 
 enum InterviewMessageRole: String, Codable {
     case user
@@ -62,7 +62,8 @@ struct InterviewMessage: Codable, Identifiable {
 struct OnboardingMessageRequest: Encodable {
     let conversation_id: String
     let message: InterviewMessage
-    // V2 (both optional; synthesized Encodable omits nil → a V1-shaped body when unset)
+    // Both optional; the synthesized encoder omits nil, so the body matches a plain
+    // free-text turn when unset.
     var screen_context: String?
     var structured_fields: StructuredFields?
 }
@@ -73,7 +74,7 @@ struct OnboardingMessageOnboardingState: Codable {
     let intake_complete: Bool
     let plan_building: Bool
     let first_plan_version_id: String?
-    let confirmed_fields: [String]?   // V2: intake keys confirmed so far
+    let confirmed_fields: [String]?   // intake keys confirmed so far
 }
 
 // Full POST /onboarding/message response
@@ -89,11 +90,11 @@ struct OnboardingSkipResponse: Codable {
     let message: String?
 }
 
-// MARK: - V2 structured input payload (subset of intake fields)
+// MARK: - Structured input payload
 
-/// The whitelisted subset of intake fields a guided screen may submit deterministically.
-/// All-optional: the synthesized encoder emits only set keys, matching the backend's
-/// `onboarding_message_structured_fields.json` (`additionalProperties: false`).
+/// Intake values a guided control submits directly instead of relying on the model to
+/// re-read them from the message text. Every field is optional; the encoder emits only
+/// the ones that are set. The set of keys matches what the backend accepts here.
 struct StructuredFields: Codable {
     var current_weekly_volume_km: Double?
     var training_phase: String?
@@ -117,10 +118,10 @@ struct StructuredFields: Codable {
     }
 }
 
-// MARK: - V2 partial intake (resume pre-fill)
+// MARK: - Partial intake (pre-fill on return)
 
-/// Echo of `onboarding_sessions.partial_intake`. All-optional so any subset decodes;
-/// guided screens read the keys they own to pre-fill their structured controls.
+/// The values confirmed so far, echoed by the status endpoint. Every field is optional
+/// so any subset decodes; each screen reads the keys it owns to pre-fill its controls.
 struct PartialIntake: Codable {
     var current_weekly_volume_km: Double?
     var training_phase: String?
@@ -137,10 +138,10 @@ struct PartialIntake: Codable {
     var following_existing_plan: Bool?
 }
 
-// MARK: - V2 Strava history summary (S2a render + branch routing)
+// MARK: - Strava history summary
 
-/// Computed Strava history echoed by GET /onboarding/status on the Strava branch.
-/// Only the fields the client needs are modeled; unknown keys are ignored.
+/// Computed training history echoed by the status endpoint when Strava is connected.
+/// Only the fields the app displays or branches on are modeled; unknown keys are ignored.
 struct StravaHistorySummary: Codable {
     let avg_weekly_volume_km_4wk: Double?
     let avg_weekly_volume_km_12wk: Double?

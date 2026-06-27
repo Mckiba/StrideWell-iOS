@@ -2,9 +2,8 @@
 //  IntakeChatView.swift
 //  Stridewell
 //
-//  The conversational surface embedded in every guided screen. Renders the chat
-//  thread + input bar from an IntakeChatModel. Reuses ChatBubbleView /
-//  TypingIndicatorView / InlineErrorView.
+//  The chat thread and input bar for an onboarding screen, rendered from an
+//  IntakeChatModel.
 //
 
 import SwiftUI

@@ -2,32 +2,31 @@
 //  OnboardingFlow.swift
 //  Stridewell
 //
-//  The single client-side source of truth for guided-flow screen ordering and
-//  advancement (Onboarding V2 spec §1.1 / §4.3). Advancement is driven exclusively
-//  by extraction state (`confirmed_fields`), never by turn count.
+//  Screen ordering and advancement for guided onboarding. The next screen is chosen
+//  by which intake fields are confirmed, never by message count.
 //
 
 import Foundation
 
-/// The ordered screens of the guided onboarding flow.
-/// `historyConfirm` (S2a) and `manualBaseline` (S2b) are the two baseline branches;
-/// the flow is linear after they converge at `goal` (S3).
+/// Screens in the guided onboarding flow, in order. `historyConfirm` and
+/// `manualBaseline` are mutually exclusive: which baseline screen is shown depends
+/// on whether usable Strava history exists.
 enum OnboardingScreen: Hashable {
-    case integrations    // S1
-    case historyConfirm  // S2a (Strava branch)
-    case manualBaseline  // S2b (no-Strava branch)
-    case goal            // S3
-    case routines        // S4
-    case speedwork       // S5
-    case lessons         // S6
-    case planBuilding    // S7
-    case planReveal      // S8
+    case integrations     // connect data sources
+    case historyConfirm   // confirm the baseline read from Strava
+    case manualBaseline   // enter the baseline by hand
+    case goal
+    case routines
+    case speedwork
+    case lessons
+    case planBuilding     // generating the first plan
+    case planReveal       // review and confirm the plan
 }
 
 enum OnboardingFlow {
 
-    /// The `screen_context` string sent to the backend for a given screen, or nil
-    /// for screens that carry no intake topic (S1, S7, S8 → V1 free-form / non-chat).
+    /// The `screen_context` sent with each message on this screen. nil for screens
+    /// that have no conversation (connect, plan building, plan reveal).
     static func screenContext(for screen: OnboardingScreen) -> String? {
         switch screen {
         case .historyConfirm: return "history_confirm"
@@ -40,8 +39,8 @@ enum OnboardingFlow {
         }
     }
 
-    /// The required intake fields that gate advancement off a screen. A screen is
-    /// satisfied when all of these appear in `confirmed_fields`. (Spec §1.1.)
+    /// Intake fields that must be confirmed before leaving this screen. The screen is
+    /// satisfied once all of them appear in `confirmed_fields`.
     static func requiredFields(for screen: OnboardingScreen) -> [String] {
         switch screen {
         case .historyConfirm, .manualBaseline:
@@ -55,12 +54,12 @@ enum OnboardingFlow {
         case .lessons:
             return ["what_hasnt_worked"]
         case .integrations, .planBuilding, .planReveal:
-            return []   // not gated by intake fields
+            return []
         }
     }
 
-    /// The baseline branch (S2a vs S2b), recomputed from connection state — never stored.
-    /// Strava with usable history → S2a; otherwise (no Strava, or insufficient data) → S2b.
+    /// Chooses the baseline screen: confirm-from-Strava when connected history is
+    /// usable, otherwise manual entry. Recomputed on each call rather than stored.
     static func baselineBranch(
         stravaConnected: Bool,
         historySummary: StravaHistorySummary?
@@ -70,16 +69,15 @@ enum OnboardingFlow {
         return .historyConfirm
     }
 
-    /// The linear order of the intake screens, given the chosen baseline branch.
-    /// S1, S7, S8 are handled outside this sequence (entry and post-intake).
+    /// The intake screens in order, starting from the chosen baseline screen. Connect,
+    /// plan building, and plan reveal sit outside this sequence.
     static func intakeSequence(branch: OnboardingScreen) -> [OnboardingScreen] {
         [branch, .goal, .routines, .speedwork, .lessons]
     }
 
-    /// The first screen in the intake sequence whose required fields are NOT all
-    /// confirmed. Implements the skip-ahead loop (spec §4.3): screens whose fields
-    /// were already volunteered are skipped. Returns nil when every intake screen is
-    /// satisfied (→ the caller should be in plan-building/reveal).
+    /// The first intake screen whose required fields aren't all confirmed. Screens
+    /// whose fields were already answered are skipped. Returns nil once every intake
+    /// screen is satisfied.
     static func firstUnsatisfied(
         branch: OnboardingScreen,
         confirmed: [String]
@@ -92,7 +90,7 @@ enum OnboardingFlow {
         return nil
     }
 
-    /// Whether a screen's gate is satisfied by the current confirmed set.
+    /// Whether the screen's required fields are all present in the confirmed set.
     static func isSatisfied(_ screen: OnboardingScreen, confirmed: [String]) -> Bool {
         let confirmedSet = Set(confirmed)
         return requiredFields(for: screen).allSatisfy { confirmedSet.contains($0) }

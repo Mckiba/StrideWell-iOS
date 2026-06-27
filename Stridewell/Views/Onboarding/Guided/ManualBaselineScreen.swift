@@ -2,9 +2,9 @@
 //  ManualBaselineScreen.swift
 //  Stridewell
 //
-//  S2b — "Your Starting Point" (no-Strava branch). Captures current_weekly_volume_km,
-//  training_phase, active_injury via a volume slider, phase chips, and chat. Advances
-//  when the three baseline fields are confirmed.
+//  Baseline screen shown when Strava isn't connected. Captures weekly volume, training
+//  phase, and injury status via a slider, phase chips, and chat, then moves on once all
+//  three are confirmed.
 //
 
 import SwiftUI

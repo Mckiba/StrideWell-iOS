@@ -2,10 +2,9 @@
 //  IntakeChatModel.swift
 //  Stridewell
 //
-//  Reusable intake-chat controller shared by every guided screen (S2-S6). Owns the
-//  per-screen message loop, sends turns with the screen's `screen_context` and any
-//  `structured_fields`, and exposes `confirmedFields` / `planBuilding` so the hosting
-//  screen can drive advancement.
+//  Drives the chat on a single onboarding screen: holds the messages, sends each turn
+//  with the screen's topic and any picked values, and publishes the confirmed fields
+//  and the plan-building signal so the screen knows when to move on.
 //
 
 import Foundation
@@ -27,7 +26,7 @@ final class IntakeChatModel {
     private(set) var confirmedFields: [String] = []
     private(set) var planBuilding = false
 
-    /// The guided screen's topic, sent as `screen_context` on every turn.
+    /// The screen's topic, sent with every turn.
     let screenContext: String?
 
     private let api: APIClient
@@ -43,7 +42,7 @@ final class IntakeChatModel {
 
     // MARK: - Turns
 
-    /// Sends the opener trigger once, so the Coach speaks first (on-topic via screen_context).
+    /// Sends the opener once so the coach speaks first on this screen's topic.
     func startIfNeeded() async {
         guard !hasStarted else { return }
         hasStarted = true
@@ -59,8 +58,8 @@ final class IntakeChatModel {
         handle(result)
     }
 
-    /// Sends a user turn. `structured` carries deterministic selections (dual-write:
-    /// `content` is the natural-language rendering, `structured` the exact values).
+    /// Sends a user turn. When a control was used, `content` is the sentence shown in
+    /// the thread and `structured` holds the exact values for the same selection.
     func send(_ content: String, structured: StructuredFields? = nil) async {
         let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }

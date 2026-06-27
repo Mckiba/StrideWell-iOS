@@ -2,8 +2,8 @@
 //  VolumeSlider.swift
 //  Stridewell
 //
-//  Weekly-volume accelerator for the manual baseline screen (S2b). Displays in the
-//  athlete's unit; 0 means "not currently running". The parent converts to km.
+//  Weekly-volume picker for the manual baseline screen. Displays in the athlete's unit;
+//  0 means "not currently running". The parent converts to km.
 //
 
 import SwiftUI

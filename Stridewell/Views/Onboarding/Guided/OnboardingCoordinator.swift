@@ -2,10 +2,9 @@
 //  OnboardingCoordinator.swift
 //  Stridewell
 //
-//  Drives the guided-flow navigation stack. Advancement is computed from
-//  `confirmed_fields` via OnboardingFlow's skip-ahead loop — screens whose fields
-//  were volunteered early are skipped (spec §4.3). S1 is the stack root; S2-S8 are
-//  pushed onto `path`.
+//  Owns the onboarding navigation stack. The connect screen is the root; the
+//  remaining screens are pushed onto `path`. The next screen is whichever one still
+//  has unconfirmed fields, so screens already answered are skipped.
 //
 
 import Foundation
@@ -16,8 +15,8 @@ final class OnboardingCoordinator {
 
     var path: [OnboardingScreen] = []
 
-    /// Push the first unsatisfied intake screen, or plan-building once intake is done.
-    /// Recomputes the baseline branch from the store each time — never stored.
+    /// Move to the next screen that still needs input, or to plan building once intake
+    /// is finished. The baseline screen is recomputed from the store on each call.
     func advance(using store: OnboardingStore, planBuilding: Bool) {
         if planBuilding {
             push(.planBuilding)

@@ -2,8 +2,8 @@
 //  GoalScreen.swift
 //  Stridewell
 //
-//  S3 — "Your Goal. Our Goal". Captures goal_type (required); race details
-//  (distance + date) are opportunistic and revealed when "A race" is chosen.
+//  Captures the training goal. When the goal is a race, an optional distance-and-date
+//  row is revealed.
 //
 
 import SwiftUI

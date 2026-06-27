@@ -2,9 +2,9 @@
 //  SpeedworkScreen.swift
 //  Stridewell
 //
-//  S5 — "The Work". Captures has_done_speedwork (required, Tier 1) and the
-//  following_existing_plan toggle (opportunistic). Skipped entirely by the
-//  coordinator when speedwork was volunteered earlier.
+//  Captures whether the athlete has done structured speed work, plus an optional
+//  "already following a plan" toggle. The coordinator skips this screen when that
+//  answer was already given earlier.
 //
 
 import SwiftUI

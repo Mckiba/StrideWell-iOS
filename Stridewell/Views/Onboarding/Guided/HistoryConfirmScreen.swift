@@ -2,9 +2,9 @@
 //  HistoryConfirmScreen.swift
 //  Stridewell
 //
-//  S2a — "You in Focus" (Strava branch). Shows the computed history summary and
-//  confirms current_weekly_volume_km, training_phase, active_injury through chat.
-//  No structured controls here — corrections flow through the conversation.
+//  Baseline screen shown when Strava is connected. Shows the computed history and
+//  confirms weekly volume, training phase, and injury status through chat. There are
+//  no controls; corrections happen in the conversation.
 //
 
 import SwiftUI

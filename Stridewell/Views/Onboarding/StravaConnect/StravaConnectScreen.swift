@@ -2,11 +2,10 @@
 //  StravaConnectScreen.swift
 //  Stridewell
 //
-//  S1 of the guided flow ("You, In Context"). The first step — where the athlete
-//  connects their data. Three affordances (Onboarding V2 spec §2.1):
-//    • Connect              → Strava OAuth → analyze → baseline branch (S2a/S2b)
-//    • Continue without Strava → no OAuth → manual baseline branch (S2b)
-//    • Skip onboarding      → POST /onboarding/skip → default plan
+//  First onboarding screen, where the athlete connects their data. Three choices:
+//    • Connect                 – run Strava OAuth, analyze history, then go to the baseline screen
+//    • Continue without Strava – skip OAuth and go straight to the manual baseline screen
+//    • Skip onboarding         – build a default plan and finish
 //
 
 import SwiftUI
@@ -22,8 +21,8 @@ struct StravaConnectScreen: View {
     @State private var showSkipConfirm = false
     @State private var isSkipping = false
 
-    /// Poll attempts before offering the "continue without waiting" escape hatch.
-    /// With 3s→15s backoff this lands a little past ~60s (spec §8.8).
+    /// Poll attempts before offering "continue without waiting". With the 3s→15s
+    /// backoff this is a little past ~60s of waiting on Strava analysis.
     private let slowBackfillThreshold = 6
 
     var body: some View {
@@ -61,8 +60,8 @@ struct StravaConnectScreen: View {
 
     // MARK: - Navigation
 
-    /// Advance into the intake interview. The coordinator pushes the resolved baseline
-    /// branch (S2a vs S2b), skipping ahead past any already-confirmed screens.
+    /// Move into the interview. The coordinator pushes the chosen baseline screen,
+    /// skipping ahead past anything already confirmed.
     private func advanceToInterview() {
         coordinator.advance(using: onboardingStore, planBuilding: false)
     }

@@ -19,9 +19,9 @@ extension APIClient {
         await post(path: APIEndpoints.stravaConnect, body: StravaConnectRequest(code: code))
     }
 
-    /// Sends an intake turn. `screenContext` keeps the Coach on the current guided
-    /// screen's topic; `structuredFields` carries deterministic selections. Both
-    /// default to nil → a V1-shaped request.
+    /// Sends one intake turn. `screenContext` tells the coach which topic the screen
+    /// is on; `structuredFields` carries values picked from controls. Both default to
+    /// nil, which sends a plain free-text turn.
     func sendOnboardingMessage(
         conversationId: String,
         message: InterviewMessage,

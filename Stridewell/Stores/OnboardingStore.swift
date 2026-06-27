@@ -15,7 +15,7 @@ final class OnboardingStore {
     private(set) var firstPlanVersionId: String? = nil
     private(set) var conversationId: String? = nil
 
-    // V2 guided flow — advancement + resume state.
+    // Drives which guided screen shows next and pre-fills controls when returning.
     private(set) var confirmedFields: [String] = []
     private(set) var partialIntake: PartialIntake? = nil
     private(set) var historySummary: StravaHistorySummary? = nil
@@ -54,28 +54,27 @@ final class OnboardingStore {
         intakeComplete     = state.intake_complete
         firstPlanVersionId = state.first_plan_version_id
         if let cid = state.conversation_id { conversationId = cid }
-        // V2 hydration (nil on a V1 backend → leave existing state untouched).
+        // Only overwrite when present, so a response that omits these leaves them as-is.
         if let confirmed = state.confirmed_fields { confirmedFields = confirmed }
         if let partial = state.partial_intake { partialIntake = partial }
         if let summary = state.history_summary { historySummary = summary }
         if isComplete { persistCompletion() }
     }
 
-    /// Merge the latest `confirmed_fields` from a POST /onboarding/message reply.
+    /// Store the confirmed fields returned by a message reply.
     func applyConfirmedFields(_ fields: [String]?) {
         if let fields { confirmedFields = fields }
     }
 
-    /// Called after POST /onboarding/confirm-plan succeeds.
-    /// Flips isComplete → RootView re-routes to the main tab bar automatically.
+    /// Called after the plan is confirmed. Flips `isComplete`, so RootView shows the
+    /// main tab bar.
     func markComplete() {
         status = .complete
         persistCompletion()
     }
 
-    /// Called after POST /onboarding/skip succeeds. `skipped` is terminal in the
-    /// current data model (RootView + launch routing treat it as complete), so this
-    /// flips isComplete and the app proceeds to the main tab bar with a default plan.
+    /// Called after onboarding is skipped. `skipped` counts as complete, so the app
+    /// moves on to the main tab bar with a default plan.
     func markSkipped() {
         status = .skipped
         persistCompletion()

@@ -2,8 +2,8 @@
 //  OnboardingContainerView.swift
 //  Stridewell
 //
-//  Hosts the guided-flow navigation stack. S1 (StravaConnectScreen) is the root;
-//  the coordinator pushes S2-S8 onto the path as `confirmed_fields` advance.
+//  Hosts the onboarding navigation stack. The connect screen is the root; the
+//  coordinator pushes the rest of the screens as fields get confirmed.
 //
 
 import SwiftUI

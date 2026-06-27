@@ -2,8 +2,8 @@
 //  LessonsScreen.swift
 //  Stridewell
 //
-//  S6 — "The Lessons". Captures what_hasnt_worked (free text — no chips would flatten
-//  it). When intake completes the backend returns plan_building → advance to S7.
+//  Captures what hasn't worked in past training, as free text. Once the backend has
+//  everything it needs it signals plan building and the screen moves on.
 //
 
 import SwiftUI

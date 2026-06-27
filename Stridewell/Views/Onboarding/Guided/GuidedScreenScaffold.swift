@@ -2,9 +2,8 @@
 //  GuidedScreenScaffold.swift
 //  Stridewell
 //
-//  Shared layout for the guided intake screens (S2-S6): full-bleed background,
-//  oversized title, and a bottom sheet hosting the structured-input accelerators
-//  (above) and the conversational surface (below).
+//  Shared layout for the onboarding intake screens: full-bleed background, large
+//  title, and a bottom sheet holding the screen's input controls above the chat.
 //
 
 import SwiftUI
@@ -40,7 +39,8 @@ struct GuidedScreenScaffold<Inputs: View>: View {
                 sheet
             }
         }
-        .navigationBarBackButtonHidden(true)
+        // The navigation stack's back button is left visible so the athlete can return
+        // to an earlier screen; re-answering simply overwrites the earlier value.
         .task { await model.startIfNeeded() }
     }
 

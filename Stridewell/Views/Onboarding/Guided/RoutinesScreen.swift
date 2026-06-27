@@ -2,8 +2,8 @@
 //  RoutinesScreen.swift
 //  Stridewell
 //
-//  S4 — "Routines". Captures available_days_per_week (required); available_day_names
-//  and preferred_long_run_day (opportunistic) via a day selector.
+//  Captures how many days a week the athlete can run, which days, and the preferred
+//  long-run day, via a day selector.
 //
 
 import SwiftUI

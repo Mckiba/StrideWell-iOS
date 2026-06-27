@@ -2,8 +2,8 @@
 //  PhaseChips.swift
 //  Stridewell
 //
-//  Optional training-phase accelerator for the manual baseline screen (S2b).
-//  Maps a friendly label to the `training_phase` enum.
+//  Optional training-phase picker for the manual baseline screen. Maps a friendly
+//  label to the value the backend expects.
 //
 
 import SwiftUI
