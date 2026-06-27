@@ -16,7 +16,11 @@ struct RoutinesScreen: View {
 
     @State private var model: IntakeChatModel?
     @State private var selectedDays: Set<String> = []
-    @State private var longRunDay: String?
+    @State private var longRunDay: String? = nil
+
+    init(previewModel: IntakeChatModel? = nil) {
+        _model = State(initialValue: previewModel)
+    }
 
     private static let days: [(short: String, value: String)] = [
         ("Mon", "monday"), ("Tue", "tuesday"), ("Wed", "wednesday"),
@@ -115,3 +119,16 @@ struct RoutinesScreen: View {
         ))
     }
 }
+
+#if DEBUG
+#Preview {
+    NavigationStack {
+        RoutinesScreen(previewModel: .preview(
+            screenContext: "routines",
+            coachLine: "Which days can you run, and when's your long run?"
+        ))
+    }
+    .environment(\.onboardingStore, OnboardingStore.preview())
+    .environment(\.onboardingCoordinator, OnboardingCoordinator())
+}
+#endif

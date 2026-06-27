@@ -46,8 +46,7 @@ struct GuidedScreenScaffold<Inputs: View>: View {
 
     private var sheet: some View {
         VStack(spacing: 0) {
-            let inputs = structuredInputs()
-            inputs
+            structuredInputs()
                 .padding(.horizontal, Spacing.md)
                 .padding(.top, Spacing.md)
 
@@ -55,10 +54,13 @@ struct GuidedScreenScaffold<Inputs: View>: View {
         }
         .frame(maxWidth: .infinity)
         .frame(maxHeight: UIScreen.main.bounds.height * 0.72)
-        .background(AppColor.surface)
-        .clipShape(
+        // The fill extends under the home indicator, but the content (including the
+        // chat input bar) stays inside the safe area so it's always visible and rises
+        // with the keyboard.
+        .background {
             UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30)
-        )
-        .ignoresSafeArea(edges: .bottom)
+                .fill(AppColor.surface)
+                .ignoresSafeArea(edges: .bottom)
+        }
     }
 }

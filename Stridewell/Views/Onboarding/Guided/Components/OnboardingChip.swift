@@ -29,3 +29,13 @@ struct OnboardingChip: View {
         .buttonStyle(.plain)
     }
 }
+
+#if DEBUG
+#Preview {
+    VStack(spacing: 12) {
+        OnboardingChip(label: "Selected", isSelected: true, action: {})
+        OnboardingChip(label: "Unselected", isSelected: false, action: {})
+    }
+    .padding()
+}
+#endif

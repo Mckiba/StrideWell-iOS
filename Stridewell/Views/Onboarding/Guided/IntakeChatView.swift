@@ -100,3 +100,10 @@ struct IntakeChatView: View {
         .background(AppColor.surface)
     }
 }
+
+#if DEBUG
+#Preview {
+    IntakeChatView(model: .preview(screenContext: nil))
+        .frame(height: 320)
+}
+#endif

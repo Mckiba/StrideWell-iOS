@@ -16,8 +16,12 @@ struct SpeedworkScreen: View {
     @Environment(\.onboardingCoordinator) private var coordinator
 
     @State private var model: IntakeChatModel?
-    @State private var selection: Bool?
+    @State private var selection: Bool? = nil
     @State private var followingPlan = false
+
+    init(previewModel: IntakeChatModel? = nil) {
+        _model = State(initialValue: previewModel)
+    }
 
     var body: some View {
         Group {
@@ -87,3 +91,16 @@ struct SpeedworkScreen: View {
         )
     }
 }
+
+#if DEBUG
+#Preview {
+    NavigationStack {
+        SpeedworkScreen(previewModel: .preview(
+            screenContext: "speedwork",
+            coachLine: "Have you done structured speed work before?"
+        ))
+    }
+    .environment(\.onboardingStore, OnboardingStore.preview())
+    .environment(\.onboardingCoordinator, OnboardingCoordinator())
+}
+#endif

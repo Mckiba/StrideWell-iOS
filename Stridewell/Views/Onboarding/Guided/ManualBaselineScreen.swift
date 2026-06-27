@@ -17,7 +17,11 @@ struct ManualBaselineScreen: View {
 
     @State private var model: IntakeChatModel?
     @State private var volumeDisplay: Double = 30
-    @State private var selectedPhase: String?
+    @State private var selectedPhase: String? = nil
+
+    init(previewModel: IntakeChatModel? = nil) {
+        _model = State(initialValue: previewModel)
+    }
 
     var body: some View {
         Group {
@@ -80,3 +84,13 @@ struct ManualBaselineScreen: View {
         )
     }
 }
+
+#if DEBUG
+#Preview {
+    NavigationStack {
+        ManualBaselineScreen(previewModel: .preview(screenContext: "manual_baseline"))
+    }
+    .environment(\.onboardingStore, OnboardingStore.preview())
+    .environment(\.onboardingCoordinator, OnboardingCoordinator())
+}
+#endif

@@ -15,10 +15,14 @@ struct GoalScreen: View {
     @Environment(\.onboardingCoordinator) private var coordinator
 
     @State private var model: IntakeChatModel?
-    @State private var selectedGoal: String?
+    @State private var selectedGoal: String? = nil
     @State private var raceDistanceM: Double = 21097     // default Half
     @State private var raceDate = Date().addingTimeInterval(60 * 60 * 24 * 84) // ~12 weeks out
     @State private var raceHandled = false
+
+    init(previewModel: IntakeChatModel? = nil) {
+        _model = State(initialValue: previewModel)
+    }
 
     private static let goals: [(label: String, value: String, phrase: String)] = [
         ("A race", "race", "to run a race"),
@@ -123,3 +127,16 @@ struct GoalScreen: View {
         coordinator.advance(using: onboardingStore, planBuilding: model?.planBuilding ?? false)
     }
 }
+
+#if DEBUG
+#Preview {
+    NavigationStack {
+        GoalScreen(previewModel: .preview(
+            screenContext: "goal",
+            coachLine: "What are we training for?"
+        ))
+    }
+    .environment(\.onboardingStore, OnboardingStore.preview())
+    .environment(\.onboardingCoordinator, OnboardingCoordinator())
+}
+#endif

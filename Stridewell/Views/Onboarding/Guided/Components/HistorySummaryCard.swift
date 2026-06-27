@@ -62,3 +62,20 @@ struct HistorySummaryCard: View {
         return phase.replacingOccurrences(of: "_", with: " ")
     }
 }
+
+#if DEBUG
+#Preview {
+    HistorySummaryCard(summary: StravaHistorySummary(
+        avg_weekly_volume_km_4wk: 40,
+        avg_weekly_volume_km_12wk: 36,
+        peak_weekly_volume_km_12wk: 52,
+        recent_long_run_m: 18000,
+        avg_runs_per_week_4wk: 4,
+        consistency_rate_12wk: 0.8,
+        has_speed_work: true,
+        inferred_training_phase: "base",
+        volume_trend: "stable"
+    ))
+    .padding()
+}
+#endif

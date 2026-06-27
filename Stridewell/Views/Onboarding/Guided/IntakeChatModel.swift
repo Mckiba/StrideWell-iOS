@@ -133,3 +133,26 @@ final class IntakeChatModel {
         )
     }
 }
+
+#if DEBUG
+extension IntakeChatModel {
+    /// A model seeded with sample messages for previews. `startIfNeeded` is a no-op,
+    /// so it never makes a network call.
+    static func preview(
+        screenContext: String?,
+        coachLine: String = "Tell me where your running is right now."
+    ) -> IntakeChatModel {
+        let model = IntakeChatModel(
+            api: APIClient(tokenProvider: { nil }, onUnauthorized: {}),
+            conversationId: "preview",
+            screenContext: screenContext
+        )
+        model.messages = [
+            InterviewMessage(id: "preview", role: .assistant, content: coachLine, agent_used: "coach", created_at: "")
+        ]
+        model.phase = .active
+        model.hasStarted = true
+        return model
+    }
+}
+#endif

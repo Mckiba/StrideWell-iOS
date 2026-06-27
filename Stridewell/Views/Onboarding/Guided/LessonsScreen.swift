@@ -16,6 +16,10 @@ struct LessonsScreen: View {
 
     @State private var model: IntakeChatModel?
 
+    init(previewModel: IntakeChatModel? = nil) {
+        _model = State(initialValue: previewModel)
+    }
+
     var body: some View {
         Group {
             if let model {
@@ -57,3 +61,16 @@ struct LessonsScreen: View {
         )
     }
 }
+
+#if DEBUG
+#Preview {
+    NavigationStack {
+        LessonsScreen(previewModel: .preview(
+            screenContext: "lessons",
+            coachLine: "What hasn't worked for you in past training?"
+        ))
+    }
+    .environment(\.onboardingStore, OnboardingStore.preview())
+    .environment(\.onboardingCoordinator, OnboardingCoordinator())
+}
+#endif

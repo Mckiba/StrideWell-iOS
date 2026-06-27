@@ -98,3 +98,19 @@ final class OnboardingStore {
         UserDefaults.standard.set(true, forKey: Self.isCompleteKey)
     }
 }
+
+#if DEBUG
+extension OnboardingStore {
+    /// A store pre-populated for SwiftUI previews.
+    static func preview(
+        historySummary: StravaHistorySummary? = nil,
+        partialIntake: PartialIntake? = nil
+    ) -> OnboardingStore {
+        let store = OnboardingStore()
+        store.conversationId = "preview"
+        store.historySummary = historySummary
+        store.partialIntake = partialIntake
+        return store
+    }
+}
+#endif

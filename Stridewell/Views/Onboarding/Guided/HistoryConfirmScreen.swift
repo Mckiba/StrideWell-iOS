@@ -17,6 +17,10 @@ struct HistoryConfirmScreen: View {
 
     @State private var model: IntakeChatModel?
 
+    init(previewModel: IntakeChatModel? = nil) {
+        _model = State(initialValue: previewModel)
+    }
+
     var body: some View {
         Group {
             if let model {
@@ -53,3 +57,30 @@ struct HistoryConfirmScreen: View {
         )
     }
 }
+
+#if DEBUG
+#Preview {
+    NavigationStack {
+        HistoryConfirmScreen(
+            previewModel: .preview(
+                screenContext: "history_confirm",
+                coachLine: "You've been averaging about 40 km a week with a solid base. Does that match how you're feeling?"
+            )
+        )
+    }
+    .environment(\.onboardingStore, OnboardingStore.preview(
+        historySummary: StravaHistorySummary(
+            avg_weekly_volume_km_4wk: 40,
+            avg_weekly_volume_km_12wk: 36,
+            peak_weekly_volume_km_12wk: 52,
+            recent_long_run_m: 18000,
+            avg_runs_per_week_4wk: 4,
+            consistency_rate_12wk: 0.8,
+            has_speed_work: true,
+            inferred_training_phase: "base",
+            volume_trend: "stable"
+        )
+    ))
+    .environment(\.onboardingCoordinator, OnboardingCoordinator())
+}
+#endif
