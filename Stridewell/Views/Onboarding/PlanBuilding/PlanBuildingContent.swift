@@ -48,6 +48,11 @@ struct PlanBuildingContent: View {
             Spacer()
         }
         .padding(.horizontal, 32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background {
+            OnboardingBackground()
+            Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
+        }
         .animation(.easeInOut(duration: 0.2), value: errorMessage)
     }
 }
