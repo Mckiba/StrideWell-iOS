@@ -140,6 +140,15 @@ struct PartialIntake: Codable {
 
 // MARK: - Strava history summary
 
+/// One week in the volume-history series. Values are in km; the UI converts to the
+/// athlete's display unit.
+struct HistoryWeekVolume: Codable, Identifiable {
+    let week_start: String   // YYYY-MM-DD, Monday of the week
+    let volume_km: Double
+
+    var id: String { week_start }
+}
+
 /// Computed training history echoed by the status endpoint when Strava is connected.
 /// Only the fields the app displays or branches on are modeled; unknown keys are ignored.
 struct StravaHistorySummary: Codable {
@@ -152,4 +161,31 @@ struct StravaHistorySummary: Codable {
     let has_speed_work: Bool?
     let inferred_training_phase: String?   // may be "insufficient_data" → route to manual baseline
     let volume_trend: String?
+    /// Last 12 weeks, oldest first. Optional: summaries stored before this field
+    /// existed decode without it and the card falls back to stats only.
+    let weekly_volumes: [HistoryWeekVolume]?
+
+    init(
+        avg_weekly_volume_km_4wk: Double?,
+        avg_weekly_volume_km_12wk: Double?,
+        peak_weekly_volume_km_12wk: Double?,
+        recent_long_run_m: Double?,
+        avg_runs_per_week_4wk: Double?,
+        consistency_rate_12wk: Double?,
+        has_speed_work: Bool?,
+        inferred_training_phase: String?,
+        volume_trend: String?,
+        weekly_volumes: [HistoryWeekVolume]? = nil
+    ) {
+        self.avg_weekly_volume_km_4wk = avg_weekly_volume_km_4wk
+        self.avg_weekly_volume_km_12wk = avg_weekly_volume_km_12wk
+        self.peak_weekly_volume_km_12wk = peak_weekly_volume_km_12wk
+        self.recent_long_run_m = recent_long_run_m
+        self.avg_runs_per_week_4wk = avg_runs_per_week_4wk
+        self.consistency_rate_12wk = consistency_rate_12wk
+        self.has_speed_work = has_speed_work
+        self.inferred_training_phase = inferred_training_phase
+        self.volume_trend = volume_trend
+        self.weekly_volumes = weekly_volumes
+    }
 }

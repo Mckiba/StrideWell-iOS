@@ -26,8 +26,8 @@ struct HistoryConfirmScreen: View {
             if let model {
                 GuidedScreenScaffold(
                     title: "You in Focus",
-                    subtitle: "Here's what your recent training looks like.",
-                    model: model
+                    model: model,
+                    image: "history_confirm"
                 ) {
                     if let summary = onboardingStore.historySummary {
                         HistorySummaryCard(summary: summary)
@@ -68,19 +68,7 @@ struct HistoryConfirmScreen: View {
             )
         )
     }
-    .environment(\.onboardingStore, OnboardingStore.preview(
-        historySummary: StravaHistorySummary(
-            avg_weekly_volume_km_4wk: 40,
-            avg_weekly_volume_km_12wk: 36,
-            peak_weekly_volume_km_12wk: 52,
-            recent_long_run_m: 18000,
-            avg_runs_per_week_4wk: 4,
-            consistency_rate_12wk: 0.8,
-            has_speed_work: true,
-            inferred_training_phase: "base",
-            volume_trend: "stable"
-        )
-    ))
+    .environment(\.onboardingStore, OnboardingStore.preview(historySummary: .previewWithSeries))
     .environment(\.onboardingCoordinator, OnboardingCoordinator())
 }
 #endif
