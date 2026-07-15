@@ -25,8 +25,8 @@ struct LessonsScreen: View {
             if let model {
                 GuidedScreenScaffold(
                     title: "The Lessons",
-                    subtitle: "What hasn't worked for you before?",
-                    model: model
+                    model: model,
+                    image: "lessons"
                 ) {
                     Button {
                         Task { await model.send("Nothing really comes to mind.") }

@@ -91,7 +91,9 @@ struct IntakeChatView: View {
             } label: {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.system(size: 32))
-                    .foregroundStyle(canSend ? AppColor.accent : AppColor.textTertiary)
+                    .foregroundStyle(canSend ? Color.white : AppColor.textTertiary, canSend ? AppColor.accent : AppColor.textTertiary) // Arrow is white, circle is blue
+
+         
             }
             .disabled(!canSend)
         }

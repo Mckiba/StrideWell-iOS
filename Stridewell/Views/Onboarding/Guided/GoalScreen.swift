@@ -40,8 +40,8 @@ struct GoalScreen: View {
             if let model {
                 GuidedScreenScaffold(
                     title: "Your Goal. Our Goal",
-                    subtitle: "What are we training for?",
-                    model: model
+                    model: model,
+                    image: "goal"
                 ) {
                     VStack(alignment: .leading, spacing: Spacing.md) {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: Spacing.sm)],

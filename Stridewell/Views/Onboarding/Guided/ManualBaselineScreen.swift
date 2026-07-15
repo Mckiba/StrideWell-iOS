@@ -27,9 +27,9 @@ struct ManualBaselineScreen: View {
         Group {
             if let model {
                 GuidedScreenScaffold(
-                    title: "Your Starting Point",
-                    subtitle: "Tell me where your running is right now.",
-                    model: model
+                    title: "Your In Focus",
+                    model: model,
+                    image: "history_confirm"
                 ) {
                     VStack(spacing: Spacing.md) {
                         VolumeSlider(displayValue: $volumeDisplay) {

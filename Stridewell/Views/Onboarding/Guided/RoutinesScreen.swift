@@ -32,8 +32,8 @@ struct RoutinesScreen: View {
             if let model {
                 GuidedScreenScaffold(
                     title: "Routines",
-                    subtitle: "Which days can you run?",
-                    model: model
+                    model: model,
+                    image: "routines"
                 ) {
                     VStack(alignment: .leading, spacing: Spacing.md) {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Spacing.xs), count: 7),

@@ -3,8 +3,7 @@
 //  Stridewell
 //
 //  Baseline screen shown when Strava is connected. Shows the computed history and
-//  confirms weekly volume, training phase, and injury status through chat. There are
-//  no controls; corrections happen in the conversation.
+//  confirms weekly volume, training phase, and injury status through chat. 
 //
 
 import SwiftUI

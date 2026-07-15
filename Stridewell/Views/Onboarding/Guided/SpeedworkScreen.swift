@@ -28,8 +28,8 @@ struct SpeedworkScreen: View {
             if let model {
                 GuidedScreenScaffold(
                     title: "The Work",
-                    subtitle: "Have you done structured speed work before?",
-                    model: model
+                    model: model,
+                    image: "speedwork"
                 ) {
                     VStack(alignment: .leading, spacing: Spacing.md) {
                         HStack(spacing: Spacing.sm) {

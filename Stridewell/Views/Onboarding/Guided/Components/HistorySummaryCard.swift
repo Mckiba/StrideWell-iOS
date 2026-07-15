@@ -3,9 +3,7 @@
 //  Stridewell
 //
 //  Summary of the computed Strava history: a 12-week volume chart with the current
-//  week highlighted, plus weekly-average, peak-week, and runs-per-week stats. The
-//  athlete confirms or corrects these values through the chat rather than with
-//  controls. Distances render in the athlete's unit.
+//  week highlighted, plus weekly-average, peak-week, and runs-per-week stats.
 //
 
 import SwiftUI
@@ -15,8 +13,8 @@ struct HistorySummaryCard: View {
 
     let summary: StravaHistorySummary
 
-    /// Strava brand orange — the chart shows Strava-sourced data.
-    private static let lineColor = Color(hex: "#FC4C02")
+    /// Strava brand orange
+    private static let lineColor = Color.accentColor
 
     private struct ChartPoint: Identifiable {
         let weekStart: Date
@@ -39,9 +37,6 @@ struct HistorySummaryCard: View {
     var body: some View {
         CardView {
             VStack(alignment: .leading, spacing: Spacing.md) {
-                Text("From your Strava")
-                    .font(.cardTitle)
-
                 if points.count >= 2 {
                     volumeChart
                 }
@@ -54,11 +49,11 @@ struct HistorySummaryCard: View {
                     stat("Runs / wk", runsPerWeek)
                 }
 
-                if let phase = phaseLabel {
-                    Text("Looks like a \(phase) phase — sound right?")
-                        .font(.cardCaption)
-                        .foregroundStyle(.secondary)
-                }
+//                if let phase = phaseLabel {
+//                    Text("Looks like a \(phase) phase — sound right?")
+//                        .font(.cardCaption)
+//                        .foregroundStyle(.secondary)
+//                }
             }
         }
     }
@@ -134,7 +129,7 @@ struct HistorySummaryCard: View {
                 }
             }
         }
-        .frame(height: 150)
+        .frame(height: 90)
     }
 
     // MARK: - Stats
@@ -198,18 +193,18 @@ extension StravaHistorySummary {
         .padding()
 }
 
-#Preview("Stats only") {
-    HistorySummaryCard(summary: StravaHistorySummary(
-        avg_weekly_volume_km_4wk: 40,
-        avg_weekly_volume_km_12wk: 36,
-        peak_weekly_volume_km_12wk: 52,
-        recent_long_run_m: 18000,
-        avg_runs_per_week_4wk: 4,
-        consistency_rate_12wk: 0.8,
-        has_speed_work: true,
-        inferred_training_phase: "base",
-        volume_trend: "stable"
-    ))
-    .padding()
-}
+//#Preview("Stats only") {
+//    HistorySummaryCard(summary: StravaHistorySummary(
+//        avg_weekly_volume_km_4wk: 40,
+//        avg_weekly_volume_km_12wk: 36,
+//        peak_weekly_volume_km_12wk: 52,
+//        recent_long_run_m: 18000,
+//        avg_runs_per_week_4wk: 4,
+//        consistency_rate_12wk: 0.8,
+//        has_speed_work: true,
+//        inferred_training_phase: "base",
+//        volume_trend: "stable"
+//    ))
+//    .padding()
+//}
 #endif

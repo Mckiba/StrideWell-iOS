@@ -204,10 +204,21 @@ struct StravaConnectContent: View {
 
 
 struct OnboardingBackground: View {
+
+    var image: String = "history_confirm"
+
     var body: some View {
-        Image("OnboardingBackground")
-            .resizable()
-            .scaledToFill()
+        // The image lives in a background of a clear view so its intrinsic size never
+        // influences layout — a bare resizable + scaledToFill reports a size that
+        // covers the proposal, which stretches the screen wider than the device when
+        // the source photo is large. Overflow from the fill is clipped.
+        Color.clear
+            .background {
+                Image(image)
+                    .resizable()
+                    .scaledToFill()
+            }
+            .clipped()
             .ignoresSafeArea()
             .allowsHitTesting(false)
             .accessibilityHidden(true)

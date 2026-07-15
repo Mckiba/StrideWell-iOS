@@ -11,26 +11,19 @@ import SwiftUI
 struct GuidedScreenScaffold<Inputs: View>: View {
 
     let title: String
-    var subtitle: String? = nil
     let model: IntakeChatModel
+    let image: String
     @ViewBuilder var structuredInputs: () -> Inputs
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            OnboardingBackground()
+            OnboardingBackground(image: image)
 
-            VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .center, spacing: 0) {
                     Text(title)
-                        .font(.system(size: 34, weight: .bold))
+                        .font(.system(size: 50, weight: .bold))
                         .foregroundStyle(.white)
-                    if let subtitle {
-                        Text(subtitle)
-                            .font(.subheadline)
-                            .foregroundStyle(.white.opacity(0.85))
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                        .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.lg)
                 .padding(.top, Spacing.lg)
 
@@ -51,9 +44,11 @@ struct GuidedScreenScaffold<Inputs: View>: View {
                 .padding(.top, Spacing.md)
 
             IntakeChatView(model: model)
+                .padding(.bottom, Spacing.lg)
+
         }
         .frame(maxWidth: .infinity)
-        .frame(maxHeight: UIScreen.main.bounds.height * 0.72)
+        .frame(maxHeight: UIScreen.main.bounds.height * 0.52)
         // The fill extends under the home indicator, but the content (including the
         // chat input bar) stays inside the safe area so it's always visible and rises
         // with the keyboard.
