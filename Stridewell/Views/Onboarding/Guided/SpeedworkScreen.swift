@@ -2,9 +2,8 @@
 //  SpeedworkScreen.swift
 //  Stridewell
 //
-//  Captures whether the athlete has done structured speed work, plus an optional
-//  "already following a plan" toggle. The coordinator skips this screen when that
-//  answer was already given earlier.
+//  Captures whether the athlete has done structured speed work. The coordinator skips
+//  this screen when that answer was already given earlier.
 //
 
 import SwiftUI
@@ -17,7 +16,6 @@ struct SpeedworkScreen: View {
 
     @State private var model: IntakeChatModel?
     @State private var selection: Bool? = nil
-    @State private var followingPlan = false
 
     init(previewModel: IntakeChatModel? = nil) {
         _model = State(initialValue: previewModel)
@@ -31,22 +29,12 @@ struct SpeedworkScreen: View {
                     model: model,
                     image: "speedwork"
                 ) {
-                    VStack(alignment: .leading, spacing: Spacing.md) {
-                        HStack(spacing: Spacing.sm) {
-                            OnboardingChip(label: "I've done speed work", isSelected: selection == true) {
-                                select(true)
-                            }
-                            OnboardingChip(label: "I haven't", isSelected: selection == false) {
-                                select(false)
-                            }
+                    HStack(spacing: Spacing.sm) {
+                        OnboardingChip(label: "I've done speed work", isSelected: selection == true) {
+                            select(true)
                         }
-
-                        Toggle(isOn: $followingPlan) {
-                            Text("I'm currently following another plan")
-                                .font(.cardCaption)
-                        }
-                        .onChange(of: followingPlan) { _, on in
-                            if on { Task { await commitFollowingPlan() } }
+                        OnboardingChip(label: "I haven't", isSelected: selection == false) {
+                            select(false)
                         }
                     }
                 }
@@ -68,7 +56,6 @@ struct SpeedworkScreen: View {
     private func setupModel() {
         guard let conversationId = onboardingStore.conversationId else { return }
         selection = onboardingStore.partialIntake?.has_done_speedwork
-        followingPlan = onboardingStore.partialIntake?.following_existing_plan ?? false
         model = IntakeChatModel(
             api: apiClient,
             conversationId: conversationId,
@@ -82,13 +69,6 @@ struct SpeedworkScreen: View {
             ? "I've done structured speed workouts before."
             : "I haven't done structured speed workouts."
         Task { await model?.send(text, structured: StructuredFields(has_done_speedwork: value)) }
-    }
-
-    private func commitFollowingPlan() async {
-        await model?.send(
-            "I'm currently following another training plan.",
-            structured: StructuredFields(following_existing_plan: true)
-        )
     }
 }
 
