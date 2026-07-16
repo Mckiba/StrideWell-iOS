@@ -22,17 +22,18 @@ struct GuidedScreenScaffold<Inputs: View>: View {
     private let expandedFraction: CGFloat = 0.9
 
     @State private var expanded = false
-    @GestureState private var dragTranslation: CGFloat = 0
+    /// Live finger delta during a drag (0 at rest). Positive = dragging down.
+    @State private var dragOffset: CGFloat = 0
 
     private var screenHeight: CGFloat { UIScreen.main.bounds.height }
     private var collapsedHeight: CGFloat { screenHeight * collapsedFraction }
     private var expandedHeight: CGFloat { screenHeight * expandedFraction }
+    private var restingHeight: CGFloat { expanded ? expandedHeight : collapsedHeight }
 
     /// Live sheet height: the resting height offset by the in-progress drag, clamped
-    /// between the two detents. Dragging up (negative translation) makes it taller.
+    /// between the two detents. Dragging up (negative offset) makes it taller.
     private var sheetHeight: CGFloat {
-        let base = expanded ? expandedHeight : collapsedHeight
-        return min(max(base - dragTranslation, collapsedHeight), expandedHeight)
+        min(max(restingHeight - dragOffset, collapsedHeight), expandedHeight)
     }
 
     var body: some View {
@@ -100,15 +101,17 @@ struct GuidedScreenScaffold<Inputs: View>: View {
     /// Drag on the handle to resize; on release, snap to the nearer detent — or the
     /// flick direction when the gesture ends with momentum. Measured in the global
     /// coordinate space so resizing the sheet (which moves the handle under the
-    /// finger) doesn't feed back into the translation and cause jitter.
+    /// finger) doesn't feed back into the translation and cause jitter. The offset is
+    /// tracked (not `@GestureState`) so the release resets it and flips the detent in
+    /// one animation transaction — a single smooth interpolation rather than two
+    /// competing springs.
     private var dragGesture: some Gesture {
         DragGesture(minimumDistance: 1, coordinateSpace: .global)
-            .updating($dragTranslation) { value, state, _ in
-                state = value.translation.height
+            .onChanged { value in
+                dragOffset = value.translation.height
             }
             .onEnded { value in
-                let base = expanded ? expandedHeight : collapsedHeight
-                let releasedHeight = base - value.translation.height
+                let releasedHeight = restingHeight - value.translation.height
                 let flick = value.predictedEndTranslation.height
                 let shouldExpand: Bool
                 if flick < -80 {
@@ -120,6 +123,7 @@ struct GuidedScreenScaffold<Inputs: View>: View {
                 }
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                     expanded = shouldExpand
+                    dragOffset = 0
                 }
             }
     }

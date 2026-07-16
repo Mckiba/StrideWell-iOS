@@ -80,12 +80,9 @@ struct GoalScreen: View {
 
             HStack(spacing: Spacing.sm) {
                 PrimaryButton("Set race", size: .small) { Task { await commitRace() } }
-                Button("Skip details") {
-                    raceHandled = true
-                    coordinator.advance(using: onboardingStore, planBuilding: model?.planBuilding ?? false)
-                }
-                .font(.cardCaption)
-                .foregroundStyle(.secondary)
+                Button("Skip details") { Task { await skipRaceDetails() } }
+                    .font(.cardCaption)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -103,20 +100,38 @@ struct GoalScreen: View {
 
     private func selectGoal(_ value: String, phrase: String) {
         selectedGoal = value
-        raceHandled = (value != "race")   // non-race goals advance immediately on confirm
+        // A race waits for the distance/date row and its "Set race" (or "Skip details")
+        // before anything is sent, so we don't confirm goal_type until the athlete
+        // finishes. Other goals send immediately.
+        guard value != "race" else {
+            raceHandled = false
+            return
+        }
+        raceHandled = true
         Task {
             await model?.send("My goal is \(phrase).", structured: StructuredFields(goal_type: value))
         }
     }
 
+    /// Send goal_type plus the chosen race distance and date in one turn.
     private func commitRace() async {
         let label = Self.distances.first { $0.meters == raceDistanceM }?.label ?? "race"
         let dateString = DateUtils.isoDate.string(from: raceDate)
         raceHandled = true
         await model?.send(
-            "It's a \(label) on \(dateString).",
-            structured: StructuredFields(goal_race_date: dateString, goal_race_distance_m: raceDistanceM)
+            "My goal is a \(label) on \(dateString).",
+            structured: StructuredFields(
+                goal_type: "race",
+                goal_race_date: dateString,
+                goal_race_distance_m: raceDistanceM
+            )
         )
+    }
+
+    /// Confirm the race goal without the distance/date so the flow can advance.
+    private func skipRaceDetails() async {
+        raceHandled = true
+        await model?.send("My goal is to run a race.", structured: StructuredFields(goal_type: "race"))
     }
 
     /// Advance once goal_type is confirmed — but for a race, wait until race details
