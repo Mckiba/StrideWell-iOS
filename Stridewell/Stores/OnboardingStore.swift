@@ -20,6 +20,11 @@ final class OnboardingStore {
     private(set) var partialIntake: PartialIntake? = nil
     private(set) var historySummary: StravaHistorySummary? = nil
 
+    /// Whether the athlete has made a data-connection choice on the connect screen —
+    /// connected Strava, continued without it, or skipped. Gates resume: while false,
+    /// the connect screen stays put so the athlete can still connect their data.
+    private(set) var dataConnectionDecided: Bool = false
+
     var isComplete: Bool { status == .complete || status == .skipped }
 
     // MARK: - Persistence
@@ -28,12 +33,17 @@ final class OnboardingStore {
     /// starts when the device is offline — no network call required.
     private static let isCompleteKey = "OnboardingStore.isComplete"
 
+    /// Persisted so a relaunch mid-onboarding remembers the athlete already passed the
+    /// connect screen and doesn't strand them back there.
+    private static let dataConnectionDecidedKey = "OnboardingStore.dataConnectionDecided"
+
     // MARK: - Init
 
     init() {
         if UserDefaults.standard.bool(forKey: Self.isCompleteKey) {
             status = .complete
         }
+        dataConnectionDecided = UserDefaults.standard.bool(forKey: Self.dataConnectionDecidedKey)
     }
 
     // MARK: - Actions
@@ -46,6 +56,14 @@ final class OnboardingStore {
 
     func stravaDidConnect() {
         self.stravaConnected = true
+    }
+
+    /// Record that the athlete chose how to handle their data connection (connect,
+    /// continue without Strava, or skip). Persisted so resume doesn't send them back
+    /// to the connect screen.
+    func markDataConnectionDecided() {
+        dataConnectionDecided = true
+        UserDefaults.standard.set(true, forKey: Self.dataConnectionDecidedKey)
     }
 
     func update(from state: OnboardingState) {
@@ -71,6 +89,7 @@ final class OnboardingStore {
     func markComplete() {
         status = .complete
         persistCompletion()
+        clearDataConnectionDecided()
     }
 
     /// Called after onboarding is skipped. `skipped` counts as complete, so the app
@@ -78,6 +97,7 @@ final class OnboardingStore {
     func markSkipped() {
         status = .skipped
         persistCompletion()
+        clearDataConnectionDecided()
     }
 
     func reset() {
@@ -90,12 +110,18 @@ final class OnboardingStore {
         partialIntake      = nil
         historySummary     = nil
         UserDefaults.standard.removeObject(forKey: Self.isCompleteKey)
+        clearDataConnectionDecided()
     }
 
     // MARK: - Private
 
     private func persistCompletion() {
         UserDefaults.standard.set(true, forKey: Self.isCompleteKey)
+    }
+
+    private func clearDataConnectionDecided() {
+        dataConnectionDecided = false
+        UserDefaults.standard.removeObject(forKey: Self.dataConnectionDecidedKey)
     }
 }
 

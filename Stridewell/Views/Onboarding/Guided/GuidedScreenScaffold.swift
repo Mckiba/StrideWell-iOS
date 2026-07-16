@@ -25,50 +25,60 @@ struct GuidedScreenScaffold<Inputs: View>: View {
     /// Live finger delta during a drag (0 at rest). Positive = dragging down.
     @State private var dragOffset: CGFloat = 0
 
-    private var screenHeight: CGFloat { UIScreen.main.bounds.height }
-    private var collapsedHeight: CGFloat { screenHeight * collapsedFraction }
-    private var expandedHeight: CGFloat { screenHeight * expandedFraction }
-    private var restingHeight: CGFloat { expanded ? expandedHeight : collapsedHeight }
+    // Detent heights are fractions of the *available* height (from the surrounding
+    // GeometryReader), not the full physical screen. Available height already excludes
+    // the top safe area and shrinks when the keyboard appears, so the sheet — and the
+    // chat input bar at its bottom — always stay on screen and above the keyboard.
+    private func collapsedHeight(_ available: CGFloat) -> CGFloat { available * collapsedFraction }
+    private func expandedHeight(_ available: CGFloat) -> CGFloat { available * expandedFraction }
+    private func restingHeight(_ available: CGFloat) -> CGFloat {
+        expanded ? expandedHeight(available) : collapsedHeight(available)
+    }
 
     /// Live sheet height: the resting height offset by the in-progress drag, clamped
     /// between the two detents. Dragging up (negative offset) makes it taller.
-    private var sheetHeight: CGFloat {
-        min(max(restingHeight - dragOffset, collapsedHeight), expandedHeight)
+    private func sheetHeight(_ available: CGFloat) -> CGFloat {
+        min(max(restingHeight(available) - dragOffset, collapsedHeight(available)), expandedHeight(available))
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            OnboardingBackground(image: image)
+        GeometryReader { geo in
+            let available = geo.size.height
+            ZStack(alignment: .bottom) {
+                OnboardingBackground(image: image)
 
-            VStack(alignment: .center, spacing: 0) {
-                Text(title)
-                    .font(.system(size: 50, weight: .bold))
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, Spacing.lg)
-                    .padding(.top, Spacing.lg)
+                // Title pinned to the top, independent of the sheet, so the sheet can
+                // grow without pushing the title (and itself) off the bottom edge.
+                VStack(alignment: .center, spacing: 0) {
+                    Text(title)
+                        .font(.system(size: 50, weight: .bold))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, Spacing.lg)
+                        .padding(.top, Spacing.lg)
 
-                Spacer(minLength: Spacing.md)
+                    Spacer(minLength: 0)
+                }
 
-                sheet
+                sheet(available: available)
             }
-        }
-        // The navigation stack's back button is left visible so the athlete can return
-        // to an earlier screen; re-answering simply overwrites the earlier value.
-        .task { await model.startIfNeeded() }
-        // Expand as soon as the athlete acts on the sheet — a sent turn (tapping a
-        // control or the send button) doesn't fit at the collapsed height alongside
-        // the coach's reply and the controls.
-        .onChange(of: model.phase) { _, phase in
-            if phase == .waiting { expand() }
+            // The navigation stack's back button is left visible so the athlete can
+            // return to an earlier screen; re-answering simply overwrites the value.
+            .task { await model.startIfNeeded() }
+            // Expand as soon as the athlete acts on the sheet — a sent turn (tapping a
+            // control or the send button) doesn't fit at the collapsed height alongside
+            // the coach's reply and the controls.
+            .onChange(of: model.phase) { _, phase in
+                if phase == .waiting { expand() }
+            }
         }
     }
 
-    private var sheet: some View {
+    private func sheet(available: CGFloat) -> some View {
         VStack(spacing: 0) {
             grabHandle
                 .contentShape(Rectangle())
-                .gesture(dragGesture)
+                .gesture(dragGesture(available: available))
 
             structuredInputs()
                 .padding(.horizontal, Spacing.md)
@@ -78,7 +88,7 @@ struct GuidedScreenScaffold<Inputs: View>: View {
                 .padding(.bottom, Spacing.lg)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: sheetHeight)
+        .frame(height: sheetHeight(available))
         // The fill extends under the home indicator, but the content (including the
         // chat input bar) stays inside the safe area so it's always visible and rises
         // with the keyboard.
@@ -105,13 +115,13 @@ struct GuidedScreenScaffold<Inputs: View>: View {
     /// tracked (not `@GestureState`) so the release resets it and flips the detent in
     /// one animation transaction — a single smooth interpolation rather than two
     /// competing springs.
-    private var dragGesture: some Gesture {
+    private func dragGesture(available: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: 1, coordinateSpace: .global)
             .onChanged { value in
                 dragOffset = value.translation.height
             }
             .onEnded { value in
-                let releasedHeight = restingHeight - value.translation.height
+                let releasedHeight = restingHeight(available) - value.translation.height
                 let flick = value.predictedEndTranslation.height
                 let shouldExpand: Bool
                 if flick < -80 {
@@ -119,7 +129,7 @@ struct GuidedScreenScaffold<Inputs: View>: View {
                 } else if flick > 80 {
                     shouldExpand = false
                 } else {
-                    shouldExpand = releasedHeight > (collapsedHeight + expandedHeight) / 2
+                    shouldExpand = releasedHeight > (collapsedHeight(available) + expandedHeight(available)) / 2
                 }
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                     expanded = shouldExpand

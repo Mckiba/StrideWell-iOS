@@ -92,6 +92,12 @@ struct IntakeChatView: View {
                 .onChange(of: inputFocused) { _, focused in
                     if focused { onInteract() }
                 }
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") { inputFocused = false }
+                    }
+                }
 
             Button {
                 let text = inputText
