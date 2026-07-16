@@ -4,6 +4,8 @@
 //
 //  Shared layout for the onboarding intake screens: full-bleed background, large
 //  title, and a bottom sheet holding the screen's input controls above the chat.
+//  The sheet has a grab handle and can be dragged between a collapsed and an
+//  expanded height, snapping to whichever is nearer on release.
 //
 
 import SwiftUI
@@ -15,17 +17,35 @@ struct GuidedScreenScaffold<Inputs: View>: View {
     let image: String
     @ViewBuilder var structuredInputs: () -> Inputs
 
+    /// Resting heights of the sheet, as fractions of the screen height.
+    private let collapsedFraction: CGFloat = 0.52
+    private let expandedFraction: CGFloat = 0.9
+
+    @State private var expanded = false
+    @GestureState private var dragTranslation: CGFloat = 0
+
+    private var screenHeight: CGFloat { UIScreen.main.bounds.height }
+    private var collapsedHeight: CGFloat { screenHeight * collapsedFraction }
+    private var expandedHeight: CGFloat { screenHeight * expandedFraction }
+
+    /// Live sheet height: the resting height offset by the in-progress drag, clamped
+    /// between the two detents. Dragging up (negative translation) makes it taller.
+    private var sheetHeight: CGFloat {
+        let base = expanded ? expandedHeight : collapsedHeight
+        return min(max(base - dragTranslation, collapsedHeight), expandedHeight)
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             OnboardingBackground(image: image)
 
             VStack(alignment: .center, spacing: 0) {
-                    Text(title)
-                        .font(.system(size: 50, weight: .bold))
-                        .foregroundStyle(.white)
-                        .multilineTextAlignment(.center)
-                .padding(.horizontal, Spacing.lg)
-                .padding(.top, Spacing.lg)
+                Text(title)
+                    .font(.system(size: 50, weight: .bold))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, Spacing.lg)
+                    .padding(.top, Spacing.lg)
 
                 Spacer(minLength: Spacing.md)
 
@@ -39,16 +59,19 @@ struct GuidedScreenScaffold<Inputs: View>: View {
 
     private var sheet: some View {
         VStack(spacing: 0) {
+            grabHandle
+                .contentShape(Rectangle())
+                .gesture(dragGesture)
+
             structuredInputs()
                 .padding(.horizontal, Spacing.md)
-                .padding(.top, Spacing.md)
+                .padding(.top, Spacing.sm)
 
             IntakeChatView(model: model)
                 .padding(.bottom, Spacing.lg)
-
         }
         .frame(maxWidth: .infinity)
-        .frame(maxHeight: UIScreen.main.bounds.height * 0.52)
+        .frame(height: sheetHeight)
         // The fill extends under the home indicator, but the content (including the
         // chat input bar) stays inside the safe area so it's always visible and rises
         // with the keyboard.
@@ -57,5 +80,39 @@ struct GuidedScreenScaffold<Inputs: View>: View {
                 .fill(AppColor.surface)
                 .ignoresSafeArea(edges: .bottom)
         }
+    }
+
+    private var grabHandle: some View {
+        Capsule()
+            .fill(Color(.systemGray3))
+            .frame(width: 40, height: 5)
+            .frame(maxWidth: .infinity)
+            .padding(.top, Spacing.sm)
+            .padding(.bottom, Spacing.xs)
+    }
+
+    /// Drag on the handle to resize; on release, snap to the nearer detent — or the
+    /// flick direction when the gesture ends with momentum.
+    private var dragGesture: some Gesture {
+        DragGesture()
+            .updating($dragTranslation) { value, state, _ in
+                state = value.translation.height
+            }
+            .onEnded { value in
+                let base = expanded ? expandedHeight : collapsedHeight
+                let releasedHeight = base - value.translation.height
+                let flick = value.predictedEndTranslation.height
+                let shouldExpand: Bool
+                if flick < -80 {
+                    shouldExpand = true
+                } else if flick > 80 {
+                    shouldExpand = false
+                } else {
+                    shouldExpand = releasedHeight > (collapsedHeight + expandedHeight) / 2
+                }
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                    expanded = shouldExpand
+                }
+            }
     }
 }
