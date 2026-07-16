@@ -55,6 +55,12 @@ struct GuidedScreenScaffold<Inputs: View>: View {
         // The navigation stack's back button is left visible so the athlete can return
         // to an earlier screen; re-answering simply overwrites the earlier value.
         .task { await model.startIfNeeded() }
+        // Expand as soon as the athlete acts on the sheet — a sent turn (tapping a
+        // control or the send button) doesn't fit at the collapsed height alongside
+        // the coach's reply and the controls.
+        .onChange(of: model.phase) { _, phase in
+            if phase == .waiting { expand() }
+        }
     }
 
     private var sheet: some View {
@@ -67,7 +73,7 @@ struct GuidedScreenScaffold<Inputs: View>: View {
                 .padding(.horizontal, Spacing.md)
                 .padding(.top, Spacing.sm)
 
-            IntakeChatView(model: model)
+            IntakeChatView(model: model, onInteract: expand)
                 .padding(.bottom, Spacing.lg)
         }
         .frame(maxWidth: .infinity)
@@ -92,9 +98,11 @@ struct GuidedScreenScaffold<Inputs: View>: View {
     }
 
     /// Drag on the handle to resize; on release, snap to the nearer detent — or the
-    /// flick direction when the gesture ends with momentum.
+    /// flick direction when the gesture ends with momentum. Measured in the global
+    /// coordinate space so resizing the sheet (which moves the handle under the
+    /// finger) doesn't feed back into the translation and cause jitter.
     private var dragGesture: some Gesture {
-        DragGesture()
+        DragGesture(minimumDistance: 1, coordinateSpace: .global)
             .updating($dragTranslation) { value, state, _ in
                 state = value.translation.height
             }
@@ -114,5 +122,12 @@ struct GuidedScreenScaffold<Inputs: View>: View {
                     expanded = shouldExpand
                 }
             }
+    }
+
+    private func expand() {
+        guard !expanded else { return }
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            expanded = true
+        }
     }
 }

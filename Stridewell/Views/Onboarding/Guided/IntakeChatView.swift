@@ -11,7 +11,12 @@ import SwiftUI
 struct IntakeChatView: View {
 
     let model: IntakeChatModel
+    /// Called when the athlete engages with the input (e.g. focuses the field), so
+    /// the host can grow the sheet.
+    var onInteract: () -> Void = {}
+
     @State private var inputText = ""
+    @FocusState private var inputFocused: Bool
 
     private var canSend: Bool {
         model.canSend && !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -82,7 +87,11 @@ struct IntakeChatView: View {
                 .background(AppColor.surfaceElevated)
                 .clipShape(RoundedRectangle(cornerRadius: CornerRadius.input))
                 .lineLimit(1...5)
+                .focused($inputFocused)
                 .disabled(model.phase == .loading || model.phase == .waiting)
+                .onChange(of: inputFocused) { _, focused in
+                    if focused { onInteract() }
+                }
 
             Button {
                 let text = inputText
