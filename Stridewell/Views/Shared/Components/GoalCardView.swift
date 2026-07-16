@@ -53,7 +53,7 @@ struct GoalCardView: View {
                     Text("Distance Completed")
                         .font(.sofiaSans(size: 12, weight: .regular))
                         .foregroundStyle(AppColor.textSecondary)
-                    Text(FormatUtils.distance(summary.total_distance_m, unit: settingsStore.unitSystem))
+                    Text(FormatUtils.distance(summary.distance_completed_m, unit: settingsStore.unitSystem))
                         .font(.sofiaSans(size: 20, weight: .bold))
                         .foregroundStyle(AppColor.textPrimary)
                 }
@@ -88,14 +88,14 @@ struct GoalCardView: View {
         goal_race_distance_m: 21097.5,
         plan_start_date: "2026-08-03",
         horizon_days: 63,
-        total_distance_m: 459027.8
+        distance_completed_m: 459027.8
     )
     let noRaceGoal = GoalSummary(
         goal_race_date: nil,
         goal_race_distance_m: nil,
         plan_start_date: "2026-08-03",
         horizon_days: 42,
-        total_distance_m: 128748.0
+        distance_completed_m: 128748.0
     )
 
     return ScrollView {
