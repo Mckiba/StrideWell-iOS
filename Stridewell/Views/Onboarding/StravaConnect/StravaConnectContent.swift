@@ -42,53 +42,65 @@ struct StravaConnectContent: View {
     var body: some View {
         ZStack {
             OnboardingBackground()
-            
-            VStack() {
-                
-                // Text("You, in Context").font(.largeTitle).padding(.vertical, 40)
+
+            VStack(alignment: .center, spacing: 0) {
+
+                Text("You, in Context")
+                    .font(.system(size: 50, weight: .bold))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, Spacing.lg)
+                    .padding(.top, Spacing.lg)
+
                 Spacer()
-                
-                // Modal
+
+                // Strava Circle
                 ZStack(alignment: .topTrailing) {
-                    
+
                     VStack(spacing: 10) {
-                        
-                        // Strava logo
+
                         Image("strava_logo")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 160, height: 65)
                             .padding(.top, 10)
-                        
+
                         statusRow
                             .frame(height: 44)
                             .padding(.bottom, 4)
-                        
-                        
+
                         switch screenState {
 
                         case .starting, .connecting, .analyzing:
                             EmptyView()
+
                         case .connected:
-                            PrimaryButton("Continue", size: .medium){
+                            PrimaryButton("Continue", size: .medium) {
                                 onContinue()
-                            }.padding(.horizontal, 48)
-                                .padding(.vertical, 8)
+                            }
+                            .padding(.horizontal, 48)
+                            .padding(.vertical, 8)
+
                         case .slowBackfill:
-                            PrimaryButton("Continue without waiting", size: .small){
+                            PrimaryButton("Continue without waiting", size: .small) {
                                 onContinueWithoutStrava()
-                            }.padding(.horizontal, 32)
-                                .padding(.vertical, 8)
+                            }
+                            .padding(.horizontal, 32)
+                            .padding(.vertical, 8)
+
                         case .sessionError:
-                            PrimaryButton("Try again", size: .small){
+                            PrimaryButton("Try again", size: .small) {
                                 onRetrySession()
-                            }.padding(.horizontal, 48)
-                                .padding(.vertical, 8)
+                            }
+                            .padding(.horizontal, 48)
+                            .padding(.vertical, 8)
+
                         case .idle, .error:
-                            PrimaryButton("Connect", size: .medium ){
+                            PrimaryButton("Connect", size: .medium) {
                                 onConnect()
-                            }                          .padding(.horizontal, 48)
-                                .padding(.vertical, 8)
+                            }
+                            .padding(.horizontal, 48)
+                            .padding(.vertical, 8)
                         }
                     }
                     .padding(.horizontal, 40)
@@ -101,61 +113,72 @@ struct StravaConnectContent: View {
                             .stroke(Color(hex: "#f9f0f0"), lineWidth: 3)
                     )
                     .clipShape(Circle())
-                    .shadow(color: Color.black.opacity(0.25), radius: 40, x: 0, y: 20)
+                    .shadow(color: .black.opacity(0.25), radius: 40, x: 0, y: 20)
                     .frame(maxWidth: 320)
-                    
                 }
                 .padding(.horizontal, 20)
+
                 
                 Spacer()
                 
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Let's make this plan about You. Together.")
-                        .foregroundStyle(.white)
-
-                    Text("Connect your Strava to help us build a plan tailored to your history and goals")
-                        .foregroundStyle(.white)
-
-                    // Secondary: continue the interview without connecting Strava.
-                    if showContinueWithoutStrava {
-                        PrimaryButton("Continue without Strava", size: .large, action: onContinueWithoutStrava)
-                        Text("You can still build a personal plan — we'll just ask a few more questions.")
-                            .font(.footnote)
-                            .foregroundStyle(.white.opacity(0.75))
+                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                        
+                        // Bottom Panel
+                        VStack(alignment: .leading, spacing: 12) {
+                            
+                            HStack(spacing: 0) {
+                                Text("Let's make this plan about ")
+                                    .foregroundStyle(.white)
+                                
+                                Text("You.")
+                                    .font(.inter(size: 20, weight: .bold)  )
+                            }
+                            
+                            Text("Together.")
+                                .font(.inter(size: 32, weight: .bold)  )
+                            
+                            Text("Connect your Strava to help us build a plan tailored to your history and goals")
+                                .foregroundStyle(.white)
+                            
+                            if showContinueWithoutStrava {
+                                PrimaryButton(
+                                    "Continue without Strava",
+                                    size: .large,
+                                    action: onContinueWithoutStrava
+                                )
+                                
+                                Text("You can still build a personal plan — we'll just ask a few more questions.")
+                                    .font(.footnote)
+                                    .foregroundStyle(.white.opacity(0.75))
+                            }
+                            
+                            Text("Skipping the onboarding will result in a default plan. For a more personal experience the early onboarding and Strava integration is recommended.")
+                                .font(.footnote)
+                                .foregroundStyle(.white.opacity(0.75))
+                                .padding(.top, 4)
+                            
+                            Button("Skip onboarding", action: onSkipOnboarding)
+                                .font(.footnote.weight(.medium))
+                                .foregroundStyle(.white.opacity(0.85))
+                            
+                            Button("Sign out", action: onSignOut)
+                                .font(.footnote)
+                                .foregroundStyle(.white.opacity(0.6))
+                                .padding(.top, 4)
+                            
+                            Spacer(minLength: 0)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(20)
+                        .background {
+                            UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30)
+                                .fill(Color.black)
+                                .ignoresSafeArea(edges: .bottom)
+                        }
                     }
-
-                    // Tertiary: skip onboarding entirely → generic starter plan.
-                    Text("Skipping the onboarding will result in a default plan. For a more personal experience the early onboarding and Strava integration is recommended.")
-                        .font(.footnote)
-                        .foregroundStyle(.white.opacity(0.75))
-                        .padding(.top, 4)
-
-                    Button("Skip onboarding", action: onSkipOnboarding)
-                        .font(.footnote.weight(.medium))
-                        .foregroundStyle(.white.opacity(0.85))
-
-                    Button("Sign out", action: onSignOut)
-                        .font(.footnote)
-                        .foregroundStyle(.white.opacity(0.6))
-                        .padding(.top, 4)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading) // expand
-                .padding(20)
-                
-                
-                .frame(maxWidth: .infinity, minHeight: 350)                .background(Color.black)
-                .clipShape(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 30,
-                        bottomLeadingRadius: 0,
-                        bottomTrailingRadius: 0,
-                        topTrailingRadius: 30
-                    )
-                )
             }
         }
     }
-    
     
     
     // MARK: - Status Row
@@ -166,22 +189,22 @@ struct StravaConnectContent: View {
         case .starting:
             ProgressView("Setting up your session…")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary)
         case .connecting:
             ProgressView("Opening Strava…")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary)
         case .analyzing:
             HStack(spacing: 8) {
                 ProgressView()
                 Text("Analyzing your run history…")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
             }
         case .slowBackfill:
             Text("This is taking a moment…")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary)
         case .connected:
             Label("Strava connected", systemImage: "checkmark.circle.fill")
                 .font(.subheadline.weight(.medium))
@@ -205,7 +228,7 @@ struct StravaConnectContent: View {
 
 struct OnboardingBackground: View {
 
-    var image: String = "history_confirm"
+    var image: String = "OnboardingBackground"
 
     var body: some View {
         // The image lives in a background of a clear view so its intrinsic size never
