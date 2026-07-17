@@ -41,6 +41,7 @@ enum APIEndpoints {
     // MARK: Analysis / Profile (V2 Phase 2)
     static let analysisWeekly    = "/analysis/weekly"
     static let profileFitness    = "/profile/fitness"
+    static let profileUnits      = "/profile/units"
     static let proactivePreferences = "/profile/proactive-preferences"
 
     // MARK: Chat (M10, M14)

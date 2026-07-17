@@ -27,7 +27,7 @@ struct ManualBaselineScreen: View {
         Group {
             if let model {
                 GuidedScreenScaffold(
-                    title: "Your In Focus",
+                    title: "You, In Focus",
                     model: model,
                     image: "history_confirm"
                 ) {

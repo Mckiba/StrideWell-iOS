@@ -2,8 +2,9 @@
 //  OnboardingUnits.swift
 //  Stridewell
 //
-//  Distance unit handling for guided onboarding. The athlete sees mi or km by
-//  locale; intake values are always stored/sent in km.
+//  Distance unit handling for guided onboarding. The athlete picks mi or km in the
+//  first onboarding step (stored under the same key as Settings); intake values are
+//  always stored/sent in km.
 //
 
 import Foundation
@@ -12,9 +13,17 @@ enum OnboardingUnits {
 
     static let kmPerMile = 1.609344
 
-    /// True when the device locale prefers imperial distances.
+    /// UserDefaults key shared with SettingsStore.unitSystem.
+    private static let unitSystemKey = "Settings.unitSystem"
+
+    /// True when the athlete's chosen unit is imperial. Reads the preference set in
+    /// the onboarding unit step / Settings, falling back to device locale when unset.
     static var usesMiles: Bool {
-        Locale.current.measurementSystem != .metric
+        if let raw = UserDefaults.standard.string(forKey: unitSystemKey),
+           let unit = UnitSystem(rawValue: raw) {
+            return unit == .imperial
+        }
+        return Locale.current.measurementSystem != .metric
     }
 
     static var unitLabel: String { usesMiles ? "mi" : "km" }

@@ -55,7 +55,7 @@ struct GuidedScreenScaffold<Inputs: View>: View {
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Spacing.lg)
-                        .padding(.top, Spacing.lg)
+//                        .padding(.top, Spacing.lg)
 
                     Spacer(minLength: 0)
                 }

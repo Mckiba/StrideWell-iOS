@@ -234,6 +234,16 @@ final class SettingsStore {
         }
     }
 
+    // MARK: - Unit System
+
+    /// Sets the local unit preference and best-effort syncs it to the backend so
+    /// the Coach converses in the athlete's unit. A sync failure is non-fatal —
+    /// the local value (used for all formatting) is already applied.
+    func setUnitSystem(_ system: UnitSystem, apiClient: APIClient) async {
+        unitSystem = system
+        _ = await apiClient.setMeasurementSystem(system)
+    }
+
     // MARK: - Coaching Notifications
 
     func setProactiveEnabled(_ enabled: Bool, apiClient: APIClient) async {

@@ -37,7 +37,7 @@ struct VolumeSlider: View {
                     .foregroundStyle(.tertiary)
             }
 
-            PrimaryButton("Set weekly volume", size: .small, action: onCommit)
+            PrimaryButton("Set weekly volume", size: .large, action: onCommit)
         }
     }
 

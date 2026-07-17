@@ -2,8 +2,9 @@
 //  OnboardingContainerView.swift
 //  Stridewell
 //
-//  Hosts the onboarding navigation stack. The connect screen is the root; the
-//  coordinator pushes the rest of the screens as fields get confirmed.
+//  Hosts the onboarding navigation stack. The unit-preference step is the root;
+//  it pushes the connect screen, and the coordinator pushes the rest of the
+//  screens as fields get confirmed.
 //
 
 import SwiftUI
@@ -15,7 +16,7 @@ struct OnboardingContainerView: View {
     var body: some View {
         @Bindable var coordinator = coordinator
         NavigationStack(path: $coordinator.path) {
-            StravaConnectScreen()
+            UnitPreferenceScreen()
                 .navigationDestination(for: OnboardingScreen.self) { screen in
                     destination(for: screen)
                 }
