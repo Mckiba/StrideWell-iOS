@@ -23,6 +23,7 @@ enum APIEndpoints {
     static let onboardingStatus  = "/onboarding/status"
     static let onboardingMessage = "/onboarding/message"
     static let onboardingConfirm = "/onboarding/confirm-plan"
+    static let onboardingSkip    = "/onboarding/skip"
 
     // MARK: Plan (M6–M11)
     static let planToday         = "/plan/today"
@@ -40,6 +41,7 @@ enum APIEndpoints {
     // MARK: Analysis / Profile (V2 Phase 2)
     static let analysisWeekly    = "/analysis/weekly"
     static let profileFitness    = "/profile/fitness"
+    static let profileUnits      = "/profile/units"
     static let proactivePreferences = "/profile/proactive-preferences"
 
     // MARK: Chat (M10, M14)

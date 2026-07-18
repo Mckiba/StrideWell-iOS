@@ -2,24 +2,40 @@
 //  StravaConnectScreen.swift
 //  Stridewell
 //
+//  First onboarding screen, where the athlete connects their data. Three choices:
+//    • Connect                 – run Strava OAuth, analyze history, then go to the baseline screen
+//    • Continue without Strava – skip OAuth and go straight to the manual baseline screen
+//    • Skip onboarding         – build a default plan and finish
+//
 
 import SwiftUI
 
 struct StravaConnectScreen: View {
 
     @Environment(\.onboardingStore) private var onboardingStore
+    @Environment(\.onboardingCoordinator) private var coordinator
     @Environment(\.authStore) private var authStore
     @Environment(\.apiClient) private var apiClient
 
     @State private var screenState: StravaConnectContent.ScreenState = .starting
-    @State private var navigateToInterview = false
+    @State private var showSkipConfirm = false
+    @State private var isSkipping = false
+    /// Guards the start/resume probe so it runs once per mount. Without this the root
+    /// screen re-runs it every time the athlete navigates back here, which would
+    /// re-advance them off the connect screen.
+    @State private var didStart = false
+
+    /// Poll attempts before offering "continue without waiting". With the 3s→15s
+    /// backoff this is a little past ~60s of waiting on Strava analysis.
+    private let slowBackfillThreshold = 6
 
     var body: some View {
         StravaConnectContent(
             screenState: screenState,
             onConnect: { Task { await startOAuth() } },
-            onSkip: { navigateToInterview = true },
-            onContinue: { navigateToInterview = true },
+            onContinueWithoutStrava: { continueWithoutStrava() },
+            onSkipOnboarding: { showSkipConfirm = true },
+            onContinue: { advanceToInterview() },
             onRetrySession: {
                 Task {
                     screenState = .starting
@@ -28,16 +44,43 @@ struct StravaConnectScreen: View {
             },
             onSignOut: { signOut() }
         )
-        .navigationTitle("Set up your plan")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .navigationDestination(isPresented: $navigateToInterview) {
-            IntakeInterviewScreen()
+        .confirmationDialog(
+            "Skip onboarding?",
+            isPresented: $showSkipConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Skip and use a default plan", role: .destructive) {
+                Task { await skipOnboarding() }
+            }
+            Button("Keep setting up", role: .cancel) {}
+        } message: {
+            Text("You'll get a generic starter plan instead of one tailored to you. You can refine it later in Settings.")
         }
-        .task { await startOnboardingSession() }
+        .task {
+            guard !didStart else { return }
+            didStart = true
+            await startOnboardingSession()
+        }
     }
 
-    // MARK: - API Calls
+    // MARK: - Navigation
+
+    /// Move into the interview. The coordinator pushes the chosen baseline screen,
+    /// skipping ahead past anything already confirmed.
+    private func advanceToInterview() {
+        coordinator.advance(using: onboardingStore, planBuilding: false)
+    }
+
+    /// Proceed without connecting Strava: record the decision so resume doesn't strand
+    /// the athlete back here, then move into the manual-baseline branch.
+    private func continueWithoutStrava() {
+        onboardingStore.markDataConnectionDecided()
+        advanceToInterview()
+    }
+
+    // MARK: - Session lifecycle
 
     private func startOnboardingSession() async {
         let result: ApiResult<OnboardingStartResponse> = await apiClient.startOnboarding()
@@ -63,7 +106,14 @@ struct StravaConnectScreen: View {
             onboardingStore.update(from: state)
             switch state.status {
             case .interview:
-                navigateToInterview = true
+                // Only advance if the athlete already made a data-connection choice; a
+                // live Strava connection counts as one even if the local flag was wiped.
+                // Otherwise stay here so they can still connect their data. Set the
+                // screen state either way so back-navigation here shows the right
+                // controls instead of a stuck spinner.
+                let decided = onboardingStore.dataConnectionDecided || onboardingStore.stravaConnected
+                screenState = onboardingStore.stravaConnected ? .connected : .idle
+                if decided { advanceToInterview() }
             case .analyzing:
                 screenState = .analyzing
                 await pollUntilInterview()
@@ -93,6 +143,7 @@ struct StravaConnectScreen: View {
         switch result {
         case .success:
             onboardingStore.stravaDidConnect()
+            onboardingStore.markDataConnectionDecided()
             screenState = .analyzing
             await pollUntilInterview()
         case .failure(_, let message):
@@ -104,19 +155,36 @@ struct StravaConnectScreen: View {
         var attempts = 0
         await Polling.exponentialBackoff {
             attempts += 1
-            if attempts > 10 {
-                self.screenState = .sessionError("Analysis is taking longer than expected. Tap 'Try again' to retry.")
+            // Slow backfill: stop blocking the athlete; offer to continue (→ manual branch).
+            if attempts > slowBackfillThreshold {
+                self.screenState = .slowBackfill
                 return true
             }
             let result: ApiResult<OnboardingState> = await self.apiClient.onboardingStatus()
             if case .success(let state) = result {
                 self.onboardingStore.update(from: state)
                 if state.status == .interview {
-                    self.navigateToInterview = true
+                    self.advanceToInterview()
                     return true
                 }
             }
             return false
+        }
+    }
+
+    // MARK: - Skip
+
+    private func skipOnboarding() async {
+        guard !isSkipping else { return }
+        isSkipping = true
+        let result = await apiClient.skipOnboarding()
+        isSkipping = false
+        switch result {
+        case .success:
+            // `skipped` is terminal in the current model → RootView routes to main.
+            onboardingStore.markSkipped()
+        case .failure(_, let message):
+            screenState = .sessionError(message)
         }
     }
 
@@ -125,5 +193,3 @@ struct StravaConnectScreen: View {
         authStore.signOut()
     }
 }
-
-

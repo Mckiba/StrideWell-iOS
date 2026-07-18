@@ -92,7 +92,9 @@ struct SettingsScreen: View {
         SettingsTrainingPreferencesSection(
             unitSystem: Binding(
                 get: { settingsStore.unitSystem },
-                set: { settingsStore.unitSystem = $0 }
+                set: { newValue in
+                    Task { await settingsStore.setUnitSystem(newValue, apiClient: apiClient) }
+                }
             ),
             reflectionReminders: Binding(
                 get: { settingsStore.reflectionReminders },

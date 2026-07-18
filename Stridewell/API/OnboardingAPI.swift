@@ -19,14 +19,28 @@ extension APIClient {
         await post(path: APIEndpoints.stravaConnect, body: StravaConnectRequest(code: code))
     }
 
+    /// Sends one intake turn. `screenContext` tells the coach which topic the screen
+    /// is on; `structuredFields` carries values picked from controls. Both default to
+    /// nil, which sends a plain free-text turn.
     func sendOnboardingMessage(
         conversationId: String,
-        message: InterviewMessage
+        message: InterviewMessage,
+        screenContext: String? = nil,
+        structuredFields: StructuredFields? = nil
     ) async -> ApiResult<OnboardingMessageResponse> {
         await post(
             path: APIEndpoints.onboardingMessage,
-            body: OnboardingMessageRequest(conversation_id: conversationId, message: message)
+            body: OnboardingMessageRequest(
+                conversation_id: conversationId,
+                message: message,
+                screen_context: screenContext,
+                structured_fields: structuredFields
+            )
         )
+    }
+
+    func skipOnboarding() async -> ApiResult<OnboardingSkipResponse> {
+        await request("POST", path: APIEndpoints.onboardingSkip)
     }
 
     func confirmPlan(planVersionId: String) async -> ApiResult<ConfirmPlanResponse> {

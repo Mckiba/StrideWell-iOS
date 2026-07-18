@@ -191,16 +191,16 @@ struct PlanRevealContent: View {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.caption)
-                        .foregroundStyle(.yellow)
+                        .foregroundStyle(.red)
                     Text(flag)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
         .padding(12)
-        .background(Color.yellow.opacity(0.08))
+        .background(Color.red.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }

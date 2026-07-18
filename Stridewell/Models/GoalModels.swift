@@ -13,7 +13,7 @@ struct GoalSummary: Codable {
     let goal_race_distance_m: Double?  // metres — nil when no race goal
     let plan_start_date: String        // "YYYY-MM-DD"
     let horizon_days: Int
-    let total_distance_m: Double       // sum of all runs since plan_start_date
+    let distance_completed_m: Double   // distance completed on the plan so far (metres)
 
     // MARK: - Computed
 
