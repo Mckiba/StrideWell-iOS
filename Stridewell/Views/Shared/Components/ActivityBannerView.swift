@@ -6,8 +6,8 @@
 import SwiftUI
 
 struct ActivityBannerView: View {
-
-    let title1:    String           // bold first line (required)
+    
+    var title1:    String? = nil           // bold first line (optional)
     var detail:    String?  = nil   // trailing text on the title1 row, e.g. a date (optional)
     var title2:    String?  = nil   // bold second line — pass either this OR workout, not both
     var workout:   Workout? = nil   // when set, metric line (distance · pace/duration) is computed here
@@ -54,21 +54,25 @@ struct ActivityBannerView: View {
             // Text column
             VStack(alignment: .leading, spacing: Spacing.sm) {
 
-                HStack {
-                    Text(title1)
-                        .font(.sofiaSans(size: 14, weight: .bold))
-                        .foregroundStyle(AppColor.textPrimary)
-                    if let detail {
-                        Spacer()
-                        Text(detail)
-                            .font(.sofiaSans(size: 13, weight: .regular))
-                            .foregroundStyle(AppColor.textPrimary)
+                if title1 != nil || detail != nil {
+                    HStack {
+                        if let title1 {
+                            Text(title1)
+                                .font(.sofiaSans(size: 14, weight: .regular))
+                                .foregroundStyle(AppColor.textPrimary)
+                        }
+                        if let detail {
+                            Spacer()
+                            Text(detail)
+                                .font(.sofiaSans(size: 13, weight: .regular))
+                                .foregroundStyle(AppColor.textPrimary)
+                        }
                     }
                 }
 
                 if let line = resolvedTitle2 {
                     Text(line)
-                        .font(.sofiaSans(size: 13, weight: .bold))
+                        .font(.sofiaSans(size: 15, weight: .bold))
                         .foregroundStyle(AppColor.textPrimary)
                         .multilineTextAlignment(.leading)
                 }
@@ -119,6 +123,7 @@ struct ActivityBannerView: View {
     }
 }
 
+
 // MARK: - Preview
 
 #Preview {
@@ -140,10 +145,10 @@ struct ActivityBannerView: View {
 
             // All fields
             ActivityBannerView(
-                title1:   "Easy Run",
+                title1:   "4 miles",
                 detail:   "Monday, Feb 23",
-                title2:   "6 Miles",
-                subtitle: "Let's talk about that last workout",
+                title2:   "Tempo Run",
+                subtitle: "Try to keep HR below 150bpm.",
                 image:    Image("bg2")
             )
 
@@ -159,8 +164,7 @@ struct ActivityBannerView: View {
             //Weather layour
             ActivityBannerView(
                 title1:    "UV index is 7",
-                title2:   "Cover Up, wear SPF and stay hydrated!",
-                subtitle: "",
+                subtitle: "Cover Up, wear SPF and stay hydrated!",
                 image:     Image("bg2"),
                 onTap:     { },
                 onDismiss: { }
