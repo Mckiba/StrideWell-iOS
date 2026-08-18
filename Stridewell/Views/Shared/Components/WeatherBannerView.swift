@@ -34,7 +34,7 @@ struct WeatherBannerView: View {
 
                 if !title2.isEmpty {
                     Text(title2)
-                        .font(.sofiaSans(size: 13, weight: .bold))
+                        .font(.sofiaSans(size: 13, weight: .regular))
                         .foregroundStyle(AppColor.textPrimary)
                         .multilineTextAlignment(.leading)
                 }

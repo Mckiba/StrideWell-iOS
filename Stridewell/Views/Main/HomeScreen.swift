@@ -28,6 +28,7 @@ struct HomeScreen: View {
     @State private var showReflection = false
     @State private var showPlanChange = false
     @State private var selectedRun: Run? = nil
+    @State private var selectedDay: PlanDay? = nil
 
     var body: some View {
         ZStack(alignment: .center) {
@@ -89,6 +90,7 @@ struct HomeScreen: View {
             )
         }
         .sheet(isPresented: $showReflection) { ReflectionScreen() }
+        .sheet(item: $selectedDay) { day in WorkoutDetailSheet(day: day) }
         .fullScreenCover(item: $selectedRun) { run in
             RunDetailScreen(run: run)
         }
@@ -105,17 +107,56 @@ struct HomeScreen: View {
             if let (title, day) = nextDisplayedWorkout {
                 Text(title)
                     .font(.sectionTitle)
-                WorkoutCard(day: day, isToday: title == "Today")
-                    .onTapGesture {
-                        // deep-link to RunDetailScreen when the
-                        // card represents a completed/modified day.
+
+                ActivityBannerView(
+                    title1:   distanceValue(for: day),
+                    detail:   cardDate(for: day),
+                    title2:   day.workout.label,
+                    subtitle: notesLine(for: day) ?? "",
+                    image:    Image(day.workout.type.rawValue),
+                    onTap: {
                         if (day.status == .completed || day.status == .modified),
                            let run = day.linkedRun {
                             selectedRun = run
+                        } else {
+                            selectedDay = day
                         }
                     }
+                )
             }
         }
+    }
+    
+    // MARK: - Planned-side computed values
+
+    // MARK: - Planned-side helpers
+
+    private func distanceValue(for day: PlanDay) -> String {
+        guard let d = day.workout.target_distance_m else { return "-" }
+        return FormatUtils.distance(d, unit: settingsStore.unitSystem)
+    }
+
+    private func timeValue(for day: PlanDay) -> String {
+        guard let dur = day.workout.target_duration_s else { return "-" }
+        return FormatUtils.duration(dur)
+    }
+
+    private func paceValue(for day: PlanDay) -> String {
+        let unit = settingsStore.unitSystem
+        if let range = day.workout.target_pace_range {
+            return FormatUtils.paceRange(min: range.min_s_per_km, max: range.max_s_per_km, unit: unit)
+        }
+        guard let p = day.workout.target_pace_s_per_km else { return "-" }
+        return FormatUtils.pace(p, unit: unit)
+    }
+
+    private func notesLine(for day: PlanDay) -> String? {
+        day.workout.notes ?? day.workout.description
+    }
+
+    private func cardDate(for day: PlanDay) -> String {
+        guard let d = DateUtils.parse(day.date) else { return "" }
+        return DateUtils.workoutCardDateFormatter.string(from: d)
     }
 
     /// Returns the label + day to feature at the top of the home screen.
@@ -232,7 +273,7 @@ struct HomeScreen: View {
                 )
             case .standard:
                 ActivityBannerView(
-                    title1:    item.title1,
+                    title2:    item.title1,
                     subtitle:  item.subtitle,
                     image:     item.image,
                     onTap:     item.onTap,
