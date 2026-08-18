@@ -15,6 +15,7 @@ enum APIEndpoints {
     static let me                = "/auth/me"
     static let appleSignIn       = "/auth/apple"
     static let googleSignIn      = "/auth/google"
+    static let refreshSession    = "/auth/refresh"
     static let forgotPassword    = "/auth/forgot-password"
     static let resetPassword     = "/auth/reset-password"
 
@@ -61,4 +62,7 @@ enum APIEndpoints {
 
     // MARK: Notifications (M15)
     static let notificationsRegister = "/notifications/register"
+
+    // MARK: Home Cards (Weather)
+    static let homeCards         = "/home/cards"
 }

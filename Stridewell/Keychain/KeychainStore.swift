@@ -47,6 +47,81 @@ enum KeychainStore {
         delete(key: "jwt")
     }
 
+    // MARK: - Refresh Token
+
+    @discardableResult
+    static func saveRefreshToken(_ token: String) -> Bool {
+        delete(key: "refresh_token")
+        let data = Data(token.utf8)
+        let query: [CFString: Any] = [
+            kSecClass:       kSecClassGenericPassword,
+            kSecAttrService: service,
+            kSecAttrAccount: "refresh_token",
+            kSecValueData:   data
+        ]
+        return SecItemAdd(query as CFDictionary, nil) == errSecSuccess
+    }
+
+    static func loadRefreshToken() -> String? {
+        let query: [CFString: Any] = [
+            kSecClass:       kSecClassGenericPassword,
+            kSecAttrService: service,
+            kSecAttrAccount: "refresh_token",
+            kSecReturnData:  kCFBooleanTrue as Any,
+            kSecMatchLimit:  kSecMatchLimitOne
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let string = String(data: data, encoding: .utf8)
+        else { return nil }
+        return string
+    }
+
+    @discardableResult
+    static func deleteRefreshToken() -> Bool {
+        delete(key: "refresh_token")
+    }
+
+    // MARK: - Access Token Expiry
+
+    @discardableResult
+    static func saveAccessTokenExpiry(_ expiresAtEpochSeconds: Int) -> Bool {
+        delete(key: "access_token_expires_at")
+        let data = Data(String(expiresAtEpochSeconds).utf8)
+        let query: [CFString: Any] = [
+            kSecClass:       kSecClassGenericPassword,
+            kSecAttrService: service,
+            kSecAttrAccount: "access_token_expires_at",
+            kSecValueData:   data
+        ]
+        return SecItemAdd(query as CFDictionary, nil) == errSecSuccess
+    }
+
+    static func loadAccessTokenExpiry() -> Int? {
+        let query: [CFString: Any] = [
+            kSecClass:       kSecClassGenericPassword,
+            kSecAttrService: service,
+            kSecAttrAccount: "access_token_expires_at",
+            kSecReturnData:  kCFBooleanTrue as Any,
+            kSecMatchLimit:  kSecMatchLimitOne
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let string = String(data: data, encoding: .utf8),
+              let expiresAt = Int(string)
+        else { return nil }
+        return expiresAt
+    }
+
+    @discardableResult
+    static func deleteAccessTokenExpiry() -> Bool {
+        delete(key: "access_token_expires_at")
+    }
+
     // MARK: - User ID
 
     @discardableResult
@@ -88,6 +163,8 @@ enum KeychainStore {
 
     static func clearAll() {
         deleteToken()
+        deleteRefreshToken()
+        deleteAccessTokenExpiry()
         deleteUserId()
     }
 

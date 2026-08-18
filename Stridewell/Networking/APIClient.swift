@@ -12,17 +12,29 @@ final class APIClient {
     private let baseURL: URL
     private let session: URLSession
     private let tokenProvider: () -> String?
+    private let refreshTokenProvider: () -> String?
+    private let accessTokenExpiryProvider: () -> Int?
+    private let onSessionRefreshed: (AuthSessionResponse) -> Void
     private let onUnauthorized: () -> Void
+    private let refreshSkewSeconds: Int = 300
+    private let refreshLock = NSLock()
+    private var refreshTask: Task<Bool, Never>?
 
     // MARK: - Init
 
     init(
         tokenProvider: @escaping () -> String?,
+        refreshTokenProvider: @escaping () -> String? = { nil },
+        accessTokenExpiryProvider: @escaping () -> Int? = { nil },
+        onSessionRefreshed: @escaping (AuthSessionResponse) -> Void = { _ in },
         onUnauthorized: @escaping () -> Void,
         baseURL: URL = Config.baseURL,
         session: URLSession = .shared
     ) {
         self.tokenProvider   = tokenProvider
+        self.refreshTokenProvider = refreshTokenProvider
+        self.accessTokenExpiryProvider = accessTokenExpiryProvider
+        self.onSessionRefreshed = onSessionRefreshed
         self.onUnauthorized  = onUnauthorized
         self.baseURL         = baseURL
         self.session         = session
@@ -35,6 +47,24 @@ final class APIClient {
         path: String,
         body: (any Encodable)? = nil
     ) async -> ApiResult<T> {
+        await request(
+            method,
+            path: path,
+            body: body,
+            allowAutoRefresh: true,
+            allowUnauthorizedHandler: true,
+            retryOn401: true
+        )
+    }
+
+    private func request<T: Decodable>(
+        _ method: String,
+        path: String,
+        body: (any Encodable)? = nil,
+        allowAutoRefresh: Bool,
+        allowUnauthorizedHandler: Bool,
+        retryOn401: Bool
+    ) async -> ApiResult<T> {
 
         guard let url = URL(string: path, relativeTo: baseURL) else {
             return .failure(status: 0, message: "Invalid URL path: \(path)")
@@ -42,6 +72,10 @@ final class APIClient {
 
         var req = URLRequest(url: url)
         req.httpMethod = method
+
+        if allowAutoRefresh && path != APIEndpoints.refreshSession && tokenProvider() != nil {
+            _ = await refreshSessionIfNeeded(force: false)
+        }
 
         if let token = tokenProvider() {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -69,7 +103,23 @@ final class APIClient {
             }
 
             if http.statusCode == 401 {
-                onUnauthorized()
+                if retryOn401 && path != APIEndpoints.refreshSession && tokenProvider() != nil {
+                    let refreshed = await refreshSessionIfNeeded(force: true)
+                    if refreshed {
+                        return await request(
+                            method,
+                            path: path,
+                            body: body,
+                            allowAutoRefresh: false,
+                            allowUnauthorizedHandler: allowUnauthorizedHandler,
+                            retryOn401: false
+                        )
+                    }
+                }
+
+                if allowUnauthorizedHandler {
+                    onUnauthorized()
+                }
                 return .failure(status: 401, message: "Session expired. Please sign in again.")
             }
 
@@ -101,6 +151,61 @@ final class APIClient {
         } catch {
             return .failure(status: 0, message: "Unexpected error: \(error.localizedDescription)")
         }
+    }
+
+    // MARK: - Session Refresh
+
+    private func refreshSessionIfNeeded(force: Bool) async -> Bool {
+        guard let refreshToken = refreshTokenProvider(), !refreshToken.isEmpty else {
+            return false
+        }
+
+        if !force && !isAccessTokenNearExpiry() {
+            return true
+        }
+
+        let task: Task<Bool, Never> = {
+            refreshLock.lock()
+            defer { refreshLock.unlock() }
+            if let existing = refreshTask {
+                return existing
+            }
+            let created = Task { [weak self] in
+                guard let self else { return false }
+                let result: ApiResult<AuthSessionResponse> = await self.request(
+                    "POST",
+                    path: APIEndpoints.refreshSession,
+                    body: RefreshSessionRequest(refresh_token: refreshToken),
+                    allowAutoRefresh: false,
+                    allowUnauthorizedHandler: false,
+                    retryOn401: false
+                )
+
+                switch result {
+                case .success(let response):
+                    self.onSessionRefreshed(response)
+                    return true
+                case .failure:
+                    return false
+                }
+            }
+            refreshTask = created
+            return created
+        }()
+
+        let refreshed = await task.value
+        refreshLock.lock()
+        refreshTask = nil
+        refreshLock.unlock()
+        return refreshed
+    }
+
+    private func isAccessTokenNearExpiry() -> Bool {
+        guard let expiresAt = accessTokenExpiryProvider() else {
+            return true
+        }
+        let now = Int(Date().timeIntervalSince1970)
+        return expiresAt - now <= refreshSkewSeconds
     }
 
     // MARK: - Convenience Methods

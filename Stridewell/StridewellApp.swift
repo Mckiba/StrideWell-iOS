@@ -25,6 +25,7 @@ extension EnvironmentValues {
     @Entry var activitiesStore: ActivitiesStore = ActivitiesStore()
     @Entry var activityStore: ActivityStore = ActivityStore()
     @Entry var connectivityStore: ConnectivityStore = ConnectivityStore()
+    @Entry var homeCardsStore: HomeCardsStore = HomeCardsStore()
 }
 
 // MARK: - Password Reset State
@@ -55,6 +56,7 @@ struct StridewellApp: App {
     @State private var activitiesStore = ActivitiesStore()
     @State private var activityStore = ActivityStore()
     @State private var connectivityStore = ConnectivityStore()
+    @State private var homeCardsStore = HomeCardsStore()
     @State private var pendingReset: PendingReset?
     private let apiClient: APIClient
     private let heatmapViewModel: HeatmapViewModel
@@ -65,6 +67,15 @@ struct StridewellApp: App {
         let store = AuthStore()
         let client = APIClient(
             tokenProvider: { store.token },
+            refreshTokenProvider: { store.refreshToken },
+            accessTokenExpiryProvider: { store.accessTokenExpiresAt },
+            onSessionRefreshed: { session in
+                store.updateSession(
+                    accessToken: session.access_token,
+                    refreshToken: session.refresh_token,
+                    expiresAt: session.expires_at
+                )
+            },
             onUnauthorized: { store.handle401() }
         )
         _authStore = State(wrappedValue: store)
@@ -99,6 +110,7 @@ struct StridewellApp: App {
                 .environment(\.activitiesStore, activitiesStore)
                 .environment(\.activityStore, activityStore)
                 .environment(\.connectivityStore, connectivityStore)
+                .environment(\.homeCardsStore, homeCardsStore)
                 .onReceive(NotificationCenter.default.publisher(for: .apnsTokenReceived)) { notification in
                     guard let token = notification.object as? String,
                           authStore.isAuthenticated else { return }

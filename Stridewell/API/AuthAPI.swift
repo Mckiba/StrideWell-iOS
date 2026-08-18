@@ -24,10 +24,16 @@ struct LoginRequest: Encodable {
     let password: String
 }
 
-/// Shared response shape for /auth/register and /auth/login.
-struct LoginResponse: Decodable {
-    let token: String
+/// Shared auth session envelope for login/register/social/refresh/reset flows.
+struct AuthSessionResponse: Decodable {
+    let access_token: String
+    let refresh_token: String
+    let expires_at: Int?
+    let token_type: String
     let user_id: String
+
+    /// Backward-compatibility accessor while migrating call sites.
+    var token: String { access_token }
 }
 
 struct ForgotPasswordRequest: Encodable {
@@ -52,35 +58,46 @@ struct GoogleSignInRequest: Encodable {
     let nonce: String
 }
 
+struct RefreshSessionRequest: Encodable {
+    let refresh_token: String
+}
+
 // MARK: - APIClient Extension
 
 extension APIClient {
 
-    func register(email: String, password: String) async -> ApiResult<LoginResponse> {
+    func register(email: String, password: String) async -> ApiResult<AuthSessionResponse> {
         await post(
             path: APIEndpoints.register,
             body: RegisterRequest(email: email, password: password)
         )
     }
 
-    func login(email: String, password: String) async -> ApiResult<LoginResponse> {
+    func login(email: String, password: String) async -> ApiResult<AuthSessionResponse> {
         await post(
             path: APIEndpoints.login,
             body: LoginRequest(email: email, password: password)
         )
     }
 
-    func appleSignIn(idToken: String, nonce: String) async -> ApiResult<LoginResponse> {
+    func appleSignIn(idToken: String, nonce: String) async -> ApiResult<AuthSessionResponse> {
         await post(
             path: APIEndpoints.appleSignIn,
             body: AppleSignInRequest(id_token: idToken, nonce: nonce)
         )
     }
 
-    func googleSignIn(idToken: String, nonce: String) async -> ApiResult<LoginResponse> {
+    func googleSignIn(idToken: String, nonce: String) async -> ApiResult<AuthSessionResponse> {
         await post(
             path: APIEndpoints.googleSignIn,
             body: GoogleSignInRequest(id_token: idToken, nonce: nonce)
+        )
+    }
+
+    func refreshSession(refreshToken: String) async -> ApiResult<AuthSessionResponse> {
+        await post(
+            path: APIEndpoints.refreshSession,
+            body: RefreshSessionRequest(refresh_token: refreshToken)
         )
     }
 
@@ -100,7 +117,7 @@ extension APIClient {
     /// Updates the user's password using their Supabase recovery token.
     /// Uses the recovery token as the Bearer — NOT the keychain token — so this
     /// bypasses the normal `request()` method and makes a direct URLRequest.
-    func resetPassword(newPassword: String, recoveryToken: String) async -> ApiResult<LoginResponse> {
+    func resetPassword(newPassword: String, recoveryToken: String) async -> ApiResult<AuthSessionResponse> {
         guard let url = URL(string: APIEndpoints.resetPassword, relativeTo: Config.baseURL) else {
             return .failure(status: 0, message: "Invalid URL")
         }
@@ -124,7 +141,7 @@ extension APIClient {
                     ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
                 return .failure(status: http.statusCode, message: msg)
             }
-            let decoded = try JSONDecoder().decode(LoginResponse.self, from: data)
+            let decoded = try JSONDecoder().decode(AuthSessionResponse.self, from: data)
             return .success(decoded)
         } catch let urlError as URLError {
             switch urlError.code {

@@ -15,6 +15,7 @@ struct SettingsScreen: View {
     @Environment(\.settingsStore) private var settingsStore
     @Environment(\.activityStore) private var activityStore
     @Environment(\.weatherStore) private var weatherStore
+    @Environment(\.homeCardsStore) private var homeCardsStore
 
     @State private var showDisconnectAlert = false
     @State private var showDeleteStep1 = false
@@ -34,6 +35,14 @@ struct SettingsScreen: View {
                     coachingNotificationsSection
                     SettingsWeatherAttributionSection()
                     accountSection
+                    #if DEBUG
+                    SettingsDebugSection(
+                        weatherCardsLocation: Binding(
+                            get: { homeCardsStore.debugLocation },
+                            set: { homeCardsStore.debugLocation = $0 }
+                        )
+                    )
+                    #endif
                 }
                 .padding(.horizontal, Spacing.md)
                 .padding(.vertical, Spacing.md)

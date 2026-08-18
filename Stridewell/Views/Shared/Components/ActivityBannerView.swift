@@ -56,26 +56,26 @@ struct ActivityBannerView: View {
 
                 HStack {
                     Text(title1)
-                        .font(.sofiaSans(size: 12, weight: .bold))
+                        .font(.sofiaSans(size: 14, weight: .bold))
                         .foregroundStyle(AppColor.textPrimary)
                     if let detail {
                         Spacer()
                         Text(detail)
-                            .font(.sofiaSans(size: 12, weight: .regular))
+                            .font(.sofiaSans(size: 13, weight: .regular))
                             .foregroundStyle(AppColor.textPrimary)
                     }
                 }
 
                 if let line = resolvedTitle2 {
                     Text(line)
-                        .font(.sofiaSans(size: 12, weight: .bold))
+                        .font(.sofiaSans(size: 13, weight: .bold))
                         .foregroundStyle(AppColor.textPrimary)
                         .multilineTextAlignment(.leading)
                 }
 
                 if let subtitle {
                     Text(subtitle)
-                        .font(.sofiaSans(size: 12, weight: .regular))
+                        .font(.sofiaSans(size: 13, weight: .regular))
                         .foregroundStyle(AppColor.textPrimary)
                         .multilineTextAlignment(.leading)
                 }
@@ -151,6 +151,16 @@ struct ActivityBannerView: View {
             ActivityBannerView(
                 title1:    "Great work out there!",
                 subtitle:  "Let's talk about that last run",
+                image:     Image("bg2"),
+                onTap:     { },
+                onDismiss: { }
+            )
+            
+            //Weather layour
+            ActivityBannerView(
+                title1:    "UV index is 7",
+                title2:   "Cover Up, wear SPF and stay hydrated!",
+                subtitle: "",
                 image:     Image("bg2"),
                 onTap:     { },
                 onDismiss: { }

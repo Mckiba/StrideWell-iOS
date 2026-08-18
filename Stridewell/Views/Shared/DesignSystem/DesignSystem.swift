@@ -63,6 +63,27 @@ enum AppColor {
     })
 
     static let destructive:      Color = .red
+
+    // MARK: Plan-day card border tokens
+    /// Bottom-stroke colour for the default (planned, upcoming) PlanDay card.
+    /// Muted blue from Figma node 688:1099.
+    static let cardBorderDefault: Color = Color(hex: "#4183B9")
+
+    /// Bottom-stroke colour for Completed/Modified PlanDay cards and the
+    /// Recent Activity feed's ActivityCard. Reuses the brand `accent`.
+    static let cardBorderCompleted: Color = accent
+
+    /// Bottom-stroke colour for Missed PlanDay cards. Same warm grey used for
+    /// the missed-state text below.
+    static let cardBorderMissed: Color = Color(hex: "#A6A6A6")
+
+    /// Text colour for Missed PlanDay cards — every label and value renders
+    /// at this colour so the whole card reads "this day passed without a run".
+    static let textMissed: Color = Color(hex: "#A6A6A6")
+
+    /// Light grey divider that separates the planned-stats block from the
+    /// actual-stats block in the Completed card variant.
+    static let cardDivider: Color = Color(hex: "#D9D9D9")
 }
 
 // MARK: - Typography (semantic aliases over system fonts)
@@ -106,11 +127,11 @@ extension Font {
         }
     }
 
-    // MARK: - Activity Card Typography (Inter)
+    // MARK: - Activity Card Typography
     static let activityTimestamp: Font = .sofiaSans(size: 12, weight: .regular)   // date + time stamp
-    static let activityName:      Font = .inter(size: 12, weight: .bold)   // run name
-    static let activityStatLabel: Font = .inter(size: 10)                  // "DISTANCE" / "TIME" / "AVG PACE"
-    static let activityStatValue: Font = .inter(size: 11, weight: .bold)   // "4.8 km" / "26:08" / "5:30 /km"
+    static let activityName:      Font = .sofiaSans(size: 14, weight: .bold)   // run name
+    static let activityStatLabel: Font = .sofiaSans(size: 12)                  // "DISTANCE" / "TIME" / "AVG PACE"
+    static let activityStatValue: Font = .sofiaSans(size: 12, weight: .bold)   // "4.8 km" / "26:08" / "5:30 /km"
     static let largeStatValue:  Font = .sofiaSans(size: 20, weight: .bold)
 }
 
@@ -154,6 +175,61 @@ extension UIColor {
             blue:  CGFloat(b) / 255,
             alpha: alpha
         )
+    }
+}
+
+// MARK: Card bottom-stroke modifier
+
+/// Conditionally applies `cardBottomStroke(AppColor.cardBorderCompleted)` when
+/// `isPlanLinked` is true. Used by ActivityCard so only runs that fulfilled a
+/// planned workout show the accent stroke — historical/unlinked runs stay plain.
+struct PlanLinkedStrokeModifier: ViewModifier {
+    let isPlanLinked: Bool
+    func body(content: Content) -> some View {
+        if isPlanLinked {
+            content.cardBottomStroke(AppColor.cardBorderCompleted)
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    /// Wraps the view's bottom edge with a coloured "lipstick" stroke that
+    /// curves with the card's `cornerRadius` (Figma node 688:1099).
+    ///
+    /// Implementation: the view is padded `height` from the bottom, and a
+    /// fully-rounded rectangle in `color` is painted behind. The stroke band
+    /// + corner curves peek out below the (already-rounded) card surface.
+    ///
+    /// Apply **after** the card's own `.background` and `.clipShape`, before
+    /// `.shadow`. The view passed in should already be the rounded card.
+    func cardBottomStroke(
+        _ color: Color,
+        height: CGFloat = 3,
+        cornerRadius: CGFloat = CornerRadius.md
+    ) -> some View {
+        self
+            .padding(.bottom, height)
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(color)
+            )
+    }
+
+    /// Optional variant — applies the stroke only when `color` is non-nil so
+    /// planned/rest cards render with no stroke at all.
+    @ViewBuilder
+    func cardBottomStroke(
+        _ color: Color?,
+        height: CGFloat = 3,
+        cornerRadius: CGFloat = CornerRadius.md
+    ) -> some View {
+        if let color {
+            cardBottomStroke(color, height: height, cornerRadius: cornerRadius)
+        } else {
+            self
+        }
     }
 }
 
