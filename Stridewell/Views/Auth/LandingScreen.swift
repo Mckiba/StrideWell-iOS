@@ -216,14 +216,14 @@ struct LandingScreen: View {
 
     // MARK: - Shared Post-Auth Flow
 
-    private func finalize(result: ApiResult<LoginResponse>, setLoading: (Bool) -> Void) async {
+    private func finalize(result: ApiResult<AuthSessionResponse>, setLoading: (Bool) -> Void) async {
         switch result {
         case .failure(_, let message):
             errorMessage = message
             setLoading(false)
             return
         case .success(let response):
-            authStore.signIn(token: response.token, userId: response.user_id)
+            authStore.signIn(session: response)
         }
 
         let statusResult = await apiClient.onboardingStatus()

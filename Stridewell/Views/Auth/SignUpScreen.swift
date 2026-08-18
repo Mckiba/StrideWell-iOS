@@ -93,7 +93,7 @@ struct SignUpScreen: View {
             return
         }
 
-        let result: ApiResult<LoginResponse> = await apiClient.register(
+        let result: ApiResult<AuthSessionResponse> = await apiClient.register(
             email: email.trimmingCharacters(in: .whitespaces),
             password: password
         )
@@ -104,7 +104,7 @@ struct SignUpScreen: View {
             isLoading = false
             return
         case .success(let response):
-            authStore.signIn(token: response.token, userId: response.user_id)
+            authStore.signIn(session: response)
         }
 
         // Check onboarding status — non-blocking; new users will have none
