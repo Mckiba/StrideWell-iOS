@@ -20,6 +20,7 @@ enum WeatherCardImage {
         case "thermometer_sun":        return "sun"
         case "thermometer_snowflake":  return "extreme_cold"
         case "sun_setting":            return "sunset"
+        case "moon":                   return "moon"
         default:                       return "sun"
         }
     }
