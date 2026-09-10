@@ -36,6 +36,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
     ) {
         let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        // Cache so we can re-register after a login when this delegate callback
+        // (which fires once per launch) won't fire again.
+        UserDefaults.standard.set(token, forKey: PushTokenStore.defaultsKey)
         NotificationCenter.default.post(name: .apnsTokenReceived, object: token)
     }
 
@@ -80,6 +83,18 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
             NotificationCenter.default.post(name: .deepLinkReceived, object: deepLink)
         }
         completionHandler()
+    }
+}
+
+// MARK: - Push Token Store
+
+/// Caches the latest APNs device token so it can be re-registered with the
+/// backend after a login, since the delegate callback only fires once per launch.
+enum PushTokenStore {
+    static let defaultsKey = "com.stridewell.apnsToken"
+
+    static var cachedToken: String? {
+        UserDefaults.standard.string(forKey: defaultsKey)
     }
 }
 
