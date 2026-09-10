@@ -9,9 +9,17 @@ enum Config {
 
     static var baseURL: URL {
         #if DEBUG
-        URL(string: "https://60cc-2601-602-8680-11a0-f141-78e0-4384-2865.ngrok-free.app")!
+        // The LAN address of the dev machine changes with the network, so allow an
+        // override without editing this file: pass `-api_base_url http://host:3000`
+        // in the scheme's launch arguments, or on the simulator with
+        // `simctl launch <udid> com.stridewell -api_base_url http://localhost:3000`.
+        if let override = UserDefaults.standard.string(forKey: "api_base_url"),
+           let url = URL(string: override) {
+            return url
+        }
+        return URL(string: "http://10.174.25.59:3000")!
         #else
-        URL(string: "https://stridewell-api-production.up.railway.app")!
+        return URL(string: "https://stridewell-api-production.up.railway.app")!
         #endif
     }
 
@@ -21,7 +29,7 @@ enum Config {
 
     static let appScheme = "stridewell"
     static let stravaRedirectURI = "stridewell://localhost"
-    static let stravaClientId = "204378"   // replace before release
+    static let stravaClientId = "270877"   // replace before release
 
     static var stravaAuthURL: URL? {
         var components = URLComponents(string: "https://www.strava.com/oauth/authorize")

@@ -45,6 +45,8 @@ struct StridewellApp: App {
 
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
+    @Environment(\.scenePhase) private var scenePhase
+
     @State private var authStore: AuthStore
     @State private var onboardingStore = OnboardingStore()
     @State private var planStore = PlanStore()
@@ -116,6 +118,21 @@ struct StridewellApp: App {
                           authStore.isAuthenticated else { return }
                     Task { _ = await apiClient.registerDeviceToken(token) }
                 }
+                .onChange(of: scenePhase) { _, phase in
+                    // On foreground, proactively refresh the (possibly just-expired)
+                    // session before screens fan out their data requests, and re-assert
+                    // the device token so pushes keep flowing.
+                    guard phase == .active, authStore.isAuthenticated else { return }
+                    Task {
+                        await apiClient.ensureFreshSession()
+                        registerCachedDeviceToken()
+                    }
+                }
+                .onChange(of: authStore.isAuthenticated) { _, isAuthenticated in
+                    // Re-register the cached APNs token right after a login — the
+                    // delegate callback that first delivered it won't fire again.
+                    if isAuthenticated { registerCachedDeviceToken() }
+                }
                 .onReceive(NotificationCenter.default.publisher(for: .foregroundPushReceived)) { notification in
                     guard let userInfo = notification.object as? [AnyHashable: Any],
                           let deepLink = userInfo["deep_link"] as? String else { return }
@@ -139,6 +156,16 @@ struct StridewellApp: App {
                         .environment(\.onboardingStore, onboardingStore)
                 }
         }
+    }
+
+    // MARK: - Push Token
+
+    /// Registers the cached APNs token with the backend if the user is signed in.
+    /// The upsert is keyed on the token, so repeated calls are idempotent and also
+    /// re-point the token at the currently authenticated user.
+    private func registerCachedDeviceToken() {
+        guard authStore.isAuthenticated, let token = PushTokenStore.cachedToken else { return }
+        Task { _ = await apiClient.registerDeviceToken(token) }
     }
 
     // MARK: - Deep Link Handler

@@ -192,6 +192,7 @@ final class SettingsStore {
     // MARK: - Strava Actions
 
     func loadStravaStatus(apiClient: APIClient) async {
+        let previous = stravaState
         stravaState = .loading
         let result: ApiResult<StravaStatusResponse> = await apiClient.stravaStatus()
         switch result {
@@ -204,7 +205,15 @@ final class SettingsStore {
                 stravaState = .connected(expiresAt: response.expires_at, scope: response.scope)
             }
         case .failure(_, let message):
-            stravaState = .error(message)
+            // A transient failure (no network) or auth blip must not clobber a known
+            // connection — otherwise the user is prompted to reconnect Strava for no
+            // reason. Keep the last known state; only surface an error if we had none.
+            switch previous {
+            case .connected, .expired, .disconnected:
+                stravaState = previous
+            default:
+                stravaState = .error(message)
+            }
         }
     }
 
