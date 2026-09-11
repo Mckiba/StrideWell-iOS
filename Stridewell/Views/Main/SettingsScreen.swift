@@ -9,11 +9,7 @@ struct SettingsScreen: View {
 
     @Environment(\.apiClient) private var apiClient
     @Environment(\.authStore) private var authStore
-    @Environment(\.onboardingStore) private var onboardingStore
-    @Environment(\.planStore) private var planStore
-    @Environment(\.chatStore) private var chatStore
     @Environment(\.settingsStore) private var settingsStore
-    @Environment(\.activityStore) private var activityStore
     @Environment(\.weatherStore) private var weatherStore
     @Environment(\.homeCardsStore) private var homeCardsStore
 
@@ -70,13 +66,7 @@ struct SettingsScreen: View {
                 Task {
                     let success = await settingsStore.executeDeleteAccount(apiClient: apiClient)
                     if success {
-                        settingsStore.signOut(
-                            authStore: authStore,
-                            onboardingStore: onboardingStore,
-                            planStore: planStore,
-                            chatStore: chatStore,
-                            activityStore: activityStore
-                        )
+                        settingsStore.signOut(authStore: authStore)
                     }
                 }
             }
@@ -129,13 +119,7 @@ struct SettingsScreen: View {
             isSigningOut: false,
             deleteState: settingsStore.deleteState,
             onSignOut: {
-                settingsStore.signOut(
-                    authStore: authStore,
-                    onboardingStore: onboardingStore,
-                    planStore: planStore,
-                    chatStore: chatStore,
-                    activityStore: activityStore
-                )
+                settingsStore.signOut(authStore: authStore)
             },
             onDeleteAccount: { showDeleteStep1 = true }
         )

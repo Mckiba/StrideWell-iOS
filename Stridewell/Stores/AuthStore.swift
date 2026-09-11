@@ -82,12 +82,23 @@ final class AuthStore {
         accessTokenExpiresAt = expiresAt
     }
 
+    /// Fires on every transition to signed-out — explicit sign-out and the
+    /// unrecoverable-401 path alike — carrying the user id that was signed in.
+    /// StridewellApp uses it to tear down every user-scoped store in one place.
+    @ObservationIgnored var onSignedOut: (@MainActor (String?) -> Void)?
+
     func signOut() {
+        let previousUserId = userId
+
         KeychainStore.clearAll()
         token = nil
         refreshToken = nil
         accessTokenExpiresAt = nil
         userId = nil
+
+        if let onSignedOut {
+            Task { @MainActor in onSignedOut(previousUserId) }
+        }
     }
 
     /// Called by APIClient when refresh cannot recover from auth failure.

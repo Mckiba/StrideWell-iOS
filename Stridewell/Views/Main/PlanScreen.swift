@@ -31,7 +31,14 @@ struct PlanScreen: View {
 
             switch screenState {
             case .loading:
-                PlanScreenSkeleton()
+                // Keep the chevrons live so an uncached week is not a dead end
+                // while its fetch is in flight.
+                VStack(spacing: Spacing.md) {
+                    weekNavigator
+                    PlanScreenSkeleton()
+                }
+                .padding(.horizontal, Spacing.md)
+                .padding(.top, Spacing.md)
 
             case .empty:
                 VStack(spacing: Spacing.md) {
@@ -247,30 +254,35 @@ struct PlanScreen: View {
 
     // MARK: - Data Loading
 
+    /// Renders the cached week immediately so navigation stays instant, then
+    /// always revalidates against /plan/week. Without the revalidation a week
+    /// prefetched earlier renders forever — stale statuses, stale replan content.
     private func loadWeek(for monday: Date, forceRefresh: Bool = false) async {
         let startDate = DateUtils.format(monday)
 
         // Fetch synced runs for this week in parallel with the plan data.
         async let runsResult = apiClient.runsForWeek(monday: monday)
 
-        // Check cache first (unless force-refreshing)
-        if !forceRefresh, let cached = planStore.cachedWeek(for: startDate) {
+        let cached = planStore.cachedWeek(for: startDate)
+        if let cached, !forceRefresh {
             displayedWeek = cached
             screenState = cached.days.isEmpty ? .empty : .loaded
-            if case .success(let r) = await runsResult { weekRuns = r.runs }
-            await prefetchAdjacentWeeks(around: monday)
-            return
-        }
-
-        // Show loading only if nothing is displayed yet
-        if displayedWeek == nil {
+        } else if cached == nil {
+            // Nothing cached for this week: clear rather than leave the previous
+            // week's days rendering under the new date range.
+            displayedWeek = nil
             screenState = .loading
         }
 
         let result = await apiClient.planWeek(start: startDate)
 
         // Resolve runs fetch alongside plan result
-        if case .success(let r) = await runsResult { weekRuns = r.runs }
+        if case .success(let r) = await runsResult, isCurrent(startDate) {
+            weekRuns = r.runs
+        }
+
+        // The user may have navigated on while this was in flight.
+        guard isCurrent(startDate) else { return }
 
         switch result {
         case .success(let week):
@@ -280,16 +292,25 @@ struct PlanScreen: View {
             await prefetchAdjacentWeeks(around: monday)
 
         case .failure(let status, let message):
+            // A failed revalidation must not blank a week already on screen.
+            if displayedWeek != nil { return }
+
             if status == 404 {
                 screenState = .empty
-            } else if let cached = planStore.serveCachedWeekOffline(for: startDate) {
+            } else if let offline = planStore.serveCachedWeekOffline(for: startDate) {
                 // Serve persistent cache when network is unavailable
-                displayedWeek = cached
-                screenState = cached.days.isEmpty ? .empty : .loaded
+                displayedWeek = offline
+                screenState = offline.days.isEmpty ? .empty : .loaded
             } else {
                 screenState = .error(message)
             }
         }
+    }
+
+    /// True while `startDate` is still the week the user is looking at. Guards
+    /// every write so a slow response cannot clobber a week navigated to since.
+    private func isCurrent(_ startDate: String) -> Bool {
+        DateUtils.format(selectedMonday) == startDate
     }
 
     /// Prefetch previous and next week in parallel if not already cached.
@@ -304,6 +325,9 @@ struct PlanScreen: View {
 
     private func prefetchIfNeeded(startDate: String) async {
         guard planStore.cachedWeek(for: startDate) == nil else { return }
+        guard planStore.beginWeekFetch(startDate) else { return }
+        defer { planStore.endWeekFetch(startDate) }
+
         if case .success(let week) = await apiClient.planWeek(start: startDate) {
             planStore.cacheWeek(week)
         }

@@ -37,11 +37,17 @@ enum DateUtils {
     /// Parses an ISO-8601 string, trying fractional seconds first, then
     /// without.  Returns nil only if the string cannot be parsed at all.
     static func parseISO8601(_ iso: String) -> Date? {
-        let withFractional = ISO8601DateFormatter()
-        withFractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = withFractional.date(from: iso) { return date }
-        return ISO8601DateFormatter().date(from: iso)
+        if let date = fractionalParser.date(from: iso) { return date }
+        return plainParser.date(from: iso)
     }
+
+    private static let fractionalParser: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
+    private static let plainParser = ISO8601DateFormatter()
 
     // MARK: - Display Formatters
 

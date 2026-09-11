@@ -35,6 +35,15 @@ final class PlanStore {
     /// survives app restarts. Used by PlanScreen for instant week navigation.
     private(set) var weekCache: [String: PlanWeekResponse] = [:]
 
+    /// plan_version_id every entry in weekCache belongs to. When a fetched week
+    /// reports a different version the whole cache is dropped — kept separate from
+    /// currentPlanVersionId, which push handling also writes.
+    private(set) var weekCachePlanVersionId: String? = nil
+
+    /// Week start dates with a /plan/week request in flight. Prevents duplicate
+    /// prefetches when the user taps through weeks quickly.
+    private var inFlightWeeks: Set<String> = []
+
     /// Cached recent runs from the home feed — persisted to UserDefaults.
     /// Served offline when the /runs/recent call fails.
     private(set) var cachedRecentRuns: [Run] = []
@@ -63,6 +72,7 @@ final class PlanStore {
     private static let lastSeenKey        = "PlanStore.lastSeenPlanVersionId"
     private static let cachedTodayKey     = "PlanStore.cachedToday"
     private static let weekCacheKey       = "PlanStore.weekCache"
+    private static let weekCacheVersionKey = "PlanStore.weekCachePlanVersionId"
     private static let lastFetchTimeKey   = "PlanStore.lastFetchTime"
     private static let cachedGoalKey      = "PlanStore.cachedGoal"
     private static let cachedRecentRunsKey = "PlanStore.cachedRecentRuns"
@@ -83,6 +93,7 @@ final class PlanStore {
            let cache = try? JSONDecoder().decode([String: PlanWeekResponse].self, from: data) {
             weekCache = cache  // pre-populates in-memory cache for offline serving
         }
+        weekCachePlanVersionId = UserDefaults.standard.string(forKey: Self.weekCacheVersionKey)
         if let data = UserDefaults.standard.data(forKey: Self.lastFetchTimeKey),
            let times = try? JSONDecoder().decode([String: Date].self, from: data) {
             lastFetchTime = times
@@ -155,13 +166,23 @@ final class PlanStore {
     /// Stores a fetched week in the cache, persists to disk, and updates plan version tracking.
     /// Evicts entries beyond the 8 most-recently-fetched weeks to bound memory and disk usage.
     func cacheWeek(_ week: PlanWeekResponse) {
+        // A new plan version makes every other cached week stale.
+        if let cachedVersion = weekCachePlanVersionId, cachedVersion != week.plan_version_id {
+            clearWeekCache()
+        }
+        weekCachePlanVersionId = week.plan_version_id
+
         weekCache[week.start_date] = week
         currentPlanVersionId = week.plan_version_id
         lastFetchTime[week.start_date] = Date()
 
-        // Keep only the 8 most recently fetched weeks (by fetch time, not calendar order)
+        // Keep only the 8 most recently fetched weeks (by fetch time, not calendar order).
+        // lastFetchTime also holds the non-week key "today", so filter to week keys —
+        // otherwise "today" can be picked and the removal is a no-op that leaves the
+        // cache over its bound.
         if weekCache.count > 8 {
             let oldest = lastFetchTime
+                .filter { weekCache[$0.key] != nil }
                 .sorted { $0.value < $1.value }
                 .prefix(weekCache.count - 8)
                 .map(\.key)
@@ -177,6 +198,22 @@ final class PlanStore {
         if lastSeenPlanVersionId == nil {
             markPlanChangeSeen()
         }
+    }
+
+    /// Claims a week for fetching. Returns false when a request for the same
+    /// week is already in flight.
+    func beginWeekFetch(_ startDate: String) -> Bool {
+        inFlightWeeks.insert(startDate).inserted
+    }
+
+    func endWeekFetch(_ startDate: String) {
+        inFlightWeeks.remove(startDate)
+    }
+
+    /// Drops every cached week. Called when the plan version changes.
+    private func clearWeekCache() {
+        weekCache = [:]
+        lastFetchTime = lastFetchTime.filter { $0.key == "today" }
     }
 
     // MARK: - Offline Fallback
@@ -208,6 +245,9 @@ final class PlanStore {
     /// Updates the version ID so the plan change banner surfaces on HomeScreen.
     func setCurrentPlanVersionId(_ id: String) {
         currentPlanVersionId = id
+        // weekCachePlanVersionId is deliberately left pointing at the old version:
+        // the next successful /plan/week reports the new one and purges then, so a
+        // push cannot blank the cache an offline user is still reading from.
     }
 
     /// Called when the user dismisses PlanChangeScreen.
@@ -225,12 +265,15 @@ final class PlanStore {
         goalSummary = nil
         currentWeek = nil
         weekCache = [:]
+        weekCachePlanVersionId = nil
+        inFlightWeeks = []
         cachedToday = nil
         cachedRecentRuns = []
         lastFetchTime = [:]
         UserDefaults.standard.removeObject(forKey: Self.lastSeenKey)
         UserDefaults.standard.removeObject(forKey: Self.cachedTodayKey)
         UserDefaults.standard.removeObject(forKey: Self.weekCacheKey)
+        UserDefaults.standard.removeObject(forKey: Self.weekCacheVersionKey)
         UserDefaults.standard.removeObject(forKey: Self.lastFetchTimeKey)
         UserDefaults.standard.removeObject(forKey: Self.cachedGoalKey)
         UserDefaults.standard.removeObject(forKey: Self.cachedRecentRunsKey)
@@ -246,6 +289,9 @@ final class PlanStore {
     private func persistWeekCache() {
         guard let data = try? JSONEncoder().encode(weekCache) else { return }
         UserDefaults.standard.set(data, forKey: Self.weekCacheKey)
+        if let version = weekCachePlanVersionId {
+            UserDefaults.standard.set(version, forKey: Self.weekCacheVersionKey)
+        }
     }
 
     private func persistLastFetchTime() {

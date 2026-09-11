@@ -89,6 +89,20 @@ struct StridewellApp: App {
         WindowGroup {
             RootView(authStore: authStore, onboardingStore: onboardingStore)
                 .task {
+                    // Every user-scoped store is torn down here so the explicit
+                    // sign-out and the unrecoverable-401 path behave identically.
+                    authStore.onSignedOut = { previousUserId in
+                        chatStore.reset()
+                        planStore.reset()
+                        onboardingStore.reset()
+                        activityStore.reset()
+                        activitiesStore.reset()
+                        homeCardsStore.reset()
+                        if let previousUserId {
+                            HeatmapCache().clearAll(userId: previousUserId)
+                        }
+                    }
+
                     // Validate the stored JWT and refresh onboarding status on every cold
                     // launch. A 401 triggers onUnauthorized → clears auth → RootView re-routes.
                     guard authStore.isAuthenticated else { return }
