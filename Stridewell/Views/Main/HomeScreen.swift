@@ -370,6 +370,10 @@ struct HomeScreen: View {
         // but today's workout still shows.
         if case .success(let weekData) = week {
             planStore.setWeekData(weekData)
+            // Share the fetch with the Plan tab, which otherwise always misses
+            // on its first load. Success branch only — re-caching the offline
+            // fallback below would reset its freshness stamp.
+            planStore.cacheWeek(weekData)
         } else if week.isOffline {
             let start = DateUtils.mondayString(containing: Date())
             if let cached = planStore.serveCachedWeekOffline(for: start) {

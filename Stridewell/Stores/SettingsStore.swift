@@ -320,23 +320,9 @@ final class SettingsStore {
 
     // MARK: - Sign Out
 
-    /// Resets all stores and signs out. authStore.signOut() is called last
-    /// because it triggers RootView re-routing.
-    func signOut(
-        authStore: AuthStore,
-        onboardingStore: OnboardingStore,
-        planStore: PlanStore,
-        chatStore: ChatStore,
-        activityStore: ActivityStore
-    ) {
-        chatStore.reset()
-        planStore.reset()
-        onboardingStore.reset()
-        activityStore.reset()
-        // Clear heatmap disk cache before signing out
-        if let userId = authStore.userId {
-            HeatmapCache().clearAll(userId: userId)
-        }
+    /// Signs out. Store teardown and the heatmap cache clear run from
+    /// AuthStore.onSignedOut, so the 401 path gets exactly the same cleanup.
+    func signOut(authStore: AuthStore) {
         authStore.signOut()
     }
 

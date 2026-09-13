@@ -17,26 +17,16 @@ struct ChatScreen: View {
     @Environment(\.authStore) private var authStore
     @Environment(\.connectivityStore) private var connectivityStore
 
+    @Environment(\.scenePhase) private var scenePhase
+
     @State private var inputText = ""
-    @State private var screenState: ScreenState = .empty
-    @State private var pendingMessage: String? = nil
-    @State private var initialLoadDone = false
+    /// Set once the user actually drags the thread. Gates the history sentinel so
+    /// it cannot page in the whole conversation on its own during layout.
+    @State private var userHasScrolled = false
     @FocusState private var isInputFocused: Bool
 
-    enum ScreenState: Equatable {
-        case empty          // no messages — show suggested prompts
-        case active         // conversation in progress
-        case waiting        // message sent, awaiting reply
-        case error(String)  // inline error with retry, thread preserved
-
-        static func == (lhs: ScreenState, rhs: ScreenState) -> Bool {
-            switch (lhs, rhs) {
-            case (.empty, .empty), (.active, .active), (.waiting, .waiting): return true
-            case (.error(let a), .error(let b)): return a == b
-            default: return false
-            }
-        }
-    }
+    /// Send/waiting/error state lives in ChatStore so it survives a tab teardown.
+    private var screenState: ChatStore.ScreenState { chatStore.screenState }
 
     var body: some View {
         ZStack {
@@ -54,25 +44,18 @@ struct ChatScreen: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            if !chatStore.messages.isEmpty { screenState = .active }
-            guard !initialLoadDone else {
-                // Screen already loaded — consume any pending message set while it was visible
-                if let msg = chatStore.pendingInitialMessage {
-                    chatStore.pendingInitialMessage = nil
-                    Task { await sendMessage(content: msg) }
-                }
-                return
+        .task {
+            await chatStore.loadInitialHistory(api: apiClient)
+            // Auto-send initial message from banner tap, guarded by consumption
+            if let msg = chatStore.pendingInitialMessage {
+                chatStore.pendingInitialMessage = nil
+                await sendMessage(content: msg)
             }
-            initialLoadDone = true
-            Task {
-                await chatStore.loadInitialHistory(api: apiClient)
-                // Auto-send initial message from banner tap, guarded by consumption
-                if let msg = chatStore.pendingInitialMessage {
-                    chatStore.pendingInitialMessage = nil
-                    await sendMessage(content: msg)
-                }
-            }
+        }
+        // Pick up proactive coach messages sent while the app was backgrounded.
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await chatStore.loadInitialHistory(api: apiClient) }
         }
         // Handles messages set while the screen is already visible and onAppear won't re-fire
         .onChange(of: chatStore.pendingInitialMessage) { _, msg in
@@ -144,6 +127,7 @@ struct ChatScreen: View {
                         HStack { Spacer(); ProgressView(); Spacer() }
                             .id("history-sentinel")
                             .onAppear {
+                                guard userHasScrolled, chatStore.hasLoadedHistory else { return }
                                 Task { await chatStore.loadMoreHistory(api: apiClient) }
                             }
                     }
@@ -157,7 +141,7 @@ struct ChatScreen: View {
                             ChatBubbleView(
                                 content: msg.content,
                                 isUser: msg.role == .user,
-                                subtitle: msg.role == .user ? nil : msg.agent_used?.rawValue
+                                subtitle: msg.role == .user ? nil : msg.agent_used?.displayName
                             )
 
                             if msg.role == .assistant {
@@ -192,13 +176,21 @@ struct ChatScreen: View {
                         .id("error")
                     }
 
-                    suggestedPromptsSection
+                    if chatStore.messages.isEmpty {
+                        suggestedPromptsSection
+                    }
 
                     Color.clear.frame(height: Spacing.sm).id("bottom")
                 }
                 .padding(.vertical, Spacing.md)
             }
+            // Opens pinned to the newest message. This also keeps the
+            // history sentinel off-screen so it only fires on a real scroll up.
+            .defaultScrollAnchor(.bottom, for: .initialOffset)
             .scrollDismissesKeyboard(.interactively)
+            .onScrollPhaseChange { _, phase in
+                if phase == .interacting || phase == .tracking { userHasScrolled = true }
+            }
             .simultaneousGesture(
                 TapGesture().onEnded {
                     isInputFocused = false
@@ -210,10 +202,6 @@ struct ChatScreen: View {
                 if !chatStore.isLoadingHistory {
                     withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo("bottom") }
                 }
-            }
-            // Jump to bottom (no animation) after the initial history load completes.
-            .onChange(of: initialLoadDone) { _, done in
-                if done { proxy.scrollTo("bottom", anchor: .bottom) }
             }
             .onChange(of: screenState) {
                 switch screenState {
@@ -266,7 +254,6 @@ struct ChatScreen: View {
         guard !trimmed.isEmpty else { return }
 
         inputText = ""
-        pendingMessage = trimmed
 
         // Create an optimistic local user message for the thread
         let userMessage = ChatMessage(
@@ -277,7 +264,7 @@ struct ChatScreen: View {
             created_at: DateUtils.isoDateTimeFormatter.string(from: Date())
         )
         chatStore.addMessage(userMessage)
-        screenState = .waiting
+        chatStore.beginSending(trimmed)
 
         let result = await apiClient.sendChatMessage(
             conversationId: chatStore.conversationId,
@@ -289,8 +276,8 @@ struct ChatScreen: View {
     // MARK: - Retry
 
     private func retry() async {
-        guard let message = pendingMessage else { return }
-        screenState = .waiting
+        guard let message = chatStore.pendingMessage else { return }
+        chatStore.beginSending(message)
 
         let result = await apiClient.sendChatMessage(
             conversationId: chatStore.conversationId,
@@ -305,14 +292,12 @@ struct ChatScreen: View {
     private func handleResult(_ result: ApiResult<ChatMessageResponse>) {
         switch result {
         case .success(let response):
-            pendingMessage = nil
-
             // Persist conversation_id for future messages / app relaunches
             chatStore.setConversationId(response.conversation_id)
 
             // Append assistant reply
             chatStore.addMessage(response.message)
-            screenState = .active
+            chatStore.finishSending(success: true)
 
             // If the Adjuster agent responded, poll for the updated plan
             if response.message.agent_used == .adjuster {
@@ -324,8 +309,13 @@ struct ChatScreen: View {
                 }
             }
 
-        case .failure(_, let errorMessage):
-            screenState = .error(errorMessage)
+        case .failure(let status, let errorMessage):
+            // The stored conversation is gone or belongs to another user —
+            // drop it so the next send opens a fresh thread.
+            if status == 404 || status == 403 {
+                chatStore.clearConversationId()
+            }
+            chatStore.finishSending(success: false, errorMessage: errorMessage)
         }
     }
 
