@@ -2,7 +2,8 @@
 //  MainContainerView.swift
 //  Stridewell
 //
-//  TabView with Home | Plan | Chat | Settings.
+//  TabView with Home | Plan | Chat | Activities | Settings, plus a Search tab
+//  that holds the full searchable activity list.
 //  Each tab wraps its content in a NavigationStack for scoped push navigation.
 //  Selection binding enables deep link routing from push notifications.
 //
@@ -15,12 +16,12 @@ struct MainContainerView: View {
     @Environment(\.weatherStore) private var weatherStore
 
     @State private var selectedTab: MainTab = .home
-    private let stormTabs: Set<MainTab> = [.home, .activities, .settings]
+    private let stormTabs: Set<MainTab> = [.home, .activities, .settings, .search]
 
     // MARK: - Tab
 
     enum MainTab: Hashable {
-        case home, plan, chat, activities, settings
+        case home, plan, chat, activities, settings, search
     }
 
     // MARK: - Body
@@ -40,7 +41,7 @@ struct MainContainerView: View {
                         }
                     }
 
-                    Tab("Chat", systemImage: "bubble.left.and.bubble.right", value: MainTab.chat) {
+                    Tab("Chat", systemImage: "message.badge.waveform", value: MainTab.chat) {
                         NavigationStack {
                             ChatScreen()
                         }
@@ -55,6 +56,12 @@ struct MainContainerView: View {
                     Tab("Settings", systemImage: "gearshape", value: MainTab.settings) {
                         NavigationStack {
                             SettingsScreen()
+                        }
+                    }
+
+                    Tab(value: MainTab.search, role: .search) {
+                        NavigationStack {
+                            AllActivitiesScreen()
                         }
                     }
                 }
@@ -109,3 +116,4 @@ struct MainContainerView: View {
         }
     }
 }
+

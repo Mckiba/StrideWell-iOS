@@ -23,6 +23,7 @@ extension EnvironmentValues {
     @Entry var heatmapViewModel: HeatmapViewModel? = nil
     @Entry var weatherStore: WeatherStore = WeatherStore()
     @Entry var activitiesStore: ActivitiesStore = ActivitiesStore()
+    @Entry var activitySummaryStore: ActivitySummaryStore = ActivitySummaryStore()
     @Entry var activityStore: ActivityStore = ActivityStore()
     @Entry var connectivityStore: ConnectivityStore = ConnectivityStore()
     @Entry var homeCardsStore: HomeCardsStore = HomeCardsStore()
@@ -56,6 +57,7 @@ struct StridewellApp: App {
     @State private var locationStore = LocationStore()
     @State private var weatherStore = WeatherStore()
     @State private var activitiesStore = ActivitiesStore()
+    @State private var activitySummaryStore = ActivitySummaryStore()
     @State private var activityStore = ActivityStore()
     @State private var connectivityStore = ConnectivityStore()
     @State private var homeCardsStore = HomeCardsStore()
@@ -97,6 +99,7 @@ struct StridewellApp: App {
                         onboardingStore.reset()
                         activityStore.reset()
                         activitiesStore.reset()
+                        activitySummaryStore.reset()
                         homeCardsStore.reset()
                         if let previousUserId {
                             HeatmapCache().clearAll(userId: previousUserId)
@@ -124,6 +127,7 @@ struct StridewellApp: App {
                 .environment(\.heatmapViewModel, heatmapViewModel)
                 .environment(\.weatherStore, weatherStore)
                 .environment(\.activitiesStore, activitiesStore)
+                .environment(\.activitySummaryStore, activitySummaryStore)
                 .environment(\.activityStore, activityStore)
                 .environment(\.connectivityStore, connectivityStore)
                 .environment(\.homeCardsStore, homeCardsStore)

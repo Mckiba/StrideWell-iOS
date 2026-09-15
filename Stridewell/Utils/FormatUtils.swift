@@ -35,6 +35,23 @@ enum FormatUtils {
         }
     }
 
+    /// Converts metres to a bare number in the given unit system, for charts
+    /// and large values: `8000 → 8.0` (metric), `8000 → 4.97` (imperial).
+    static func distanceValue(_ metres: Double, unit: UnitSystem = .metric) -> Double {
+        switch unit {
+        case .metric:   return metres / 1000.0
+        case .imperial: return metres / 1609.344
+        }
+    }
+
+    /// Full unit name shown under a large distance value: "Kilometers" or "Miles".
+    static func distanceUnitName(_ unit: UnitSystem) -> String {
+        switch unit {
+        case .metric:   return "Kilometers"
+        case .imperial: return "Miles"
+        }
+    }
+
     // MARK: - Pace
 
     /// Converts seconds-per-kilometre to a pace string in the given unit system.

@@ -26,7 +26,7 @@ extension APIClient {
     }
 
     /// Paginated run list with optional server-side search and date filter.
-    /// Used by ActivitiesScreen.
+    /// Used by AllActivitiesScreen.
     func activities(limit: Int, offset: Int, search: String, date: Date?) async -> ApiResult<RecentRunsResponse> {
         var path = "\(APIEndpoints.runsRecent)?limit=\(limit)&offset=\(offset)"
         if !search.isEmpty, let encoded = search.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
@@ -34,6 +34,23 @@ extension APIClient {
         }
         if let date {
             path += "&date=\(DateUtils.format(date))"
+        }
+        return await get(path: path)
+    }
+
+    /// Paginated runs whose local start date is within `from`...`to` (inclusive),
+    /// with plan days for plan-linked runs. Used by the Activities overview.
+    func activities(from: Date, to: Date, limit: Int, offset: Int) async -> ApiResult<RecentRunsResponse> {
+        let path = "\(APIEndpoints.runsRecent)?limit=\(limit)&offset=\(offset)"
+            + "&date_from=\(DateUtils.format(from))&date_to=\(DateUtils.format(to))&include_plan_day=true"
+        return await get(path: path)
+    }
+
+    /// Totals and chart buckets for one Activities period. `start` is ignored for `.all`.
+    func runSummary(range: ActivityRange, start: Date?) async -> ApiResult<RunSummaryResponse> {
+        var path = "\(APIEndpoints.runsSummary)?range=\(range.rawValue)"
+        if let start, range != .all {
+            path += "&start=\(DateUtils.format(start))"
         }
         return await get(path: path)
     }

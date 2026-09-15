@@ -305,6 +305,62 @@ struct ActivitiesScreenSkeleton: View {
     }
 }
 
+// MARK: - Activities Overview Skeleton
+
+/// Mirrors ActivitiesScreen.overview: range picker, period totals, chart, and
+/// the first activity cards.
+struct ActivitiesOverviewSkeleton: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Spacing.xl2) {
+                SkeletonBlock(height: 30, cornerRadius: 15)
+                VStack(alignment: .leading, spacing: Spacing.sm) {
+                    SkeletonBlock(width: 110, height: 22, cornerRadius: CornerRadius.sm)
+                    SkeletonBlock(width: 140, height: 64, cornerRadius: CornerRadius.sm)
+                    SkeletonBlock(width: 60, height: 20, cornerRadius: CornerRadius.sm)
+                    SkeletonBlock(height: 48, cornerRadius: CornerRadius.sm)
+                }
+                SkeletonBlock(height: 140, cornerRadius: CornerRadius.sm)
+                ForEach(0..<2, id: \.self) { _ in
+                    SkeletonBlock(height: 80, cornerRadius: CornerRadius.md)
+                }
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
+        }
+        .scrollDisabled(true)
+    }
+}
+
+// MARK: - Activity List Skeleton
+
+/// Placeholder for the Activities overview list while runs load: an optional
+/// section-title bar followed by activity-card-shaped blocks.
+struct ActivityListSkeleton: View {
+    var cardCount: Int = 3
+    var showsHeader: Bool = true
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.lg) {
+            if showsHeader {
+                SkeletonBlock(width: 140, height: 22, cornerRadius: CornerRadius.sm)
+            }
+            ForEach(0..<cardCount, id: \.self) { _ in
+                SkeletonBlock(height: 80, cornerRadius: CornerRadius.md)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+#Preview("Activity List") {
+    VStack(alignment: .leading, spacing: Spacing.xl) {
+        ActivityListSkeleton()
+        ActivityListSkeleton(cardCount: 1, showsHeader: false)
+    }
+    .padding()
+}
+
 // MARK: - Preview
 
 #Preview("Primitive") {
@@ -319,6 +375,10 @@ struct ActivitiesScreenSkeleton: View {
 
 #Preview("Run Detail Sheet") {
     ScrollView { RunDetailSheetSkeleton() }
+}
+
+#Preview("Activities Overview") {
+    ActivitiesOverviewSkeleton()
 }
 
 #Preview("Home") {
