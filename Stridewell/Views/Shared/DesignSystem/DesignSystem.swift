@@ -84,6 +84,11 @@ enum AppColor {
     /// Light grey divider that separates the planned-stats block from the
     /// actual-stats block in the Completed card variant.
     static let cardDivider: Color = Color(hex: "#D9D9D9")
+
+    /// Grid lines and plot border on the Activities volume chart.
+    static let chartGrid: Color = Color(uiColor: UIColor { t in
+        t.userInterfaceStyle == .dark ? UIColor(hex: "#3A3A3C") : UIColor(hex: "#D3CFCF")
+    })
 }
 
 // MARK: - Typography (semantic aliases over system fonts)
@@ -123,6 +128,7 @@ extension Font {
         case .bold:     return .custom("SofiaSans-Bold",     size: size)
         case .semibold: return .custom("SofiaSans-SemiBold", size: size)
         case .medium:   return .custom("SofiaSans-Medium",   size: size)
+        case .heavy:   return .custom("SofiaSans-ExtraBold",   size: size)
         default:        return .custom("SofiaSans-Regular",  size: size)
         }
     }
@@ -133,6 +139,15 @@ extension Font {
     static let activityStatLabel: Font = .sofiaSans(size: 12)                  // "DISTANCE" / "TIME" / "AVG PACE"
     static let activityStatValue: Font = .sofiaSans(size: 12, weight: .bold)   // "4.8 km" / "26:08" / "5:30 /km"
     static let largeStatValue:  Font = .sofiaSans(size: 20, weight: .bold)
+
+    // MARK: - Activities Overview Typography
+    static let activityHeroValue:         Font = .sofiaSans(size: 64, weight: .heavy)   // period distance
+    static let activityHeroUnit:          Font = .sofiaSans(size: 20)                  // "Miles"
+    static let activityPeriodLabel:       Font = .sofiaSans(size: 20)                  // "This Week"
+    static let activityRangeLabel:        Font = .sofiaSans(size: 16)                  // "W" / "M" / "Y" / "All"
+    static let activityOverviewStatValue: Font = .inter(size: 20, weight: .bold)       // "12" / "8:40 /mi"
+    static let activityOverviewStatLabel: Font = .sofiaSans(size: 16)                  // "Runs" / "Avg. Pace"
+    static let activitySectionTitle:      Font = .sofiaSans(size: 18)                  // "Earlier This Week"
 }
 
 // MARK: - Color Hex Initialiser

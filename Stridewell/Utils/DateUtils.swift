@@ -204,4 +204,173 @@ enum DateUtils {
     static func format(_ date: Date) -> String {
         isoDate.string(from: date)
     }
+
+    // MARK: - Activity Periods
+
+    /// Start of the `range` period containing `date`: its Monday, the 1st of its
+    /// month, or January 1st.
+    static func periodStart(for range: ActivityRange, containing date: Date) -> Date {
+        let calendar = Calendar.current
+        switch range {
+        case .week:
+            return calendar.startOfDay(for: mondayOfWeek(containing: date))
+        case .month:
+            return calendar.date(from: calendar.dateComponents([.year, .month], from: date))!
+        case .year, .all:
+            return calendar.date(from: calendar.dateComponents([.year], from: date))!
+        }
+    }
+
+    /// Start of the period before the one starting at `start`.
+    static func previousPeriodStart(for range: ActivityRange, from start: Date) -> Date {
+        let calendar = Calendar.current
+        switch range {
+        case .week:       return calendar.date(byAdding: .day, value: -7, to: start)!
+        case .month:      return calendar.date(byAdding: .month, value: -1, to: start)!
+        case .year, .all: return calendar.date(byAdding: .year, value: -1, to: start)!
+        }
+    }
+
+    /// Period starts from the current period back to the one containing
+    /// `firstRunDate`, newest first. Empty for `.all`, which has a single period.
+    static func periodStarts(for range: ActivityRange, back firstRunDate: Date?, today: Date = Date()) -> [Date] {
+        guard range != .all else { return [] }
+        let current = periodStart(for: range, containing: today)
+        guard let firstRunDate else { return [current] }
+
+        let oldest = periodStart(for: range, containing: firstRunDate)
+        var starts = [current]
+        var cursor = previousPeriodStart(for: range, from: current)
+        while cursor >= oldest {
+            starts.append(cursor)
+            cursor = previousPeriodStart(for: range, from: cursor)
+        }
+        return starts
+    }
+
+    /// Dropdown label: "This Week", "Last Week", "Sep 1 – 7", "This Month",
+    /// "August", "Aug 2025", "This Year", "2025", "All Time".
+    static func periodLabel(for range: ActivityRange, start: Date, today: Date = Date()) -> String {
+        let current = periodStart(for: range, containing: today)
+        switch range {
+        case .week:
+            if start == current { return "This Week" }
+            if start == previousPeriodStart(for: .week, from: current) { return "Last Week" }
+            return weekRangeLabel(monday: start)
+        case .month:
+            if start == current { return "This Month" }
+            let monthsBack = Calendar.current.dateComponents([.month], from: start, to: current).month ?? 0
+            return (monthsBack < 12 ? monthNameFormatter : monthYearFormatter).string(from: start)
+        case .year:
+            return start == current ? "This Year" : yearFormatter.string(from: start)
+        case .all:
+            return "All Time"
+        }
+    }
+
+    /// Section title for runs before today in the current period.
+    static func earlierLabel(for range: ActivityRange) -> String {
+        switch range {
+        case .week:  return "Earlier This Week"
+        case .month: return "Earlier This Month"
+        case .year:  return "Earlier This Year"
+        case .all:   return "Earlier"
+        }
+    }
+
+    /// "February 18" — section title for a single day.
+    static func sectionDayLabel(_ date: Date) -> String {
+        monthDayFormatter.string(from: date)
+    }
+
+    /// Short x-axis label for a summary bucket key: weekday initial, day of
+    /// month, month initial, or year.
+    static func bucketAxisLabel(for range: ActivityRange, key: String) -> String {
+        switch range {
+        case .week:
+            return parse(key).map { weekdayInitialFormatter.string(from: $0) } ?? key
+        case .month:
+            return parse(key).map { dayNumberFormatter.string(from: $0) } ?? key
+        case .year:
+            return bucketMonthFormatter.date(from: key).map { monthInitialFormatter.string(from: $0) } ?? key
+        case .all:
+            return key
+        }
+    }
+
+    /// Callout title for a summary bucket key: "Mon, Sep 14", "September 2026", "2026".
+    static func bucketTitle(for range: ActivityRange, key: String) -> String {
+        switch range {
+        case .week, .month:
+            return parse(key).map { weekdayMonthDayFormatter.string(from: $0) } ?? key
+        case .year:
+            return bucketMonthFormatter.date(from: key).map { monthYearLongFormatter.string(from: $0) } ?? key
+        case .all:
+            return key
+        }
+    }
+
+    /// Inclusive first and last day covered by a summary bucket key.
+    static func bucketWindow(for range: ActivityRange, key: String) -> (from: Date, to: Date)? {
+        let calendar = Calendar.current
+        switch range {
+        case .week, .month:
+            guard let day = parse(key) else { return nil }
+            return (day, day)
+        case .year:
+            guard let start = bucketMonthFormatter.date(from: key),
+                  let next = calendar.date(byAdding: .month, value: 1, to: start),
+                  let last = calendar.date(byAdding: .day, value: -1, to: next) else { return nil }
+            return (start, last)
+        case .all:
+            guard let start = parse("\(key)-01-01"), let last = parse("\(key)-12-31") else { return nil }
+            return (start, last)
+        }
+    }
+
+    private static func formatter(_ format: String, posix: Bool = false) -> DateFormatter {
+        let f = DateFormatter()
+        f.dateFormat = format
+        if posix { f.locale = Locale(identifier: "en_US_POSIX") }
+        return f
+    }
+
+    private static let monthNameFormatter       = formatter("MMMM")
+    private static let monthYearFormatter       = formatter("MMM yyyy")
+    private static let monthYearLongFormatter   = formatter("MMMM yyyy")
+    private static let yearFormatter            = formatter("yyyy")
+    private static let monthDayFormatter        = formatter("MMMM d")
+    private static let weekdayInitialFormatter  = formatter("EEEEE")
+    private static let monthInitialFormatter    = formatter("MMMMM")
+    private static let weekdayMonthDayFormatter = formatter("EEE, MMM d")
+    private static let bucketMonthFormatter     = formatter("yyyy-MM", posix: true)
+}
+
+// MARK: - Activity Range
+
+/// Period granularity for the Activities overview.
+enum ActivityRange: String, CaseIterable, Identifiable {
+    case week, month, year, all
+
+    var id: String { rawValue }
+
+    /// Segment label in the range picker.
+    var shortLabel: String {
+        switch self {
+        case .week:  return "W"
+        case .month: return "M"
+        case .year:  return "Y"
+        case .all:   return "All"
+        }
+    }
+
+    /// Spoken label for accessibility.
+    var title: String {
+        switch self {
+        case .week:  return "Week"
+        case .month: return "Month"
+        case .year:  return "Year"
+        case .all:   return "All Time"
+        }
+    }
 }

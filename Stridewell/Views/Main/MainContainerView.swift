@@ -2,7 +2,8 @@
 //  MainContainerView.swift
 //  Stridewell
 //
-//  TabView with Home | Plan | Chat | Settings.
+//  TabView with Home | Plan | Chat | Activities | Settings, plus a Search tab
+//  that holds the full searchable activity list.
 //  Each tab wraps its content in a NavigationStack for scoped push navigation.
 //  Selection binding enables deep link routing from push notifications.
 //
@@ -15,12 +16,19 @@ struct MainContainerView: View {
     @Environment(\.weatherStore) private var weatherStore
 
     @State private var selectedTab: MainTab = .home
-    private let stormTabs: Set<MainTab> = [.home, .activities, .settings]
+    private let stormTabs: Set<MainTab> = [.home, .activities, .settings, .search]
 
     // MARK: - Tab
 
     enum MainTab: Hashable {
-        case home, plan, chat, activities, settings
+        case home, plan, chat, activities, settings, search
+    }
+
+    /// Tab label that renders the symbol exactly as named. TabView otherwise
+    /// swaps in the .fill variant (house -> house.fill).
+    private func tabLabel(_ title: String, systemImage: String) -> some View {
+        Label(title, systemImage: systemImage)
+            .environment(\.symbolVariants, .none)
     }
 
     // MARK: - Body
@@ -28,33 +36,49 @@ struct MainContainerView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: $selectedTab) {
-                    Tab("Home", systemImage: "house", value: MainTab.home) {
+                    Tab(value: MainTab.home) {
                         NavigationStack {
                             HomeScreen()
                         }
+                    } label: {
+                        tabLabel("Home", systemImage: "house")
                     }
 
-                    Tab("Plan", systemImage: "calendar", value: MainTab.plan) {
+                    Tab(value: MainTab.plan) {
                         NavigationStack {
                             PlanScreen()
                         }
+                    } label: {
+                        tabLabel("Plan", systemImage: "calendar")
                     }
 
-                    Tab("Chat", systemImage: "bubble.left.and.bubble.right", value: MainTab.chat) {
+                    Tab(value: MainTab.chat) {
                         NavigationStack {
                             ChatScreen()
                         }
+                    } label: {
+                        tabLabel("Chat", systemImage: "message.badge.waveform")
                     }
 
-                    Tab("Activities", systemImage: "figure.run", value: MainTab.activities) {
+                    Tab(value: MainTab.activities) {
                         NavigationStack {
                             ActivitiesScreen()
                         }
+                    } label: {
+                        tabLabel("Activities", systemImage: "figure.run")
                     }
 
-                    Tab("Settings", systemImage: "gearshape", value: MainTab.settings) {
+                    Tab(value: MainTab.settings) {
                         NavigationStack {
                             SettingsScreen()
+                        }
+                    } label: {
+                        tabLabel("Settings", systemImage: "gearshape")
+                    }
+
+                    Tab(value: MainTab.search, role: .search) {
+                        NavigationStack {
+                            AllActivitiesScreen()
                         }
                     }
                 }
@@ -109,3 +133,4 @@ struct MainContainerView: View {
         }
     }
 }
+

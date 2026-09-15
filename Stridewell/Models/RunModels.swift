@@ -35,4 +35,33 @@ struct Run: Codable, Identifiable {
 struct RecentRunsResponse: Codable {
     let runs: [Run]
     let hasMore: Bool?  // nil when fetched via the HomeScreen 3-item call on older server
+    /// Completed/modified plan days linked to `runs`. Present only when
+    /// requested with include_plan_day=true.
+    var plan_days: [PlanDay]? = nil
+}
+
+// MARK: - Summary (GET /runs/summary)
+
+struct RunSummaryResponse: Codable {
+    let range: String          // week | month | year | all
+    let start: String          // YYYY-MM-DD, inclusive
+    let end: String            // YYYY-MM-DD, exclusive
+    let totals: RunSummaryTotals
+    let buckets: [RunSummaryBucket]
+    let first_run_date: String?
+}
+
+struct RunSummaryTotals: Codable {
+    let distance_m: Double
+    let run_count: Int
+    let duration_s: Int
+    let avg_pace_s_per_km: Double?
+}
+
+struct RunSummaryBucket: Codable, Identifiable {
+    let key: String            // YYYY-MM-DD, YYYY-MM, or YYYY
+    let distance_m: Double
+    let run_count: Int
+    let run_id: String?        // set only when run_count == 1
+    var id: String { key }
 }
